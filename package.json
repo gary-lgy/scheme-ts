@@ -1,0 +1,120 @@
+{
+  "name": "x-slang",
+  "version": "0.4.70",
+  "description": "Javascript-based implementations of a simple calc language, written in Typescript",
+  "keywords": [
+    "JavaScript",
+    "interpreter",
+    "compiler",
+    "Source",
+    "SICP"
+  ],
+  "author": {
+    "name": "Source Academy",
+    "url": "https://github.com/source-academy/"
+  },
+  "dependencies": {
+    "@types/estree": "0.0.45",
+    "acorn": "^8.0.3",
+    "acorn-loose": "^8.0.0",
+    "acorn-walk": "^8.0.0",
+    "antlr4ts": "^0.5.0-alpha.4",
+    "astring": "^1.4.3",
+    "gpu.js": "^2.10.4",
+    "lodash": "^4.17.20",
+    "node-getopt": "^0.3.2",
+    "source-map": "^0.7.3",
+    "xmlhttprequest-ts": "^1.0.1"
+  },
+  "main": "dist/index",
+  "types": "dist/index",
+  "files": [
+    "dist"
+  ],
+  "bin": {
+    "js-slang": "dist/repl/repl.js"
+  },
+  "scripts": {
+    "ci": "yarn jsdoc && yarn autocomplete && yarn format:ci && yarn eslint && yarn test",
+    "format": "prettier --write \"src/**/*.{ts,tsx}\"",
+    "format:ci": "prettier --list-different \"src/**/*.{ts,tsx}\"",
+    "prepublishOnly": "tsc",
+    "test": "jest",
+    "benchmark": "jest --testPathPattern='.*benchmark.*'",
+    "test-coverage": "jest --coverage",
+    "eslint": "eslint --ext \".ts,.tsx\" src",
+    "jsdoc": "./scripts/jsdoc.sh",
+    "autocomplete": "node ./scripts/updateAutocompleteDocs.js",
+    "docs": "yarn jsdoc && yarn autocomplete",
+    "build": "yarn docs && yarn tsc",
+    "antlr4ts": "antlr4ts -visitor ./src/lang/Calc.g4"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/source-academy/x-slang.git"
+  },
+  "bugs": {
+    "url": "https://github.com/source-academy/x-slang/issues"
+  },
+  "homepage": "https://github.com/source-academy/x-slang",
+  "devDependencies": {
+    "@types/jest": "^26.0.14",
+    "@types/lodash.assignin": "^4.2.6",
+    "@types/lodash.clonedeep": "^4.5.6",
+    "@types/node": "^14.11.2",
+    "@typescript-eslint/eslint-plugin": "^4.4.1",
+    "@typescript-eslint/parser": "^4.4.1",
+    "ace-builds": "^1.4.12",
+    "coveralls": "^3.1.0",
+    "escodegen": "^2.0.0",
+    "eslint": "^7.11.0",
+    "eslint-config-prettier": "^6.13.0",
+    "husky": "^4.3.0",
+    "jest": "^26.4.2",
+    "jest-html-reporter": "^3.2.0",
+    "jsdoc": "^3.6.6",
+    "jsdom": "^16.4.0",
+    "prettier": "^2.1.2",
+    "ts-jest": "^26.4.1",
+    "typescript": "^4.0.3",
+    "antlr4ts-cli": "^0.5.0-alpha.4"
+  },
+  "jest": {
+    "moduleFileExtensions": [
+      "ts",
+      "js"
+    ],
+    "transform": {
+      "\\.ts$": "<rootDir>/node_modules/ts-jest",
+      "\\.js$": "<rootDir>/node_modules/babel-jest"
+    },
+    "testRegex": "/__tests__/.*\\.ts$",
+    "testPathIgnorePatterns": [
+      "/dist/",
+      "'.*benchmark.*'"
+    ],
+    "coveragePathIgnorePatterns": [
+      "/dist/",
+      "/node_modules/",
+      "/src/typings/",
+      "/src/utils/testing.ts"
+    ],
+    "reporters": [
+      "default",
+      [
+        "./node_modules/jest-html-reporter",
+        {
+          "pageTitle": "Test Report",
+          "includeFailureMsg": true,
+          "includeConsoleLog": true
+        }
+      ]
+    ]
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "yarn eslint --fix && yarn format && yarn eslint",
+      "pre-push": "yarn ci"
+    }
+  }
+}
