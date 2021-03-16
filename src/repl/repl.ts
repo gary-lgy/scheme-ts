@@ -91,5 +91,3 @@ function main() {
 }
 
 main()
-
-console.log('test')
