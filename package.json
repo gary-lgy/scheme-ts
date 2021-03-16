@@ -47,7 +47,7 @@
     "autocomplete": "node ./scripts/updateAutocompleteDocs.js",
     "docs": "yarn jsdoc && yarn autocomplete",
     "build": "yarn docs && yarn tsc",
-    "antlr4ts": "antlr4ts -visitor ./src/lang/Calc.g4"
+    "antlr4ts": "antlr4ts -visitor ./src/lang/Scheme.g4"
   },
   "repository": {
     "type": "git",

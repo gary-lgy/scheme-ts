@@ -1,30 +1,22 @@
-import { findNodeAt } from './utils/walkers'
-import { Program, SourceLocation } from 'estree'
 import { SourceMapConsumer } from 'source-map'
 import createContext from './createContext'
-import { findDeclarationNode, findIdentifierNode } from './finder'
 import { evaluate } from './interpreter/interpreter'
 import { parse } from './parser/parser'
+import { PreemptiveScheduler } from './schedulers'
 import {
+  Context,
   Error as ResultError,
   ExecutionMethod,
   Finished,
+  Result,
   Scheduler,
   SourceError,
-  Context,
-  Result,
-  Variant,
-  TypeAnnotatedNode,
-  TypeAnnotatedFuncDecl
+  Variant
 } from './types'
 
-export { Variant } from './types'
-import { validateAndAnnotate } from './validator/validator'
 export { SourceDocumentation } from './editors/ace/docTooltip'
-import * as es from 'estree'
-import { typeCheck } from './typeChecker/typeChecker'
-import { typeToString } from './utils/stringify'
-import { PreemptiveScheduler } from './schedulers'
+export { Variant } from './types'
+export { createContext, Context, Result }
 
 export interface IOptions {
   scheduler: 'preemptive' | 'async'
@@ -41,7 +33,7 @@ const DEFAULT_OPTIONS: IOptions = {
   steps: 1000,
   stepLimit: 1000,
   executionMethod: 'auto',
-  variant: 'calc',
+  variant: 's1',
   originalMaxExecTime: 1000,
   isPrelude: false
 }
@@ -77,152 +69,6 @@ export function parseError(errors: SourceError[], verbose: boolean = verboseErro
   return errorMessagesArr.join('\n')
 }
 
-export function findDeclaration(
-  code: string,
-  context: Context,
-  loc: { line: number; column: number }
-): SourceLocation | null | undefined {
-  const program = parse(code, context)
-  if (!program) {
-    return null
-  }
-  const identifierNode = findIdentifierNode(program, context, loc)
-  if (!identifierNode) {
-    return null
-  }
-  const declarationNode = findDeclarationNode(program, identifierNode)
-  if (!declarationNode || identifierNode === declarationNode) {
-    return null
-  }
-  return declarationNode.loc
-}
-
-export function hasDeclaration(
-  code: string,
-  context: Context,
-  loc: { line: number; column: number }
-): boolean {
-  const program = parse(code, context)
-  if (!program) {
-    return false
-  }
-  const identifierNode = findIdentifierNode(program, context, loc)
-  if (!identifierNode) {
-    return false
-  }
-  const declarationNode = findDeclarationNode(program, identifierNode)
-  if (declarationNode == null || declarationNode.loc == null) {
-    return false
-  }
-
-  return true
-}
-
-function typedParse(code: any, context: Context) {
-  const program: Program | undefined = parse(code, context)
-  if (program === undefined) {
-    return null
-  }
-  return validateAndAnnotate(program, context)
-}
-
-export function getTypeInformation(
-  code: string,
-  context: Context,
-  loc: { line: number; column: number },
-  name: string
-): string {
-  try {
-    // parse the program into typed nodes and parse error
-    const program = typedParse(code, context)
-    if (program === null) {
-      return ''
-    }
-    if (context.prelude !== null) {
-      typeCheck(typedParse(context.prelude, context)!, context)
-    }
-    const [typedProgram, error] = typeCheck(program, context)
-    const parsedError = parseError(error)
-    if (context.prelude !== null) {
-      // the env of the prelude was added, we now need to remove it
-      context.typeEnvironment.pop()
-    }
-
-    // initialize the ans string
-    let ans = ''
-    if (parsedError) {
-      ans += parsedError + '\n'
-    }
-    if (!typedProgram) {
-      return ans
-    }
-
-    // get name of the node
-    const getName = (typedNode: TypeAnnotatedNode<es.Node>) => {
-      let nodeId = ''
-      if (typedNode.type) {
-        if (typedNode.type === 'FunctionDeclaration') {
-          nodeId = typedNode.id?.name!
-        } else if (typedNode.type === 'VariableDeclaration') {
-          nodeId = (typedNode.declarations[0].id as es.Identifier).name
-        } else if (typedNode.type === 'Identifier') {
-          nodeId = typedNode.name
-        }
-      }
-      return nodeId
-    }
-
-    // callback function for findNodeAt function
-    function findByLocationPredicate(t: string, nd: TypeAnnotatedNode<es.Node>) {
-      if (!nd.inferredType) {
-        return false
-      }
-
-      const isInLoc = (nodeLoc: SourceLocation): boolean => {
-        return !(
-          nodeLoc.start.line > loc.line ||
-          nodeLoc.end.line < loc.line ||
-          (nodeLoc.start.line === loc.line && nodeLoc.start.column > loc.column) ||
-          (nodeLoc.end.line === loc.line && nodeLoc.end.column < loc.column)
-        )
-      }
-
-      const location = nd.loc
-      if (nd.type && location) {
-        return getName(nd) === name && isInLoc(location)
-      }
-      return false
-    }
-
-    // report both as the type inference
-
-    const res = findNodeAt(typedProgram, undefined, undefined, findByLocationPredicate)
-
-    if (res === undefined) {
-      return ans
-    }
-
-    const node: TypeAnnotatedNode<es.Node> = res.node
-
-    if (node === undefined) {
-      return ans
-    }
-
-    const actualNode =
-      node.type === 'VariableDeclaration'
-        ? (node.declarations[0].init! as TypeAnnotatedNode<es.Node>)
-        : node
-    const type = typeToString(
-      actualNode.type === 'FunctionDeclaration'
-        ? (actualNode as TypeAnnotatedFuncDecl).functionInferredType!
-        : actualNode.inferredType!
-    )
-    return ans + `At Line ${loc.line} => ${getName(node)}: ${type}`
-  } catch (error) {
-    return ''
-  }
-}
-
 export async function runInContext(
   code: string,
   context: Context,
@@ -236,8 +82,6 @@ export async function runInContext(
   if (!program) {
     return resolvedErrorPromise
   }
-  validateAndAnnotate(program as Program, context)
-  typeCheck(program, context)
   if (context.errors.length > 0) {
     return resolvedErrorPromise
   }
@@ -281,5 +125,3 @@ export function resume(result: Result): Finished | ResultError | Promise<Result>
     return result.scheduler.run(result.it, result.context)
   }
 }
-
-export { createContext, Context, Result }

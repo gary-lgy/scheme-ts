@@ -1,13 +1,13 @@
-import * as es from 'estree'
 import { UNKNOWN_LOCATION } from '../constants'
+import { SchemeExpression, SourceLocation } from '../lang/scheme'
 import { ErrorSeverity, ErrorType, SourceError } from '../types'
 
 export class RuntimeSourceError implements SourceError {
   public type = ErrorType.RUNTIME
   public severity = ErrorSeverity.ERROR
-  public location: es.SourceLocation
+  public location: SourceLocation
 
-  constructor(node?: es.Node) {
+  constructor(node?: SchemeExpression) {
     this.location = node ? node.loc! : UNKNOWN_LOCATION
   }
 

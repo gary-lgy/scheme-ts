@@ -2,12 +2,13 @@
 /* tslint:disable:max-line-length */
 import { baseGenerator, generate } from 'astring'
 import * as es from 'estree'
+import { SchemeExpression } from '../lang/scheme'
 import { ErrorSeverity, ErrorType, SourceError, Value } from '../types'
 import { stringify } from '../utils/stringify'
 import { RuntimeSourceError } from './runtimeSourceError'
 
 export class ModuleNotFound extends RuntimeSourceError {
-  constructor(public moduleName: string, node?: es.Node) {
+  constructor(public moduleName: string, node?: SchemeExpression) {
     super(node)
   }
 
@@ -23,7 +24,7 @@ export class ModuleNotFound extends RuntimeSourceError {
 }
 
 export class ModuleInternalError extends RuntimeSourceError {
-  constructor(public moduleName: string, node?: es.Node) {
+  constructor(public moduleName: string, node?: SchemeExpression) {
     super(node)
   }
 
@@ -67,7 +68,7 @@ export class MaximumStackLimitExceeded extends RuntimeSourceError {
     }
   }
 
-  constructor(node: es.Node, private calls: es.CallExpression[]) {
+  constructor(node: SchemeExpression, private calls: es.CallExpression[]) {
     super(node)
   }
 
@@ -84,7 +85,7 @@ export class MaximumStackLimitExceeded extends RuntimeSourceError {
 }
 
 export class CallingNonFunctionValue extends RuntimeSourceError {
-  constructor(private callee: Value, private node: es.Node) {
+  constructor(private callee: Value, private node: SchemeExpression) {
     super(node)
   }
 
@@ -95,11 +96,13 @@ export class CallingNonFunctionValue extends RuntimeSourceError {
   public elaborate() {
     const calleeVal = this.callee
     const calleeStr = stringify(calleeVal)
-    let argStr = ''
+    const argStr = ''
 
-    const callArgs = (this.node as es.CallExpression).arguments
+    // const callArgs = (this.node as es.CallExpression).arguments
 
-    argStr = callArgs.map(generate).join(', ')
+    // To temporarily silence TS warnings
+    this.node
+    // argStr = callArgs.map(generate).join(', ')
 
     const elabStr = `Because ${calleeStr} is not a function, you cannot run ${calleeStr}(${argStr}).`
     const multStr = `If you were planning to perform multiplication by ${calleeStr}, you need to use the * operator.`
@@ -113,7 +116,7 @@ export class CallingNonFunctionValue extends RuntimeSourceError {
 }
 
 export class UndefinedVariable extends RuntimeSourceError {
-  constructor(public name: string, node: es.Node) {
+  constructor(public name: string, node: SchemeExpression) {
     super(node)
   }
 
@@ -127,7 +130,7 @@ export class UndefinedVariable extends RuntimeSourceError {
 }
 
 export class UnassignedVariable extends RuntimeSourceError {
-  constructor(public name: string, node: es.Node) {
+  constructor(public name: string, node: SchemeExpression) {
     super(node)
   }
 
@@ -143,9 +146,9 @@ export class UnassignedVariable extends RuntimeSourceError {
 export class InvalidNumberOfArguments extends RuntimeSourceError {
   private calleeStr: string
 
-  constructor(node: es.Node, private expected: number, private got: number) {
+  constructor(node: SchemeExpression, private expected: number, private got: number) {
     super(node)
-    this.calleeStr = generate((node as es.CallExpression).callee)
+    // this.calleeStr = generate((node as es.CallExpression).callee)
   }
 
   public explain() {
@@ -161,7 +164,7 @@ export class InvalidNumberOfArguments extends RuntimeSourceError {
 }
 
 export class VariableRedeclaration extends RuntimeSourceError {
-  constructor(private node: es.Node, private name: string, private writable?: boolean) {
+  constructor(private node: SchemeExpression, private name: string, private writable?: boolean) {
     super(node)
   }
 
@@ -173,14 +176,17 @@ export class VariableRedeclaration extends RuntimeSourceError {
     if (this.writable === true) {
       const elabStr = `Since ${this.name} has already been declared, you can assign a value to it without re-declaring.`
 
-      let initStr = ''
+      const initStr = ''
 
-      if (this.node.type === 'FunctionDeclaration') {
-        initStr =
-          '(' + (this.node as es.FunctionDeclaration).params.map(generate).join(',') + ') => {...'
-      } else if (this.node.type === 'VariableDeclaration') {
-        initStr = generate((this.node as es.VariableDeclaration).declarations[0].init)
-      }
+      // To temporarily silence ts warning
+      this.node
+
+      // if (this.node.type === 'FunctionDeclaration') {
+      //   initStr =
+      //     '(' + (this.node as es.FunctionDeclaration).params.map(generate).join(',') + ') => {...'
+      // } else if (this.node.type === 'VariableDeclaration') {
+      //   initStr = generate((this.node as es.VariableDeclaration).declarations[0].init)
+      // }
 
       return `${elabStr} As such, you can just do\n\n\t${this.name} = ${initStr};\n`
     } else if (this.writable === false) {
@@ -192,7 +198,7 @@ export class VariableRedeclaration extends RuntimeSourceError {
 }
 
 export class ConstAssignment extends RuntimeSourceError {
-  constructor(node: es.Node, private name: string) {
+  constructor(node: SchemeExpression, private name: string) {
     super(node)
   }
 
@@ -206,7 +212,7 @@ export class ConstAssignment extends RuntimeSourceError {
 }
 
 export class GetPropertyError extends RuntimeSourceError {
-  constructor(node: es.Node, private obj: Value, private prop: string) {
+  constructor(node: SchemeExpression, private obj: Value, private prop: string) {
     super(node)
   }
 
@@ -224,7 +230,7 @@ export class GetInheritedPropertyError extends RuntimeSourceError {
   public severity = ErrorSeverity.ERROR
   public location: es.SourceLocation
 
-  constructor(node: es.Node, private obj: Value, private prop: string) {
+  constructor(node: SchemeExpression, private obj: Value, private prop: string) {
     super(node)
     this.location = node.loc!
   }
@@ -239,7 +245,7 @@ export class GetInheritedPropertyError extends RuntimeSourceError {
 }
 
 export class SetPropertyError extends RuntimeSourceError {
-  constructor(node: es.Node, private obj: Value, private prop: string) {
+  constructor(node: SchemeExpression, private obj: Value, private prop: string) {
     super(node)
   }
 
