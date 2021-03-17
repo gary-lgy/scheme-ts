@@ -1,14 +1,14 @@
 #!/usr/bin/env node
 import { start } from 'repl' // 'repl' here refers to the module named 'repl' in index.d.ts
 import { inspect } from 'util'
-import { createContext, IOptions, parseError, runInContext } from '../index'
-import { Variant, ExecutionMethod } from '../types'
-import Closure from '../interpreter/closure'
 import { sourceLanguages } from '../constants'
+import { createContext, IOptions, parseError, runInContext } from '../index'
+import Closure from '../interpreter/closure'
+import { ExecutionMethod, Variant } from '../types'
 
 function startRepl(
   executionMethod: ExecutionMethod = 'interpreter',
-  variant: Variant = 'calc',
+  variant: Variant = 's1',
   useRepl: boolean,
   prelude = ''
 ) {
@@ -91,5 +91,3 @@ function main() {
 }
 
 main()
-
-console.log('test')

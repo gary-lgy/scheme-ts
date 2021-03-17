@@ -1,5 +1,6 @@
 import * as es from 'estree'
 import { RuntimeSourceError } from '../errors/runtimeSourceError'
+import { SchemeExpression } from '../lang/scheme'
 import { ErrorSeverity, ErrorType, Value } from '../types'
 
 const LHS = ' on left hand side of operation'
@@ -10,7 +11,12 @@ export class TypeError extends RuntimeSourceError {
   public severity = ErrorSeverity.ERROR
   public location: es.SourceLocation
 
-  constructor(node: es.Node, public side: string, public expected: string, public got: string) {
+  constructor(
+    node: SchemeExpression,
+    public side: string,
+    public expected: string,
+    public got: string
+  ) {
     super(node)
   }
 
@@ -44,7 +50,11 @@ const isBool = (v: Value) => typeOf(v) === 'boolean'
 const isObject = (v: Value) => typeOf(v) === 'object'
 const isArray = (v: Value) => typeOf(v) === 'array'
 
-export const checkUnaryExpression = (node: es.Node, operator: es.UnaryOperator, value: Value) => {
+export const checkUnaryExpression = (
+  node: SchemeExpression,
+  operator: es.UnaryOperator,
+  value: Value
+) => {
   if ((operator === '+' || operator === '-') && !isNumber(value)) {
     return new TypeError(node, '', 'number', typeOf(value))
   } else if (operator === '!' && !isBool(value)) {
@@ -55,7 +65,7 @@ export const checkUnaryExpression = (node: es.Node, operator: es.UnaryOperator, 
 }
 
 export const checkBinaryExpression = (
-  node: es.Node,
+  node: SchemeExpression,
   operator: es.BinaryOperator,
   left: Value,
   right: Value
@@ -91,11 +101,11 @@ export const checkBinaryExpression = (
   }
 }
 
-export const checkIfStatement = (node: es.Node, test: Value) => {
+export const checkIfStatement = (node: SchemeExpression, test: Value) => {
   return isBool(test) ? undefined : new TypeError(node, ' as condition', 'boolean', typeOf(test))
 }
 
-export const checkMemberAccess = (node: es.Node, obj: Value, prop: Value) => {
+export const checkMemberAccess = (node: SchemeExpression, obj: Value, prop: Value) => {
   if (isObject(obj)) {
     return isString(prop) ? undefined : new TypeError(node, ' as prop', 'string', typeOf(prop))
   } else if (isArray(obj)) {

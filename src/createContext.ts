@@ -2,8 +2,8 @@
 
 import { GLOBAL } from './constants'
 import * as misc from './stdlib/misc'
-import { Context, CustomBuiltIns, Value, Variant } from './types'
 import { createTypeEnvironment, tForAll, tVar } from './typeChecker/typeChecker'
+import { Context, CustomBuiltIns, Value, Variant } from './types'
 
 const createEmptyRuntime = () => ({
   break: false,
@@ -107,7 +107,7 @@ const defaultBuiltIns: CustomBuiltIns = {
 }
 
 const createContext = <T>(
-  variant: Variant = 'calc',
+  variant: Variant = 's1',
   externalSymbols: string[] = [],
   externalContext?: T,
   externalBuiltIns: CustomBuiltIns = defaultBuiltIns,

@@ -7,6 +7,7 @@
 
 import { SourceLocation } from 'acorn'
 import * as es from 'estree'
+import { SchemeExpression } from './lang/scheme'
 
 /**
  * Defines functions that act as built-ins, but might rely on
@@ -57,7 +58,7 @@ export interface Comment {
 }
 
 export type ExecutionMethod = 'native' | 'interpreter' | 'auto'
-export type Variant = 'calc'
+export type Variant = 's1'
 
 export interface SourceLanguage {
   variant: Variant
@@ -92,7 +93,7 @@ export interface Context<T = any> {
   runtime: {
     isRunning: boolean
     environments: Environment[]
-    nodes: es.Node[]
+    nodes: SchemeExpression[]
   }
 
   moduleParams?: any
