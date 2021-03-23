@@ -2,7 +2,7 @@ import { SchemeExpression, SchemeSequence } from '../lang/scheme'
 import { Environment } from '../types'
 
 // An expressible value is a value that can be the result of an evaluation
-export type ExpressibleValue = EVNumber | EVString | EVBool | EVProcedure | EVList
+export type ExpressibleValue = EVNumber | EVString | EVBool | EVProcedure | EVPair | EVEmptyList
 
 export type EVNumber = {
   type: 'EVNumber'
@@ -21,14 +21,29 @@ export type EVBool = {
 
 export type EVProcedure = {
   type: 'EVProcedure'
+  argumentPassingStyle: LambdaArgumentPassingStyle
+} & (EVCompoundProcedure | EVBuiltInProcedure)
+
+export type EVCompoundProcedure = {
+  variant: 'CompoundProcedure'
   parameters: string[]
   body: SchemeSequence
   environment: Environment
-} & LambdaArgumentStyle
+}
 
-export type EVList = {
-  type: 'EVList'
-  value: ExpressibleValue[]
+export type EVBuiltInProcedure = {
+  variant: 'BuiltInProcedure'
+  body: (args: ExpressibleValue[]) => ExpressibleValue
+}
+
+export type EVEmptyList = {
+  type: 'EVEmptyList'
+}
+
+export type EVPair = {
+  type: 'EVPair'
+  head: ExpressibleValue
+  tail: ExpressibleValue
 }
 
 // Special syntax forms
@@ -47,15 +62,17 @@ export type SetForm = {
   value: SchemeExpression
 }
 
-export type LambdaArgumentStyle =
+export type LambdaArgumentPassingStyle =
   | { style: 'fixed-args'; numParams: number }
-  | { style: 'var-args' | 'rest-args' }
+  | { style: 'var-args'; minNumParams: number }
+  | { style: 'rest-args' }
 
 export type LambdaForm = {
   tag: 'lambda'
   parameters: string[]
   body: SchemeSequence
-} & LambdaArgumentStyle
+  argumentPassingStyle: LambdaArgumentPassingStyle
+}
 
 // Runtime data structures
 
@@ -73,9 +90,4 @@ export class Frame {
   set(name: string, newBinding: FrameBinding) {
     this.bindings.set(name, newBinding)
   }
-}
-
-export const EmptyList: EVList = {
-  type: 'EVList',
-  value: []
 }

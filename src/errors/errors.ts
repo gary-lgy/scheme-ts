@@ -36,6 +36,15 @@ export class SetSyntaxError extends RuntimeSourceError {
   }
 }
 
+export class BuiltinProcedureError extends RuntimeSourceError {
+  constructor(public cause: Error, node?: SchemeExpression) {
+    super(node)
+  }
+  public explain() {
+    return this.cause.message
+  }
+}
+
 export class ModuleNotFound extends RuntimeSourceError {
   constructor(public moduleName: string, node?: SchemeExpression) {
     super(node)
@@ -171,6 +180,26 @@ export class InvalidNumberOfArguments extends RuntimeSourceError {
   public elaborate() {
     const pluralS = this.expected === 1 ? '' : 's'
     return `Try calling procedure ${this.procedureName} again, but with ${this.expected} argument${pluralS} instead.`
+  }
+}
+
+export class NotEnoughArguments extends RuntimeSourceError {
+  constructor(
+    node: SchemeExpression,
+    private procedureName: string,
+    private expected: number,
+    private got: number
+  ) {
+    super(node)
+  }
+
+  public explain() {
+    return `${this.procedureName} expected at least ${this.expected} arguments, but got ${this.got}.`
+  }
+
+  public elaborate() {
+    const pluralS = this.expected === 1 ? '' : 's'
+    return `Try calling procedure ${this.procedureName} again, but with at least ${this.expected} argument${pluralS} instead.`
   }
 }
 

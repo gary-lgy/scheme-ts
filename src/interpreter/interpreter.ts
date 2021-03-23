@@ -13,31 +13,25 @@ import {
   SchemeStringLiteral
 } from '../lang/scheme'
 import { Context, Environment } from '../types'
-import {
-  EmptyList,
-  EVProcedure,
-  ExpressibleValue,
-  Frame,
-  FrameBinding,
-  SpecialForm
-} from './runtime'
+import { EVProcedure, ExpressibleValue, Frame, FrameBinding, SpecialForm } from './runtime'
 
 const extendProcedureEnvironment = (
-  procedure: EVProcedure,
+  environment: Environment,
+  parameters: string[],
   procedureName: string,
   args: ExpressibleValue[]
 ): Environment => {
   const frame = new Frame()
-  const environment: Environment = {
+  const newEnvironment: Environment = {
     name: procedureName,
-    tail: procedure.environment,
+    tail: environment,
     head: frame,
     procedureName: procedureName
   }
-  procedure.parameters.forEach((param, index) => {
+  parameters.forEach((param, index) => {
     frame.set(param, { value: args[index] })
   })
-  return environment
+  return newEnvironment
 }
 
 const extendCurrentEnvironment = (
@@ -120,19 +114,22 @@ function* evaluateSpecialForm(form: SpecialForm, context: Context): ValueGenerat
       const value = yield* evaluate(form.value, context)
       const frame = environment.head
       frame.set(form.name, { value })
-      return EmptyList
+      return { type: 'EVEmptyList' }
     }
     case 'lambda': {
       return {
         type: 'EVProcedure',
-        environment,
-        ...form
+        parameters: form.parameters,
+        argumentPassingStyle: form.argumentPassingStyle,
+        variant: 'CompoundProcedure',
+        body: form.body,
+        environment
       }
     }
     case 'set!': {
       const value = yield* evaluate(form.value, context)
       setVariable(context, form.name, value)
-      return EmptyList
+      return { type: 'EVEmptyList' }
     }
   }
 }
@@ -178,8 +175,10 @@ const listToSpecialForm = (
         expressions: list.elements.slice(2),
         loc: list.loc
       },
-      style: 'fixed-args',
-      numParams: parameters.length
+      argumentPassingStyle: {
+        style: 'fixed-args',
+        numParams: parameters.length
+      }
     }
   } else if (tag === 'set!') {
     if (list.elements.length != 3 || list.elements[1].type !== 'Identifier') {
@@ -231,7 +230,7 @@ export const evaluators: { [key in SchemeExpressionType]: Evaluator<SchemeExpres
   List: function* (node: SchemeList, context: Context): ValueGenerator {
     if (node.elements.length === 0) {
       // Empty list - return empty list
-      return EmptyList
+      return { type: 'EVEmptyList' }
     }
 
     const firstElement = node.elements[0]
@@ -305,13 +304,29 @@ const checkNumberOfArguments = (
   callExpression: SchemeList
 ) => {
   const numArgs = callExpression.elements.length - 1
-  if (procedure.style === 'fixed-args' && procedure.numParams !== numArgs) {
+  if (
+    procedure.argumentPassingStyle.style === 'fixed-args' &&
+    procedure.argumentPassingStyle.numParams !== numArgs
+  ) {
     return handleRuntimeError(
       context,
       new errors.InvalidNumberOfArguments(
         callExpression,
         procedureName,
-        procedure.numParams,
+        procedure.argumentPassingStyle.numParams,
+        numArgs
+      )
+    )
+  } else if (
+    procedure.argumentPassingStyle.style === 'var-args' &&
+    numArgs < procedure.argumentPassingStyle.minNumParams
+  ) {
+    return handleRuntimeError(
+      context,
+      new errors.NotEnoughArguments(
+        callExpression,
+        procedureName,
+        procedure.argumentPassingStyle.minNumParams,
         numArgs
       )
     )
@@ -339,9 +354,22 @@ function* apply(
 ) {
   // TODO: TCO
   checkNumberOfArguments(context, procedure, procedureName, node)
-  const environment = extendProcedureEnvironment(procedure, procedureName, args)
-  pushEnvironment(context, environment)
-  const result = yield* evaluate(procedure.body, context)
-  popEnvironment(context)
-  return result
+  if (procedure.variant === 'CompoundProcedure') {
+    const environment = extendProcedureEnvironment(
+      procedure.environment,
+      procedure.parameters,
+      procedureName,
+      args
+    )
+    pushEnvironment(context, environment)
+    const result = yield* evaluate(procedure.body, context)
+    popEnvironment(context)
+    return result
+  } else {
+    try {
+      return procedure.body(args)
+    } catch (e) {
+      return handleRuntimeError(context, new errors.BuiltinProcedureError(e, node))
+    }
+  }
 }
