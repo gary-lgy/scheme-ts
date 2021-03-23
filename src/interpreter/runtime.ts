@@ -1,5 +1,8 @@
-import { SchemeSequence } from '../lang/scheme'
+import { SchemeExpression, SchemeSequence } from '../lang/scheme'
 import { Environment } from '../types'
+
+// An expressible value is a value that can be the result of an evaluation
+export type ExpressibleValue = EVNumber | EVString | EVBool | EVProcedure | EVList
 
 export type EVNumber = {
   type: 'EVNumber'
@@ -16,7 +19,7 @@ export type EVBool = {
   value: boolean
 }
 
-export type EVClosure = {
+export type EVProcedure = {
   type: 'EVProcedure'
   value: {
     body: SchemeSequence
@@ -29,7 +32,29 @@ export type EVList = {
   value: ExpressibleValue[]
 }
 
-export type ExpressibleValue = EVNumber | EVString | EVBool | EVClosure | EVList
+// Special syntax forms
+
+export type SpecialForm = DefineForm | SetForm | LambdaForm
+
+export type DefineForm = {
+  tag: 'define'
+  name: string
+  value: SchemeExpression
+}
+
+export type SetForm = {
+  tag: 'set!'
+  name: string
+  value: SchemeExpression
+}
+
+export type LambdaForm = {
+  tag: 'lambda'
+  parameters: string[]
+  body: SchemeSequence
+}
+
+// Runtime data structures
 
 export interface FrameBinding {
   value: ExpressibleValue
@@ -45,4 +70,9 @@ export class Frame {
   set(name: string, newBinding: FrameBinding) {
     this.bindings.set(name, newBinding)
   }
+}
+
+export const EmptyList: EVList = {
+  type: 'EVList',
+  value: []
 }

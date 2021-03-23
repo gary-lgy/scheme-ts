@@ -13,7 +13,7 @@ import {
   SchemeStringLiteral
 } from '../lang/scheme'
 import { Context, Environment } from '../types'
-import { EVList, ExpressibleValue, Frame, FrameBinding } from './runtime'
+import { EmptyList, ExpressibleValue, Frame, FrameBinding, SpecialForm } from './runtime'
 
 // const createEnvironment = (
 //   closure: Closure,
@@ -137,13 +137,13 @@ const getVariable = (context: Context, name: string) =>
     () => undefined
   )
 
-// const setVariable = (context: Context, name: string, newValue: ExpressibleValue) =>
-//   variableDo(
-//     context,
-//     name,
-//     binding => (binding.value = newValue),
-//     () => handleRuntimeError(context, new errors.UndefinedVariable(name, context.runtime.nodes[0]))
-//   )
+const setVariable = (context: Context, name: string, newValue: ExpressibleValue) =>
+  variableDo(
+    context,
+    name,
+    binding => (binding.value = newValue),
+    () => handleRuntimeError(context, new errors.UndefinedVariable(name, context.runtime.nodes[0]))
+  )
 
 // const checkNumberOfArguments = (
 //   context: Context,
@@ -169,11 +169,86 @@ const getVariable = (context: Context, name: string) =>
 //   return undefined
 // }
 
-const processSpecialForm = (list: SchemeList, context: Context): ExpressibleValue => {
-  // TODO: implement special form processing
-  return {
-    type: 'EVString',
-    value: 'special form invocation'
+function* evaluateSpecialForm(form: SpecialForm, context: Context): ValueGenerator {
+  const environment = context.runtime.environments[0]
+  switch (form.tag) {
+    case 'define': {
+      // TODO: disallow mixing of definitions and expressions?
+      const value = yield* evaluate(form.value, context)
+      const frame = environment.head
+      frame.set(form.name, { value })
+      return EmptyList
+    }
+    case 'lambda': {
+      return {
+        type: 'EVProcedure',
+        value: {
+          body: form.body,
+          environment
+        }
+      }
+    }
+    case 'set!': {
+      const value = yield* evaluate(form.value, context)
+      setVariable(context, form.name, value)
+      return EmptyList
+    }
+  }
+}
+
+const listToSpecialForm = (
+  tag: string,
+  list: SchemeList,
+  context: Context
+): SpecialForm | undefined => {
+  if (tag === 'define') {
+    // TODO: allow procedure definition using `define'?
+    if (list.elements.length !== 3) {
+      return handleRuntimeError(context, new errors.DefineSyntaxError(list))
+    }
+    const identifier = list.elements[1]
+    if (identifier.type === 'Identifier') {
+      return {
+        tag,
+        name: identifier.name,
+        value: list.elements[2]
+      }
+    } else {
+      return handleRuntimeError(context, new errors.DefineSyntaxError(list))
+    }
+  } else if (tag === 'lambda') {
+    // TODO: varargs?
+    if (list.elements.length <= 2 || list.elements[1].type !== 'List') {
+      return handleRuntimeError(context, new errors.LambdaSyntaxError(list))
+    }
+    const parameters: string[] = []
+    list.elements[1].elements.forEach(element => {
+      if (element.type === 'Identifier') {
+        return parameters.push(element.name)
+      } else {
+        return handleRuntimeError(context, new errors.LambdaSyntaxError(list))
+      }
+    })
+    return {
+      tag,
+      parameters,
+      body: {
+        type: 'Sequence',
+        expressions: list.elements.slice(2),
+        loc: list.loc
+      }
+    }
+  } else if (tag === 'set!') {
+    if (list.elements.length != 3 || list.elements[1].type !== 'Identifier') {
+      return handleRuntimeError(context, new errors.SetSyntaxError(list))
+    }
+    return {
+      tag,
+      name: list.elements[1].name,
+      value: list.elements[2]
+    }
+  } else {
+    return undefined
   }
 }
 
@@ -230,18 +305,14 @@ export const evaluators: { [key in SchemeExpressionType]: Evaluator<SchemeExpres
   List: function* (node: SchemeList, context: Context): ValueGenerator {
     if (node.elements.length === 0) {
       // Empty list - return empty list
-      const list: EVList = {
-        type: 'EVList',
-        value: []
-      }
-      return list
+      return EmptyList
     }
 
     const firstElement = node.elements[0]
     if (firstElement.type === 'Identifier') {
       const boundValue = getVariable(context, firstElement.name)
       if (boundValue) {
-        const procedure = yield* evaluate(firstElement, context)
+        // const procedure = yield* evaluate(firstElement, context)
         // Procedure invocation - procedure is the value bound to the identifier
         if (boundValue.type !== 'EVProcedure') {
           return handleRuntimeError(context, new errors.CallingNonFunctionValue(context, node))
@@ -253,7 +324,11 @@ export const evaluators: { [key in SchemeExpressionType]: Evaluator<SchemeExpres
         }
       } else {
         // No procedure bound to the name - treat it as a special forms
-        return processSpecialForm(node, context)
+        const specialForm = listToSpecialForm(firstElement.name, node, context)
+        if (!specialForm) {
+          return handleRuntimeError(context, new errors.UndefinedVariable(firstElement.name, node))
+        }
+        return yield* evaluateSpecialForm(specialForm, context)
       }
     }
 

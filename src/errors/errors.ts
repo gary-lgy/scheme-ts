@@ -7,6 +7,36 @@ import { ErrorSeverity, ErrorType, SourceError, Value } from '../types'
 import { stringify } from '../utils/stringify'
 import { RuntimeSourceError } from './runtimeSourceError'
 
+export class DefineSyntaxError extends RuntimeSourceError {
+  constructor(node: SchemeExpression) {
+    super(node)
+  }
+
+  public explain() {
+    return "Syntax for `define' is incorrect. Please use `(define variable value)'"
+  }
+}
+
+export class LambdaSyntaxError extends RuntimeSourceError {
+  constructor(node: SchemeExpression) {
+    super(node)
+  }
+
+  public explain() {
+    return "Syntax for `lambda' is incorrect. Please use `(lambda (arg1 arg2 ...) body)'"
+  }
+}
+
+export class SetSyntaxError extends RuntimeSourceError {
+  constructor(node: SchemeExpression) {
+    super(node)
+  }
+
+  public explain() {
+    return "Syntax for `set!' is incorrect. Please use `(set! variable value) body)'"
+  }
+}
+
 export class ModuleNotFound extends RuntimeSourceError {
   constructor(public moduleName: string, node?: SchemeExpression) {
     super(node)
