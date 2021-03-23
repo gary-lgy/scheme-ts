@@ -1,4 +1,5 @@
 /* tslint:disable:max-classes-per-file */
+import * as errors from '../errors/errors'
 import { RuntimeSourceError } from '../errors/runtimeSourceError'
 import {
   SchemeBoolLiteral,
@@ -11,7 +12,8 @@ import {
   SchemeSequence,
   SchemeStringLiteral
 } from '../lang/scheme'
-import { Context, Environment, Frame, Value } from '../types'
+import { Context, Environment } from '../types'
+import { EVList, ExpressibleValue, Frame, FrameBinding } from './runtime'
 
 // const createEnvironment = (
 //   closure: Closure,
@@ -39,7 +41,7 @@ import { Context, Environment, Frame, Value } from '../types'
 const createBlockEnvironment = (
   context: Context,
   name = 'blockEnvironment',
-  head: Frame = {}
+  head: Frame = new Frame()
 ): Environment => {
   return {
     name,
@@ -108,6 +110,41 @@ const currentEnvironment = (context: Context) => context.runtime.environments[0]
 const pushEnvironment = (context: Context, environment: Environment) =>
   context.runtime.environments.unshift(environment)
 
+const variableDo = <T, U>(
+  context: Context,
+  name: string,
+  bindingFoundCallback: (binding: FrameBinding) => T,
+  bindingNotFoundCallback: () => U
+) => {
+  let environment: Environment | null = context.runtime.environments[0]
+  while (environment) {
+    const frame = environment.head
+    const currentBinding = frame.get(name)
+    if (currentBinding) {
+      return bindingFoundCallback(currentBinding)
+    } else {
+      environment = environment.tail
+    }
+  }
+  return bindingNotFoundCallback()
+}
+
+const getVariable = (context: Context, name: string) =>
+  variableDo(
+    context,
+    name,
+    binding => binding.value,
+    () => undefined
+  )
+
+// const setVariable = (context: Context, name: string, newValue: ExpressibleValue) =>
+//   variableDo(
+//     context,
+//     name,
+//     binding => (binding.value = newValue),
+//     () => handleRuntimeError(context, new errors.UndefinedVariable(name, context.runtime.nodes[0]))
+//   )
+
 // const checkNumberOfArguments = (
 //   context: Context,
 //   callee: Closure | Value,
@@ -132,10 +169,16 @@ const pushEnvironment = (context: Context, environment: Environment) =>
 //   return undefined
 // }
 
-export type Evaluator<T extends SchemeExpression> = (
-  node: T,
-  context: Context
-) => IterableIterator<Value>
+const processSpecialForm = (list: SchemeList, context: Context): ExpressibleValue => {
+  // TODO: implement special form processing
+  return {
+    type: 'EVString',
+    value: 'special form invocation'
+  }
+}
+
+export type ValueGenerator = Generator<Context, ExpressibleValue>
+export type Evaluator<T extends SchemeExpression> = (node: T, context: Context) => ValueGenerator
 
 // function* evaluateBlockSatement(context: Context, node: es.BlockStatement) {
 //   declareFunctionsAndVariables(context, node)
@@ -154,6 +197,7 @@ export type Evaluator<T extends SchemeExpression> = (
 //   return result
 // }
 
+// TODO: refactor type Value to ExpressibleValue?
 /**
  * WARNING: Do not use object literal shorthands, e.g.
  *   {
@@ -167,48 +211,103 @@ export type Evaluator<T extends SchemeExpression> = (
 // tslint:disable:object-literal-shorthand
 // prettier-ignore
 export const evaluators: { [key in SchemeExpressionType]: Evaluator<SchemeExpression> } = {
-    Program: function*(node: SchemeProgram, context: Context) {
-        context.numberOfOuterEnvironments += 1
-        const environment = createBlockEnvironment(context, 'programEnvironment')
-        pushEnvironment(context, environment)
-        const result = yield* evaluate(node.body, context);
-        return result;
-    },
+  Program: function* (node: SchemeProgram, context: Context): ValueGenerator {
+    context.numberOfOuterEnvironments += 1
+    const environment = createBlockEnvironment(context, 'programEnvironment')
+    pushEnvironment(context, environment)
+    const result = yield* evaluate(node.body, context);
+    return result;
+  },
 
-    Sequence: function*(node: SchemeSequence, context: Context) {
-        let result
-        for (const expression of node.expressions) {
-          result = yield* evaluate(expression, context)
+  Sequence: function* (node: SchemeSequence, context: Context): ValueGenerator {
+    let result : ExpressibleValue
+    for (const expression of node.expressions) {
+      result = yield* evaluate(expression, context)
+    }
+    return result!
+  },
+
+  List: function* (node: SchemeList, context: Context): ValueGenerator {
+    if (node.elements.length === 0) {
+      // Empty list - return empty list
+      const list: EVList = {
+        type: 'EVList',
+        value: []
+      }
+      return list
+    }
+
+    const firstElement = node.elements[0]
+    if (firstElement.type === 'Identifier') {
+      const boundValue = getVariable(context, firstElement.name)
+      if (boundValue) {
+        const procedure = yield* evaluate(firstElement, context)
+        // Procedure invocation - procedure is the value bound to the identifier
+        if (boundValue.type !== 'EVProcedure') {
+          return handleRuntimeError(context, new errors.CallingNonFunctionValue(context, node))
         }
-        return result
-    },
+        // TODO: implement invocation
+        return {
+          type: 'EVString',
+          value: 'procedure invocation',
+        }
+      } else {
+        // No procedure bound to the name - treat it as a special forms
+        return processSpecialForm(node, context)
+      }
+    }
 
-    List: function*(node: SchemeList, context: Context) {
-        throw new Error("Lists are not supported in x-slang");
-    },
+    if (firstElement.type === 'List') {
+      // Procedure invocation - the procedure is the result of evaluating the first element
+      // const procedure = yield* evaluate(firstElement, context)
+      return {
+        type: 'EVString',
+        value: 'procedure invocation',
+      }
+      // TODO: implement invocation
+    }
+    return handleRuntimeError(context, new errors.CallingNonFunctionValue(context, node))
+  },
 
-    StringLiteral: function*(node: SchemeStringLiteral, context: Context) {
-        return node.value
-    },
+  StringLiteral: function* (node: SchemeStringLiteral, context: Context): ValueGenerator {
+    return {
+      type: 'EVString',
+      value: node.value
+    }
+  },
 
-    NumberLiteral: function*(node: SchemeNumberLiteral, context: Context) {
-        return node.value
-    },
+  NumberLiteral: function* (node: SchemeNumberLiteral, context: Context): ValueGenerator {
+    return {
+      type: 'EVNumber',
+      value: node.value
+    }
+  },
 
-    BoolLiteral: function*(node: SchemeBoolLiteral, context: Context) {
-        return node.value
-    },
+  BoolLiteral: function* (node: SchemeBoolLiteral, context: Context): ValueGenerator {
+    return {
+      type:'EVBool',
+      value: node.value
+    }
+  },
 
-    Identifier: function*(node: SchemeIdentifier, context: Context) {
-        throw new Error("Variables not supported in x-slang");
-    },
-
+  Identifier: function* (node: SchemeIdentifier, context: Context): ValueGenerator {
+    const boundValue = getVariable(context, node.name)
+    if (boundValue) {
+      return boundValue
+    } else {
+      return handleRuntimeError(context, new errors.UndefinedVariable(node.name, node))
+    }
+  },
 }
 // tslint:enable:object-literal-shorthand
 
-export function* evaluate(node: SchemeExpression, context: Context) {
+export function* evaluate(
+  node: SchemeExpression,
+  context: Context
+): Generator<Context, ExpressibleValue> {
   yield* visit(context, node)
-  const result = yield* evaluators[node.type](node, context)
+  const evaluator = evaluators[node.type]
+  const result = yield* evaluator(node, context)
   yield* leave(context)
   return result
 }

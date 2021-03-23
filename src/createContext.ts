@@ -1,6 +1,7 @@
 // Variable determining chapter of Source is contained in this file.
 
 import { GLOBAL } from './constants'
+import { Frame } from './interpreter/runtime'
 import * as misc from './stdlib/misc'
 import { createTypeEnvironment, tForAll, tVar } from './typeChecker/typeChecker'
 import { Context, CustomBuiltIns, Value, Variant } from './types'
@@ -17,7 +18,7 @@ const createEmptyRuntime = () => ({
 const createGlobalEnvironment = () => ({
   tail: null,
   name: 'global',
-  head: {}
+  head: new Frame()
 })
 
 export const createEmptyContext = <T>(

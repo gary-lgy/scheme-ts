@@ -1,5 +1,4 @@
 import { MAX_LIST_DISPLAY_LENGTH } from '../constants'
-import Closure from '../interpreter/closure'
 import { Type, Value } from '../types'
 
 function makeIndent(indent: number | string): string {
@@ -143,8 +142,6 @@ ${indentify(indentString.repeat(indentLevel), valueStrs[1])}${arrSuffix}`
       return 'undefined'
     } else if (ancestors.has(v)) {
       return '...<circular>'
-    } else if (v instanceof Closure) {
-      return v.toString()
     } else if (typeof v === 'string') {
       return JSON.stringify(v)
     } else if (typeof v !== 'object') {

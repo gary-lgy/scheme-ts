@@ -3,7 +3,6 @@ import { start } from 'repl' // 'repl' here refers to the module named 'repl' in
 import { inspect } from 'util'
 import { sourceLanguages } from '../constants'
 import { createContext, IOptions, parseError, runInContext } from '../index'
-import Closure from '../interpreter/closure'
 import { ExecutionMethod, Variant } from '../types'
 
 function startRepl(
@@ -40,8 +39,8 @@ function startRepl(
           // set depth to a large number so that `parse()` output will not be folded,
           // setting to null also solves the problem, however a reference loop might crash
           writer: output => {
-            return output instanceof Closure || typeof output === 'function'
-              ? output.toString()
+            return output.type === 'EVProcedure'
+              ? '[Procedure]'
               : inspect(output, {
                   depth: 1000,
                   colors: true
