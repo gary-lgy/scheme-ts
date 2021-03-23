@@ -21,11 +21,10 @@ export type EVBool = {
 
 export type EVProcedure = {
   type: 'EVProcedure'
-  value: {
-    body: SchemeSequence
-    environment: Environment
-  }
-}
+  parameters: string[]
+  body: SchemeSequence
+  environment: Environment
+} & LambdaArgumentStyle
 
 export type EVList = {
   type: 'EVList'
@@ -48,11 +47,15 @@ export type SetForm = {
   value: SchemeExpression
 }
 
+export type LambdaArgumentStyle =
+  | { style: 'fixed-args'; numParams: number }
+  | { style: 'var-args' | 'rest-args' }
+
 export type LambdaForm = {
   tag: 'lambda'
   parameters: string[]
   body: SchemeSequence
-}
+} & LambdaArgumentStyle
 
 // Runtime data structures
 

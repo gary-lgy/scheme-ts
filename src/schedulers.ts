@@ -37,15 +37,16 @@ export class PreemptiveScheduler implements Scheduler {
 function checkForStackOverflow(error: any, context: Context) {
   if (/Maximum call stack/.test(error.toString())) {
     const environments = context.runtime.environments
-    const stacks: any = []
+    const stacks: string[] = []
     let counter = 0
     for (
       let i = 0;
       counter < MaximumStackLimitExceeded.MAX_CALLS_TO_SHOW && i < environments.length;
       i++
     ) {
-      if (environments[i].callExpression) {
-        stacks.unshift(environments[i].callExpression)
+      const procedureName = environments[i].procedureName
+      if (procedureName) {
+        stacks.unshift(procedureName)
         counter++
       }
     }

@@ -13,34 +13,36 @@ import {
   SchemeStringLiteral
 } from '../lang/scheme'
 import { Context, Environment } from '../types'
-import { EmptyList, ExpressibleValue, Frame, FrameBinding, SpecialForm } from './runtime'
+import {
+  EmptyList,
+  EVProcedure,
+  ExpressibleValue,
+  Frame,
+  FrameBinding,
+  SpecialForm
+} from './runtime'
 
-// const createEnvironment = (
-//   closure: Closure,
-//   args: Value[],
-//   callExpression?: es.CallExpression
-// ): Environment => {
-//   const environment: Environment = {
-//     name: closure.functionName, // TODO: Change this
-//     tail: closure.environment,
-//     head: {}
-//   }
-//   if (callExpression) {
-//     environment.callExpression = {
-//       ...callExpression,
-//       arguments: args.map(primitive)
-//     }
-//   }
-//   closure.node.params.forEach((param, index) => {
-//     const ident = param as es.Identifier
-//     environment.head[ident.name] = args[index]
-//   })
-//   return environment
-// }
+const extendProcedureEnvironment = (
+  procedure: EVProcedure,
+  procedureName: string,
+  args: ExpressibleValue[]
+): Environment => {
+  const frame = new Frame()
+  const environment: Environment = {
+    name: procedureName,
+    tail: procedure.environment,
+    head: frame,
+    procedureName: procedureName
+  }
+  procedure.parameters.forEach((param, index) => {
+    frame.set(param, { value: args[index] })
+  })
+  return environment
+}
 
-const createBlockEnvironment = (
+const extendCurrentEnvironment = (
   context: Context,
-  name = 'blockEnvironment',
+  name: string,
   head: Frame = new Frame()
 ): Environment => {
   return {
@@ -58,41 +60,6 @@ const handleRuntimeError = (context: Context, error: RuntimeSourceError): never 
   throw error
 }
 
-// const DECLARED_BUT_NOT_YET_ASSIGNED = Symbol('Used to implement hoisting')
-
-// function declareIdentifier(context: Context, name: string, node: SchemeExpression) {
-//   const environment = currentEnvironment(context)
-//   if (environment.head.hasOwnProperty(name)) {
-//     const descriptors = Object.getOwnPropertyDescriptors(environment.head)
-
-//     return handleRuntimeError(
-//       context,
-//       new errors.VariableRedeclaration(node, name, descriptors[name].writable)
-//     )
-//   }
-//   environment.head[name] = DECLARED_BUT_NOT_YET_ASSIGNED
-//   return environment
-// }
-
-// function declareVariables(context: Context, node: es.VariableDeclaration) {
-//   for (const declaration of node.declarations) {
-//     declareIdentifier(context, (declaration.id as es.Identifier).name, node)
-//   }
-// }
-
-// function declareFunctionsAndVariables(context: Context, node: es.BlockStatement) {
-//   for (const statement of node.body) {
-//     switch (statement.type) {
-//       case 'VariableDeclaration':
-//         declareVariables(context, statement)
-//         break
-//       case 'FunctionDeclaration':
-//         declareIdentifier(context, (statement.id as es.Identifier).name, statement)
-//         break
-//     }
-//   }
-// }
-
 function* visit(context: Context, node: SchemeExpression) {
   context.runtime.nodes.unshift(node)
   yield context
@@ -106,7 +73,7 @@ function* leave(context: Context) {
 const currentEnvironment = (context: Context) => context.runtime.environments[0]
 // const replaceEnvironment = (context: Context, environment: Environment) =>
 //   (context.runtime.environments[0] = environment)
-// const popEnvironment = (context: Context) => context.runtime.environments.shift()
+const popEnvironment = (context: Context) => context.runtime.environments.shift()
 const pushEnvironment = (context: Context, environment: Environment) =>
   context.runtime.environments.unshift(environment)
 
@@ -145,30 +112,6 @@ const setVariable = (context: Context, name: string, newValue: ExpressibleValue)
     () => handleRuntimeError(context, new errors.UndefinedVariable(name, context.runtime.nodes[0]))
   )
 
-// const checkNumberOfArguments = (
-//   context: Context,
-//   callee: Closure | Value,
-//   args: Value[],
-//   exp: es.CallExpression
-// ) => {
-//   if (callee instanceof Closure) {
-//     if (callee.node.params.length !== args.length) {
-//       return handleRuntimeError(
-//         context,
-//         new errors.InvalidNumberOfArguments(exp, callee.node.params.length, args.length)
-//       )
-//     }
-//   } else {
-//     if (callee.hasVarArgs === false && callee.length !== args.length) {
-//       return handleRuntimeError(
-//         context,
-//         new errors.InvalidNumberOfArguments(exp, callee.length, args.length)
-//       )
-//     }
-//   }
-//   return undefined
-// }
-
 function* evaluateSpecialForm(form: SpecialForm, context: Context): ValueGenerator {
   const environment = context.runtime.environments[0]
   switch (form.tag) {
@@ -182,10 +125,8 @@ function* evaluateSpecialForm(form: SpecialForm, context: Context): ValueGenerat
     case 'lambda': {
       return {
         type: 'EVProcedure',
-        value: {
-          body: form.body,
-          environment
-        }
+        environment,
+        ...form
       }
     }
     case 'set!': {
@@ -236,7 +177,9 @@ const listToSpecialForm = (
         type: 'Sequence',
         expressions: list.elements.slice(2),
         loc: list.loc
-      }
+      },
+      style: 'fixed-args',
+      numParams: parameters.length
     }
   } else if (tag === 'set!') {
     if (list.elements.length != 3 || list.elements[1].type !== 'Identifier') {
@@ -255,23 +198,6 @@ const listToSpecialForm = (
 export type ValueGenerator = Generator<Context, ExpressibleValue>
 export type Evaluator<T extends SchemeExpression> = (node: T, context: Context) => ValueGenerator
 
-// function* evaluateBlockSatement(context: Context, node: es.BlockStatement) {
-//   declareFunctionsAndVariables(context, node)
-//   let result
-//   for (const statement of node.body) {
-//     result = yield* evaluate(statement, context)
-//     if (
-//       result instanceof ReturnValue ||
-//       result instanceof TailCallReturnValue ||
-//       result instanceof BreakValue ||
-//       result instanceof ContinueValue
-//     ) {
-//       break
-//     }
-//   }
-//   return result
-// }
-
 // TODO: refactor type Value to ExpressibleValue?
 /**
  * WARNING: Do not use object literal shorthands, e.g.
@@ -288,7 +214,7 @@ export type Evaluator<T extends SchemeExpression> = (node: T, context: Context) 
 export const evaluators: { [key in SchemeExpressionType]: Evaluator<SchemeExpression> } = {
   Program: function* (node: SchemeProgram, context: Context): ValueGenerator {
     context.numberOfOuterEnvironments += 1
-    const environment = createBlockEnvironment(context, 'programEnvironment')
+    const environment = extendCurrentEnvironment(context, 'programEnvironment')
     pushEnvironment(context, environment)
     const result = yield* evaluate(node.body, context);
     return result;
@@ -309,39 +235,24 @@ export const evaluators: { [key in SchemeExpressionType]: Evaluator<SchemeExpres
     }
 
     const firstElement = node.elements[0]
-    if (firstElement.type === 'Identifier') {
-      const boundValue = getVariable(context, firstElement.name)
-      if (boundValue) {
-        // const procedure = yield* evaluate(firstElement, context)
-        // Procedure invocation - procedure is the value bound to the identifier
-        if (boundValue.type !== 'EVProcedure') {
-          return handleRuntimeError(context, new errors.CallingNonFunctionValue(context, node))
-        }
-        // TODO: implement invocation
-        return {
-          type: 'EVString',
-          value: 'procedure invocation',
-        }
-      } else {
-        // No procedure bound to the name - treat it as a special forms
-        const specialForm = listToSpecialForm(firstElement.name, node, context)
-        if (!specialForm) {
-          return handleRuntimeError(context, new errors.UndefinedVariable(firstElement.name, node))
-        }
-        return yield* evaluateSpecialForm(specialForm, context)
+    if (firstElement.type === 'Identifier' && !getVariable(context, firstElement.name)) {
+      // No procedure bound to the name - treat it as a special form
+      const specialForm = listToSpecialForm(firstElement.name, node, context)
+      if (!specialForm) {
+        return handleRuntimeError(context, new errors.UndefinedVariable(firstElement.name, node))
       }
+      return yield* evaluateSpecialForm(specialForm, context)
     }
 
-    if (firstElement.type === 'List') {
-      // Procedure invocation - the procedure is the result of evaluating the first element
-      // const procedure = yield* evaluate(firstElement, context)
-      return {
-        type: 'EVString',
-        value: 'procedure invocation',
-      }
-      // TODO: implement invocation
+    // Procedure invocation - procedure is the value bound to the identifier
+    const procedure = yield* evaluate(firstElement, context)
+    if (procedure.type !== 'EVProcedure') {
+      return handleRuntimeError(context, new errors.CallingNonFunctionValue(context, node))
     }
-    return handleRuntimeError(context, new errors.CallingNonFunctionValue(context, node))
+
+    const args = yield* listOfValues(node.elements.slice(1), context)
+    const procedureName = firstElement.type === 'Identifier' ? firstElement.name : '[Anonymous procedure]'
+    return yield* apply(context, procedure, procedureName, args, node)
   },
 
   StringLiteral: function* (node: SchemeStringLiteral, context: Context): ValueGenerator {
@@ -387,76 +298,50 @@ export function* evaluate(
   return result
 }
 
-// export function* apply(
-//   context: Context,
-//   fun: Closure | Value,
-//   args: (Thunk | Value)[],
-//   node: es.CallExpression,
-//   thisContext?: Value
-// ) {
-//   let result: Value
-//   let total = 0
+const checkNumberOfArguments = (
+  context: Context,
+  procedure: EVProcedure,
+  procedureName: string,
+  callExpression: SchemeList
+) => {
+  const numArgs = callExpression.elements.length - 1
+  if (procedure.style === 'fixed-args' && procedure.numParams !== numArgs) {
+    return handleRuntimeError(
+      context,
+      new errors.InvalidNumberOfArguments(
+        callExpression,
+        procedureName,
+        procedure.numParams,
+        numArgs
+      )
+    )
+  }
+  return undefined
+}
 
-//   while (!(result instanceof ReturnValue)) {
-//     if (fun instanceof Closure) {
-//       checkNumberOfArguments(context, fun, args, node!)
-//       const environment = createEnvironment(fun, args, node)
-//       if (result instanceof TailCallReturnValue) {
-//         replaceEnvironment(context, environment)
-//       } else {
-//         pushEnvironment(context, environment)
-//         total++
-//       }
-//       const bodyEnvironment = createBlockEnvironment(context, 'functionBodyEnvironment')
-//       bodyEnvironment.thisContext = thisContext
-//       pushEnvironment(context, bodyEnvironment)
-//       result = yield* evaluateBlockSatement(context, fun.node.body as es.BlockStatement)
-//       popEnvironment(context)
-//       if (result instanceof TailCallReturnValue) {
-//         fun = result.callee
-//         node = result.node
-//         args = result.args
-//       } else if (!(result instanceof ReturnValue)) {
-//         // No Return Value, set it as undefined
-//         result = new ReturnValue(undefined)
-//       }
-//     } else if (typeof fun === 'function') {
-//       checkNumberOfArguments(context, fun, args, node!)
-//       try {
-//         const forcedArgs = []
+function* listOfValues(
+  expressions: SchemeExpression[],
+  context: Context
+): Generator<Context, ExpressibleValue[]> {
+  const values: ExpressibleValue[] = []
+  for (const expression of expressions) {
+    values.push(yield* evaluate(expression, context))
+  }
+  return values
+}
 
-//         for (const arg of args) {
-//           forcedArgs.push(yield* forceIt(arg, context))
-//         }
-
-//         result = fun.apply(thisContext, forcedArgs)
-//         break
-//       } catch (e) {
-//         // Recover from exception
-//         context.runtime.environments = context.runtime.environments.slice(
-//           -context.numberOfOuterEnvironments
-//         )
-
-//         const loc = node ? node.loc! : constants.UNKNOWN_LOCATION
-//         if (!(e instanceof RuntimeSourceError || e instanceof errors.ExceptionError)) {
-//           // The error could've arisen when the builtin called a source function which errored.
-//           // If the cause was a source error, we don't want to include the error.
-//           // However if the error came from the builtin itself, we need to handle it.
-//           return handleRuntimeError(context, new errors.ExceptionError(e, loc))
-//         }
-//         result = undefined
-//         throw e
-//       }
-//     } else {
-//       return handleRuntimeError(context, new errors.CallingNonFunctionValue(fun, node))
-//     }
-//   }
-//   // Unwraps return value and release stack environment
-//   if (result instanceof ReturnValue) {
-//     result = result.value
-//   }
-//   for (let i = 1; i <= total; i++) {
-//     popEnvironment(context)
-//   }
-//   return result
-// }
+function* apply(
+  context: Context,
+  procedure: EVProcedure,
+  procedureName: string,
+  args: ExpressibleValue[],
+  node: SchemeList
+) {
+  // TODO: TCO
+  checkNumberOfArguments(context, procedure, procedureName, node)
+  const environment = extendProcedureEnvironment(procedure, procedureName, args)
+  pushEnvironment(context, environment)
+  const result = yield* evaluate(procedure.body, context)
+  popEnvironment(context)
+  return result
+}

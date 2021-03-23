@@ -150,9 +150,8 @@ export type AllowedDeclarations = 'const' | 'let'
 export interface Environment {
   name: string
   tail: Environment | null
-  callExpression?: es.CallExpression
+  procedureName?: string
   head: Frame
-  thisContext?: Value
 }
 
 export interface Thunk {
