@@ -1,4 +1,5 @@
 /* tslint:disable:max-classes-per-file */
+import { RuntimeSourceError } from '../errors/runtimeSourceError'
 import {
   SchemeBoolLiteral,
   SchemeExpression,
@@ -47,13 +48,13 @@ const createBlockEnvironment = (
   }
 }
 
-// const handleRuntimeError = (context: Context, error: RuntimeSourceError): never => {
-//   context.errors.push(error)
-//   context.runtime.environments = context.runtime.environments.slice(
-//     -context.numberOfOuterEnvironments
-//   )
-//   throw error
-// }
+const handleRuntimeError = (context: Context, error: RuntimeSourceError): never => {
+  context.errors.push(error)
+  context.runtime.environments = context.runtime.environments.slice(
+    -context.numberOfOuterEnvironments
+  )
+  throw error
+}
 
 // const DECLARED_BUT_NOT_YET_ASSIGNED = Symbol('Used to implement hoisting')
 
@@ -175,7 +176,11 @@ export const evaluators: { [key in SchemeExpressionType]: Evaluator<SchemeExpres
     },
 
     Sequence: function*(node: SchemeSequence, context: Context) {
-        throw new Error("Seuqences are not supported in x-slang");
+        let result
+        for (const expression of node.expressions) {
+          result = yield* evaluate(expression, context)
+        }
+        return result
     },
 
     List: function*(node: SchemeList, context: Context) {
