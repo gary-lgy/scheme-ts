@@ -106,6 +106,8 @@ const setVariable = (context: Context, name: string, newValue: ExpressibleValue)
     () => handleRuntimeError(context, new errors.UndefinedVariable(name, context.runtime.nodes[0]))
   )
 
+const isTruthy = (value: ExpressibleValue) => value.type !== 'EVBool' || value.value
+
 function* evaluateSpecialForm(form: SpecialForm, context: Context): ValueGenerator {
   const environment = context.runtime.environments[0]
   switch (form.tag) {
@@ -130,6 +132,16 @@ function* evaluateSpecialForm(form: SpecialForm, context: Context): ValueGenerat
       const value = yield* evaluate(form.value, context)
       setVariable(context, form.name, value)
       return { type: 'EVEmptyList' }
+    }
+    case 'if': {
+      const testValue = yield* evaluate(form.test, context)
+      if (isTruthy(testValue)) {
+        return yield* evaluate(form.consequent, context)
+      } else if (form.alternative) {
+        return yield* evaluate(form.alternative, context)
+      } else {
+        return { type: 'EVEmptyList' }
+      }
     }
   }
 }
@@ -188,6 +200,16 @@ const listToSpecialForm = (
       tag,
       name: list.elements[1].name,
       value: list.elements[2]
+    }
+  } else if (tag === 'if') {
+    if (list.elements.length < 3 || list.elements.length > 4) {
+      return handleRuntimeError(context, new errors.IfSyntaxError(list))
+    }
+    return {
+      tag,
+      test: list.elements[1],
+      consequent: list.elements[2],
+      alternative: list.elements[3]
     }
   } else {
     return undefined

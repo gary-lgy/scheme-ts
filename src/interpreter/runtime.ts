@@ -48,7 +48,7 @@ export type EVPair = {
 
 // Special syntax forms
 
-export type SpecialForm = DefineForm | SetForm | LambdaForm
+export type SpecialForm = DefineForm | SetForm | LambdaForm | ConditionalForm
 
 export type DefineForm = {
   tag: 'define'
@@ -72,6 +72,13 @@ export type LambdaForm = {
   parameters: string[]
   body: SchemeSequence
   argumentPassingStyle: LambdaArgumentPassingStyle
+}
+
+export type ConditionalForm = {
+  tag: 'if'
+  test: SchemeExpression
+  consequent: SchemeExpression
+  alternative?: SchemeExpression
 }
 
 // Runtime data structures

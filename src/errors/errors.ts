@@ -36,6 +36,16 @@ export class SetSyntaxError extends RuntimeSourceError {
   }
 }
 
+export class IfSyntaxError extends RuntimeSourceError {
+  constructor(node: SchemeExpression) {
+    super(node)
+  }
+
+  public explain() {
+    return "Syntax for `if' is incorrect. Please use `(if (test) (consequent))' or `(if (test) (consequent) (alternative))'"
+  }
+}
+
 export class BuiltinProcedureError extends RuntimeSourceError {
   constructor(public cause: Error, node?: SchemeExpression) {
     super(node)
