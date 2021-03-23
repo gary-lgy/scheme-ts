@@ -1,10 +1,9 @@
 /* tslint:disable:max-classes-per-file */
-import { ANTLRInputStream, CommonTokenStream } from 'antlr4ts'
+import { ANTLRInputStream, CommonTokenStream, ParserRuleContext } from 'antlr4ts'
 import { ErrorNode } from 'antlr4ts/tree/ErrorNode'
 import { ParseTree } from 'antlr4ts/tree/ParseTree'
 import { RuleNode } from 'antlr4ts/tree/RuleNode'
 import { TerminalNode } from 'antlr4ts/tree/TerminalNode'
-import { ExpressionContext, NumberContext } from '../lang/CalcParser'
 import {
   SchemeBoolLiteral,
   SchemeExpression,
@@ -19,8 +18,10 @@ import {
 import { SchemeLexer } from '../lang/SchemeLexer'
 import {
   BoolContext,
+  ExpressionContext,
   IdentifierContext,
   ListContext,
+  NumberContext,
   ProgramContext,
   SchemeParser,
   SequenceContext,
@@ -71,7 +72,7 @@ export class TrailingCommaError implements SourceError {
   }
 }
 
-function contextToLocation(ctx: ExpressionContext): SourceLocation {
+function contextToLocation(ctx: ParserRuleContext): SourceLocation {
   return {
     start: {
       line: ctx.start.line,
