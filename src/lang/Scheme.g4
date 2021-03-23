@@ -35,11 +35,11 @@ WHITESPACE
 
 IDENTIFIER
    : IDENTIFIER_INITIAL IDENTIFIER_SUBSEQUENT*
+   | PECULIAR_IDENTIFIER
    ;
 
 fragment LETTER
    : ('a' .. 'z')
-   | ('A' .. 'Z')
 ;
 
 fragment DIGIT
@@ -48,13 +48,32 @@ fragment DIGIT
 
 fragment IDENTIFIER_INITIAL
    : LETTER
-   | '+'
-   | '-'
+   | '$'
+   | '%'
+   | '&'
    | '*'
    | '/'
+   | ':'
+   | '<'
+   | '='
+   | '>'
+   | '?'
+   | '^'
+   | '_'
    ;
 
 fragment IDENTIFIER_SUBSEQUENT
    : IDENTIFIER_INITIAL
    | DIGIT
+   | '+'
+   | '-'
+   | '.'
+   | '@'
+   | '!'
 ;
+
+fragment PECULIAR_IDENTIFIER
+   : '+'
+   | '-'
+   | '...'
+   ;

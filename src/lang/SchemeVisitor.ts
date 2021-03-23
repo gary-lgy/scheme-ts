@@ -1,5 +1,4 @@
 // Generated from ./src/lang/Scheme.g4 by ANTLR 4.9.0-SNAPSHOT
-
 // @ts-ignore
 
 import { ParseTreeVisitor } from 'antlr4ts/tree/ParseTreeVisitor'
