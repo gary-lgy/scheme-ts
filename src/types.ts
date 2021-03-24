@@ -7,7 +7,7 @@
 
 import { SourceLocation } from 'acorn'
 import * as es from 'estree'
-import { Frame } from './interpreter/runtime'
+import { ExpressibleValue } from './interpreter/runtime'
 import { SchemeExpression } from './lang/scheme'
 
 /**
@@ -146,6 +146,10 @@ export type Value = any
 // tslint:enable:no-any
 
 export type AllowedDeclarations = 'const' | 'let'
+
+export interface Frame {
+  [name: string]: ExpressibleValue
+}
 
 export interface Environment {
   name: string

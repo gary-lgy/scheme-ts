@@ -12,8 +12,8 @@ import {
   SchemeSequence,
   SchemeStringLiteral
 } from '../lang/scheme'
-import { Context, Environment } from '../types'
-import { EVProcedure, ExpressibleValue, Frame, FrameBinding, SpecialForm } from './runtime'
+import { Context, Environment, Frame } from '../types'
+import { EVProcedure, ExpressibleValue, SpecialForm } from './runtime'
 
 const extendProcedureEnvironment = (
   environment: Environment,
@@ -21,7 +21,7 @@ const extendProcedureEnvironment = (
   procedureName: string,
   args: ExpressibleValue[]
 ): Environment => {
-  const frame = new Frame()
+  const frame = {}
   const newEnvironment: Environment = {
     name: procedureName,
     tail: environment,
@@ -29,7 +29,7 @@ const extendProcedureEnvironment = (
     procedureName: procedureName
   }
   parameters.forEach((param, index) => {
-    frame.set(param, { value: args[index] })
+    frame[param] = args[index]
   })
   return newEnvironment
 }
@@ -37,7 +37,7 @@ const extendProcedureEnvironment = (
 const extendCurrentEnvironment = (
   context: Context,
   name: string,
-  head: Frame = new Frame()
+  head: Frame = {}
 ): Environment => {
   return {
     name,
@@ -71,40 +71,30 @@ const popEnvironment = (context: Context) => context.runtime.environments.shift(
 const pushEnvironment = (context: Context, environment: Environment) =>
   context.runtime.environments.unshift(environment)
 
-const variableDo = <T, U>(
-  context: Context,
-  name: string,
-  bindingFoundCallback: (binding: FrameBinding) => T,
-  bindingNotFoundCallback: () => U
-) => {
+const getVariable = (context: Context, name: string) => {
   let environment: Environment | null = context.runtime.environments[0]
   while (environment) {
-    const frame = environment.head
-    const currentBinding = frame.get(name)
-    if (currentBinding) {
-      return bindingFoundCallback(currentBinding)
+    if (environment.head.hasOwnProperty(name)) {
+      return environment.head[name]
     } else {
       environment = environment.tail
     }
   }
-  return bindingNotFoundCallback()
+  return undefined
 }
 
-const getVariable = (context: Context, name: string) =>
-  variableDo(
-    context,
-    name,
-    binding => binding.value,
-    () => undefined
-  )
-
-const setVariable = (context: Context, name: string, newValue: ExpressibleValue) =>
-  variableDo(
-    context,
-    name,
-    binding => (binding.value = newValue),
-    () => handleRuntimeError(context, new errors.UndefinedVariable(name, context.runtime.nodes[0]))
-  )
+const setVariable = (context: Context, name: string, value: any) => {
+  let environment: Environment | null = context.runtime.environments[0]
+  while (environment) {
+    if (environment.head.hasOwnProperty(name)) {
+      environment.head[name] = value
+      return
+    } else {
+      environment = environment.tail
+    }
+  }
+  return handleRuntimeError(context, new errors.UndefinedVariable(name, context.runtime.nodes[0]))
+}
 
 const isTruthy = (value: ExpressibleValue) => value.type !== 'EVBool' || value.value
 
@@ -114,8 +104,8 @@ function* evaluateSpecialForm(form: SpecialForm, context: Context): ValueGenerat
     case 'define': {
       // TODO: disallow mixing of definitions and expressions?
       const value = yield* evaluate(form.value, context)
-      const frame = environment.head
-      frame.set(form.name, { value })
+      const frame = context.runtime.environments[0].head
+      frame[form.name] = value
       return { type: 'EVEmptyList' }
     }
     case 'lambda': {

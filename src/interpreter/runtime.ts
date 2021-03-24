@@ -80,21 +80,3 @@ export type ConditionalForm = {
   consequent: SchemeExpression
   alternative?: SchemeExpression
 }
-
-// Runtime data structures
-
-export interface FrameBinding {
-  value: ExpressibleValue
-}
-
-export class Frame {
-  private bindings: Map<string, FrameBinding> = new Map()
-
-  get(name: string): FrameBinding | undefined {
-    return this.bindings.get(name)
-  }
-
-  set(name: string, newBinding: FrameBinding) {
-    this.bindings.set(name, newBinding)
-  }
-}

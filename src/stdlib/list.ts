@@ -1,5 +1,5 @@
-import { stringify, ArrayLike } from '../utils/stringify'
 import { Value } from '../types'
+import { ArrayLike, stringify } from '../utils/stringify'
 
 // list.ts: Supporting lists in the Scheme style, using pairs made
 //          up of two-element JavaScript array (vector)
@@ -126,6 +126,7 @@ export function rawDisplayList(display: any, xs: Value, prepend: string) {
 
   // We will convert list-like structures in xs to ListObject.
   class ListObject implements ArrayLike {
+    type: 'ArrayLike'
     replPrefix = 'list('
     replSuffix = ')'
     replArrayContents(): Value[] {

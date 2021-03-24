@@ -1,7 +1,8 @@
-import { EVNumber, EVPair, EVProcedure, ExpressibleValue, Frame } from './runtime'
+import { Frame } from '../types'
+import { EVNumber, EVPair, EVProcedure, ExpressibleValue } from './runtime'
 
 const defineBuiltin = (frame: Frame, name: string, value: ExpressibleValue) => {
-  frame.set(name, { value })
+  frame[name] = value
 }
 
 const mapNumericalArguments = (opName: string, args: ExpressibleValue[]): number[] => {
