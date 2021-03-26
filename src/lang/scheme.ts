@@ -26,42 +26,53 @@ export type SchemeExpressionType =
 /**
  * Represents a language construct in Scheme.
  */
-export interface SchemeExpression {
-  type: SchemeExpressionType
+export type SchemeExpression =
+  | SchemeProgram
+  | SchemeSequence
+  | SchemeList
+  | SchemeStringLiteral
+  | SchemeNumberLiteral
+  | SchemeBoolLiteral
+  | SchemeIdentifier
+
+export interface SchemeProgram {
+  type: 'Program'
+  body: SchemeSequence
   loc: SourceLocation
 }
 
-export interface SchemeProgram extends SchemeExpression {
-  type: 'Program'
-  body: SchemeSequence
-}
-
-export interface SchemeSequence extends SchemeExpression {
+export interface SchemeSequence {
   type: 'Sequence'
   expressions: SchemeExpression[]
+  loc: SourceLocation
 }
 
-export interface SchemeList extends SchemeExpression {
+export interface SchemeList {
   type: 'List'
   elements: SchemeExpression[]
+  loc: SourceLocation
 }
 
-export interface SchemeStringLiteral extends SchemeExpression {
+export interface SchemeStringLiteral {
   type: 'StringLiteral'
   value: string
+  loc: SourceLocation
 }
 
-export interface SchemeNumberLiteral extends SchemeExpression {
+export interface SchemeNumberLiteral {
   type: 'NumberLiteral'
   value: number
+  loc: SourceLocation
 }
 
-export interface SchemeBoolLiteral extends SchemeExpression {
+export interface SchemeBoolLiteral {
   type: 'BoolLiteral'
   value: boolean
+  loc: SourceLocation
 }
 
-export interface SchemeIdentifier extends SchemeExpression {
+export interface SchemeIdentifier {
   type: 'Identifier'
   name: string
+  loc: SourceLocation
 }

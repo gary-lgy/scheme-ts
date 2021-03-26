@@ -1,11 +1,59 @@
 /* tslint:disable: max-classes-per-file */
 /* tslint:disable:max-line-length */
-import { baseGenerator, generate } from 'astring'
 import * as es from 'estree'
 import { SchemeExpression } from '../lang/scheme'
 import { ErrorSeverity, ErrorType, SourceError, Value } from '../types'
 import { stringify } from '../utils/stringify'
 import { RuntimeSourceError } from './runtimeSourceError'
+
+export class DefineSyntaxError extends RuntimeSourceError {
+  constructor(node: SchemeExpression) {
+    super(node)
+  }
+
+  public explain() {
+    return "Syntax for `define' is incorrect. Please use `(define variable value)'"
+  }
+}
+
+export class LambdaSyntaxError extends RuntimeSourceError {
+  constructor(node: SchemeExpression) {
+    super(node)
+  }
+
+  public explain() {
+    return "Syntax for `lambda' is incorrect. Please use `(lambda (arg1 arg2 ...) body)'"
+  }
+}
+
+export class SetSyntaxError extends RuntimeSourceError {
+  constructor(node: SchemeExpression) {
+    super(node)
+  }
+
+  public explain() {
+    return "Syntax for `set!' is incorrect. Please use `(set! variable value) body)'"
+  }
+}
+
+export class IfSyntaxError extends RuntimeSourceError {
+  constructor(node: SchemeExpression) {
+    super(node)
+  }
+
+  public explain() {
+    return "Syntax for `if' is incorrect. Please use `(if (test) (consequent))' or `(if (test) (consequent) (alternative))'"
+  }
+}
+
+export class BuiltinProcedureError extends RuntimeSourceError {
+  constructor(public cause: Error, node?: SchemeExpression) {
+    super(node)
+  }
+  public explain() {
+    return this.cause.message
+  }
+}
 
 export class ModuleNotFound extends RuntimeSourceError {
   constructor(public moduleName: string, node?: SchemeExpression) {
@@ -57,30 +105,12 @@ export class ExceptionError implements SourceError {
 export class MaximumStackLimitExceeded extends RuntimeSourceError {
   public static MAX_CALLS_TO_SHOW = 3
 
-  private customGenerator = {
-    ...baseGenerator,
-    CallExpression(node: any, state: any) {
-      state.write(generate(node.callee))
-      state.write('(')
-      const argsRepr = node.arguments.map((arg: any) => stringify(arg.value))
-      state.write(argsRepr.join(', '))
-      state.write(')')
-    }
-  }
-
-  constructor(node: SchemeExpression, private calls: es.CallExpression[]) {
+  constructor(node: SchemeExpression, private calls: string[]) {
     super(node)
   }
 
   public explain() {
-    const repr = (call: es.CallExpression) => generate(call, { generator: this.customGenerator })
-    return (
-      'Maximum call stack size exceeded\n  ' + this.calls.map(call => repr(call) + '..').join('  ')
-    )
-  }
-
-  public elaborate() {
-    return 'TODO'
+    return 'Maximum call stack size exceeded\n  ' + this.calls.join('  ')
   }
 }
 
@@ -144,22 +174,42 @@ export class UnassignedVariable extends RuntimeSourceError {
 }
 
 export class InvalidNumberOfArguments extends RuntimeSourceError {
-  private calleeStr: string
-
-  constructor(node: SchemeExpression, private expected: number, private got: number) {
+  constructor(
+    node: SchemeExpression,
+    private procedureName: string,
+    private expected: number,
+    private got: number
+  ) {
     super(node)
-    // this.calleeStr = generate((node as es.CallExpression).callee)
   }
 
   public explain() {
-    return `Expected ${this.expected} arguments, but got ${this.got}.`
+    return `${this.procedureName} expected ${this.expected} arguments, but got ${this.got}.`
   }
 
   public elaborate() {
-    const calleeStr = this.calleeStr
     const pluralS = this.expected === 1 ? '' : 's'
+    return `Try calling procedure ${this.procedureName} again, but with ${this.expected} argument${pluralS} instead.`
+  }
+}
 
-    return `Try calling function ${calleeStr} again, but with ${this.expected} argument${pluralS} instead. Remember that arguments are separated by a ',' (comma).`
+export class NotEnoughArguments extends RuntimeSourceError {
+  constructor(
+    node: SchemeExpression,
+    private procedureName: string,
+    private expected: number,
+    private got: number
+  ) {
+    super(node)
+  }
+
+  public explain() {
+    return `${this.procedureName} expected at least ${this.expected} arguments, but got ${this.got}.`
+  }
+
+  public elaborate() {
+    const pluralS = this.expected === 1 ? '' : 's'
+    return `Try calling procedure ${this.procedureName} again, but with at least ${this.expected} argument${pluralS} instead.`
   }
 }
 
