@@ -69,8 +69,15 @@ export const importExternalSymbols = (context: Context, externalSymbols: string[
 
 export const importBuiltins = (context: Context, externalBuiltIns: CustomBuiltIns) => {
   ensureGlobalEnvironmentExist(context)
-  const rawDisplay = (v: Value) => externalBuiltIns.rawDisplay(v, '', context.externalContext)
-  const display: EVProcedure = {
+
+  const rawDisplay = (v: Value) =>
+    externalBuiltIns.rawDisplay(
+      v,
+      undefined as any, // Workaround for rawDisplay hack on frontend
+      context.externalContext
+    )
+
+  const displayProcedure: EVProcedure = {
     type: 'EVProcedure',
     argumentPassingStyle: {
       style: 'fixed-args',
@@ -87,7 +94,25 @@ export const importBuiltins = (context: Context, externalBuiltIns: CustomBuiltIn
     }
   }
 
-  defineSymbol(context, 'display', display)
+  const errorProcedure: EVProcedure = {
+    type: 'EVProcedure',
+    argumentPassingStyle: {
+      style: 'fixed-args',
+      numParams: 1
+    },
+    variant: 'BuiltInProcedure',
+    body: (args: ExpressibleValue[]): ExpressibleValue => {
+      if (args.length !== 1) {
+        throw new Error('error expected 1 argument, but encountered ' + args.length)
+      }
+
+      misc.error_message(args[0])
+      return args[0]
+    }
+  }
+
+  defineSymbol(context, 'display', displayProcedure)
+  defineSymbol(context, 'error', errorProcedure)
 }
 
 /**
