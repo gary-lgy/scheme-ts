@@ -9,8 +9,12 @@ import {
   ListContext,
   NumberContext,
   ProgramContext,
+  QuasiquoteContext,
+  QuoteContext,
   SequenceContext,
-  StringContext
+  StringContext,
+  UnquoteContext,
+  UnquoteSplicingContext
 } from './SchemeParser'
 
 /**
@@ -30,6 +34,58 @@ export interface SchemeListener extends ParseTreeListener {
    * @param ctx the parse tree
    */
   exitList?: (ctx: ListContext) => void
+
+  /**
+   * Enter a parse tree produced by the `Quote`
+   * labeled alternative in `SchemeParser.expression`.
+   * @param ctx the parse tree
+   */
+  enterQuote?: (ctx: QuoteContext) => void
+  /**
+   * Exit a parse tree produced by the `Quote`
+   * labeled alternative in `SchemeParser.expression`.
+   * @param ctx the parse tree
+   */
+  exitQuote?: (ctx: QuoteContext) => void
+
+  /**
+   * Enter a parse tree produced by the `Quasiquote`
+   * labeled alternative in `SchemeParser.expression`.
+   * @param ctx the parse tree
+   */
+  enterQuasiquote?: (ctx: QuasiquoteContext) => void
+  /**
+   * Exit a parse tree produced by the `Quasiquote`
+   * labeled alternative in `SchemeParser.expression`.
+   * @param ctx the parse tree
+   */
+  exitQuasiquote?: (ctx: QuasiquoteContext) => void
+
+  /**
+   * Enter a parse tree produced by the `Unquote`
+   * labeled alternative in `SchemeParser.expression`.
+   * @param ctx the parse tree
+   */
+  enterUnquote?: (ctx: UnquoteContext) => void
+  /**
+   * Exit a parse tree produced by the `Unquote`
+   * labeled alternative in `SchemeParser.expression`.
+   * @param ctx the parse tree
+   */
+  exitUnquote?: (ctx: UnquoteContext) => void
+
+  /**
+   * Enter a parse tree produced by the `UnquoteSplicing`
+   * labeled alternative in `SchemeParser.expression`.
+   * @param ctx the parse tree
+   */
+  enterUnquoteSplicing?: (ctx: UnquoteSplicingContext) => void
+  /**
+   * Exit a parse tree produced by the `UnquoteSplicing`
+   * labeled alternative in `SchemeParser.expression`.
+   * @param ctx the parse tree
+   */
+  exitUnquoteSplicing?: (ctx: UnquoteSplicingContext) => void
 
   /**
    * Enter a parse tree produced by the `String`

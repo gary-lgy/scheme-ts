@@ -18,6 +18,10 @@ export type SchemeExpressionType =
   | 'Program'
   | 'Sequence'
   | 'List'
+  | 'Quote'
+  | 'Quasiquote'
+  | 'Unquote'
+  | 'UnquoteSplicing'
   | 'StringLiteral'
   | 'NumberLiteral'
   | 'BoolLiteral'
@@ -30,6 +34,10 @@ export type SchemeExpression =
   | SchemeProgram
   | SchemeSequence
   | SchemeList
+  | SchemeQuote
+  | SchemeQuasiquote
+  | SchemeUnquote
+  | SchemeUnquoteSplicing
   | SchemeStringLiteral
   | SchemeNumberLiteral
   | SchemeBoolLiteral
@@ -50,6 +58,30 @@ export interface SchemeSequence {
 export interface SchemeList {
   type: 'List'
   elements: SchemeExpression[]
+  loc: SourceLocation
+}
+
+export interface SchemeQuote {
+  type: 'Quote'
+  expression: SchemeExpression
+  loc: SourceLocation
+}
+
+export interface SchemeQuasiquote {
+  type: 'Quasiquote'
+  expression: SchemeExpression
+  loc: SourceLocation
+}
+
+export interface SchemeUnquote {
+  type: 'Unquote'
+  expression: SchemeExpression
+  loc: SourceLocation
+}
+
+export interface SchemeUnquoteSplicing {
+  type: 'UnquoteSplicing'
+  expression: SchemeExpression
   loc: SourceLocation
 }
 

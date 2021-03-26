@@ -162,6 +162,8 @@ ${indentify(indentString.repeat(indentLevel), tailStr)})`
       case 'EVEmptyList':
         return '()'
       case 'EVString':
+        return `"${v.value}"`
+      case 'EVSymbol':
         return v.value
       case 'EVPair':
         return stringifyPair(v, indentLevel)

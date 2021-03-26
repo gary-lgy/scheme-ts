@@ -2,7 +2,14 @@ import { SchemeExpression, SchemeSequence } from '../lang/scheme'
 import { Environment } from '../types'
 
 // An expressible value is a value that can be the result of an evaluation
-export type ExpressibleValue = EVNumber | EVString | EVBool | EVProcedure | EVPair | EVEmptyList
+export type ExpressibleValue =
+  | EVNumber
+  | EVString
+  | EVSymbol
+  | EVBool
+  | EVProcedure
+  | EVPair
+  | EVEmptyList
 
 export type EVNumber = {
   type: 'EVNumber'
@@ -11,6 +18,11 @@ export type EVNumber = {
 
 export type EVString = {
   type: 'EVString'
+  value: string
+}
+
+export type EVSymbol = {
+  type: 'EVSymbol'
   value: string
 }
 

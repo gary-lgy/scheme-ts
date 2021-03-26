@@ -11,8 +11,12 @@ import {
   SchemeList,
   SchemeNumberLiteral,
   SchemeProgram,
+  SchemeQuasiquote,
+  SchemeQuote,
   SchemeSequence,
   SchemeStringLiteral,
+  SchemeUnquote,
+  SchemeUnquoteSplicing,
   SourceLocation
 } from '../lang/scheme'
 import { SchemeLexer } from '../lang/SchemeLexer'
@@ -23,9 +27,13 @@ import {
   ListContext,
   NumberContext,
   ProgramContext,
+  QuasiquoteContext,
+  QuoteContext,
   SchemeParser,
   SequenceContext,
-  StringContext
+  StringContext,
+  UnquoteContext,
+  UnquoteSplicingContext
 } from '../lang/SchemeParser'
 import { SchemeVisitor } from '../lang/SchemeVisitor'
 import { Context, ErrorSeverity, ErrorType, SourceError } from '../types'
@@ -41,34 +49,6 @@ export class FatalSyntaxError implements SourceError {
 
   public elaborate() {
     return 'There is a syntax error in your program'
-  }
-}
-
-export class MissingSemicolonError implements SourceError {
-  public type = ErrorType.SYNTAX
-  public severity = ErrorSeverity.ERROR
-  public constructor(public location: SourceLocation) {}
-
-  public explain() {
-    return 'Missing semicolon at the end of statement'
-  }
-
-  public elaborate() {
-    return 'Every statement must be terminated by a semicolon.'
-  }
-}
-
-export class TrailingCommaError implements SourceError {
-  public type: ErrorType.SYNTAX
-  public severity: ErrorSeverity.WARNING
-  public constructor(public location: SourceLocation) {}
-
-  public explain() {
-    return 'Trailing comma'
-  }
-
-  public elaborate() {
-    return 'Please remove the trailing comma'
   }
 }
 
@@ -90,6 +70,38 @@ class ExpressionGenerator implements SchemeVisitor<SchemeExpression> {
     return {
       type: 'List',
       elements: ctx.expression().map(ex => ex.accept(this)),
+      loc: contextToLocation(ctx)
+    }
+  }
+
+  visitQuote(ctx: QuoteContext): SchemeQuote {
+    return {
+      type: 'Quote',
+      expression: ctx.expression().accept(this),
+      loc: contextToLocation(ctx)
+    }
+  }
+
+  visitQuasiquote(ctx: QuasiquoteContext): SchemeQuasiquote {
+    return {
+      type: 'Quasiquote',
+      expression: ctx.expression().accept(this),
+      loc: contextToLocation(ctx)
+    }
+  }
+
+  visitUnquote(ctx: UnquoteContext): SchemeUnquote {
+    return {
+      type: 'Unquote',
+      expression: ctx.expression().accept(this),
+      loc: contextToLocation(ctx)
+    }
+  }
+
+  visitUnquoteSplicing(ctx: UnquoteSplicingContext): SchemeUnquoteSplicing {
+    return {
+      type: 'UnquoteSplicing',
+      expression: ctx.expression().accept(this),
       loc: contextToLocation(ctx)
     }
   }
@@ -158,17 +170,6 @@ class ExpressionGenerator implements SchemeVisitor<SchemeExpression> {
   visit(tree: ParseTree): SchemeExpression {
     return tree.accept(this)
   }
-
-  // visitChildren(node: RuleNode): es.Expression {
-  //   const expressions: es.Expression[] = []
-  //   for (let i = 0; i < node.childCount; i++) {
-  //     expressions.push(node.getChild(i).accept(this))
-  //   }
-  //   return {
-  //     type: 'SequenceExpression',
-  //     expressions
-  //   }
-  // }
 
   visitErrorNode(node: ErrorNode): SchemeExpression {
     throw new FatalSyntaxError(

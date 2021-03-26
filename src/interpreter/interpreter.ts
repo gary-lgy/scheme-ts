@@ -9,11 +9,15 @@ import {
   SchemeList,
   SchemeNumberLiteral,
   SchemeProgram,
+  SchemeQuasiquote,
+  SchemeQuote,
   SchemeSequence,
-  SchemeStringLiteral
+  SchemeStringLiteral,
+  SchemeUnquote,
+  SchemeUnquoteSplicing
 } from '../lang/scheme'
 import { Context, Environment, Frame } from '../types'
-import { EVProcedure, ExpressibleValue, SpecialForm } from './runtime'
+import { EVPair, EVProcedure, ExpressibleValue, SpecialForm } from './runtime'
 
 const extendProcedureEnvironment = (
   environment: Environment,
@@ -206,6 +210,84 @@ const listToSpecialForm = (
   }
 }
 
+const listOfValues = (...values: ExpressibleValue[]): ExpressibleValue => {
+  const precursor: EVPair = {
+    type: 'EVPair',
+    head: {
+      type: 'EVEmptyList'
+    },
+    tail: {
+      type: 'EVEmptyList'
+    }
+  }
+  let prev = precursor
+  for (const value of values) {
+    const newTail: EVPair = {
+      type: 'EVPair',
+      head: value,
+      tail: {
+        type: 'EVEmptyList'
+      }
+    }
+    prev.tail = newTail
+    prev = newTail
+  }
+  return precursor.tail
+}
+
+const quoteExpression = (expression: SchemeExpression, context: Context): ExpressibleValue => {
+  switch (expression.type) {
+    case 'BoolLiteral':
+      return {
+        type: 'EVBool',
+        value: expression.value
+      }
+    case 'NumberLiteral':
+      return {
+        type: 'EVNumber',
+        value: expression.value
+      }
+    case 'StringLiteral':
+      return {
+        type: 'EVString',
+        value: expression.value
+      }
+    case 'Identifier':
+      return {
+        type: 'EVSymbol',
+        value: expression.name
+      }
+    case 'List':
+      return listOfValues(...expression.elements.map(elem => quoteExpression(elem, context)))
+    case 'Quote':
+      return listOfValues(
+        { type: 'EVSymbol', value: 'quote' },
+        quoteExpression(expression.expression, context)
+      )
+    case 'Quasiquote':
+      return listOfValues(
+        { type: 'EVSymbol', value: 'quosiquote' },
+        quoteExpression(expression.expression, context)
+      )
+    case 'Unquote':
+      return listOfValues(
+        { type: 'EVSymbol', value: 'unquote' },
+        quoteExpression(expression.expression, context)
+      )
+    case 'UnquoteSplicing':
+      return listOfValues(
+        { type: 'EVSymbol', value: 'unquote-splicing' },
+        quoteExpression(expression.expression, context)
+      )
+    case 'Program':
+    case 'Sequence':
+      return handleRuntimeError(
+        context,
+        new errors.UnexpectedQuotationError(context.runtime.nodes[0])
+      )
+  }
+}
+
 export type ValueGenerator = Generator<Context, ExpressibleValue>
 export type Evaluator<T extends SchemeExpression> = (node: T, context: Context) => ValueGenerator
 
@@ -261,9 +343,25 @@ export const evaluators: { [key in SchemeExpressionType]: Evaluator<SchemeExpres
       return handleRuntimeError(context, new errors.CallingNonFunctionValue(context, node))
     }
 
-    const args = yield* listOfValues(node.elements.slice(1), context)
+    const args = yield* listOfArguments(node.elements.slice(1), context)
     const procedureName = firstElement.type === 'Identifier' ? firstElement.name : '[Anonymous procedure]'
     return yield* apply(context, procedure, procedureName, args, node)
+  },
+
+  Quote: function* (node: SchemeQuote, context: Context): ValueGenerator {
+    return quoteExpression(node.expression, context)
+  },
+
+  Quasiquote: function* (node: SchemeQuasiquote, context: Context): ValueGenerator {
+    throw new Error('quasiquote is not implemented')
+  },
+
+  Unquote: function* (node: SchemeUnquote, context: Context): ValueGenerator {
+    throw new Error('unquote is not implemented')
+  },
+
+  UnquoteSplicing: function* (node: SchemeUnquoteSplicing, context: Context): ValueGenerator {
+    throw new Error('unquote-splicing is not implemented')
   },
 
   StringLiteral: function* (node: SchemeStringLiteral, context: Context): ValueGenerator {
@@ -346,7 +444,7 @@ const checkNumberOfArguments = (
   return undefined
 }
 
-function* listOfValues(
+function* listOfArguments(
   expressions: SchemeExpression[],
   context: Context
 ): Generator<Context, ExpressibleValue[]> {

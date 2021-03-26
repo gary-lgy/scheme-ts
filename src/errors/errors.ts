@@ -55,19 +55,13 @@ export class BuiltinProcedureError extends RuntimeSourceError {
   }
 }
 
-export class ModuleNotFound extends RuntimeSourceError {
-  constructor(public moduleName: string, node?: SchemeExpression) {
+export class UnexpectedQuotationError extends RuntimeSourceError {
+  constructor(node: SchemeExpression) {
     super(node)
   }
 
   public explain() {
-    return `Module "${this.moduleName}" not found.`
-  }
-
-  public elaborate() {
-    return `
-      You should check your Internet connection, and ensure you have used the correct module path.
-    `
+    return `Unexpected quotation`
   }
 }
 
