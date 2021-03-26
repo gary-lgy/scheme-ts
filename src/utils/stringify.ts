@@ -1,6 +1,7 @@
 import { MAX_LIST_DISPLAY_LENGTH } from '../constants'
 import { EVPair, ExpressibleValue } from '../interpreter/runtime'
-import { Type, Value } from '../types'
+import { NonEmptyList } from '../stdlib/list'
+import { Type } from '../types'
 
 function makeIndent(indent: number | string): string {
   if (typeof indent === 'number') {
@@ -23,11 +24,32 @@ function indentify(indent: string, s: string): string {
     .join('\n')
 }
 
-export interface ArrayLike {
-  type: 'ArrayLike'
-  replPrefix: string
-  replSuffix: string
-  replArrayContents: () => Value[]
+// For flattening pairs into list
+type ListElement = {
+  value: ExpressibleValue
+  pair: EVPair
+}
+type List = ListElement[]
+
+function tryConvertToList(pair: EVPair): List | null {
+  const seen: Set<EVPair> = new Set()
+  const flattened: List = []
+  while (true) {
+    if (seen.has(pair)) {
+      return null
+    }
+    seen.add(pair)
+    flattened.push({ value: pair.head, pair })
+
+    const tail = pair.tail
+    if (tail.type === 'EVEmptyList') {
+      return flattened
+    }
+    if (tail.type !== 'EVPair') {
+      return null
+    }
+    pair = tail
+  }
 }
 
 export const stringify = (
@@ -36,7 +58,7 @@ export const stringify = (
   splitlineThreshold = 80
 ): string => {
   // Used to check if there are any cyclic structures
-  const ancestors = new Set<ExpressibleValue | ArrayLike>()
+  const ancestors = new Set<ExpressibleValue | NonEmptyList>()
 
   // Precompute useful strings
   const indentString = makeIndent(indent)
@@ -53,6 +75,11 @@ export const stringify = (
   // The real one is stringifyValue
 
   const stringifyPair = (pair: EVPair, indentLevel: number) => {
+    const maybeList = tryConvertToList(pair)
+    if (maybeList) {
+      return stringifyList(maybeList, indentLevel)
+    }
+
     ancestors.add(pair)
     const headStr = stringifyValue(pair.head, 0)
     const tailStr = stringifyValue(pair.tail, 0)
@@ -71,29 +98,56 @@ ${indentify(indentString.repeat(indentLevel), tailStr)})`
     }
   }
 
-  const stringifyArrayLike = (arrayLike: ArrayLike, indentLevel: number) => {
-    const prefix = arrayLike.replPrefix
-    const suffix = arrayLike.replSuffix
+  const stringifyList = (list: List, indentLevel: number) => {
+    const prefix = '('
+    const suffix = ')'
     const prefixIndented = prefix + indentString.substring(prefix.length)
     const suffixIndented = suffix
-    const xs = arrayLike.replArrayContents()
 
-    ancestors.add(arrayLike)
-    const valueStrs = xs.map(x => stringifyValue(x, 0))
-    ancestors.delete(arrayLike)
+    const valueStrs = list.map(x => {
+      ancestors.add(x.pair)
+      const value = stringifyValue(x.value, 0)
+      ancestors.delete(x.pair)
+      return value
+    })
 
     if (shouldMultiline(valueStrs)) {
       // indent second element onwards to match with first element
       return `${prefixIndented}${indentify(
         indentString.repeat(indentLevel) + ' '.repeat(prefixIndented.length),
-        valueStrs.join(',\n')
+        valueStrs.join(' \n')
       ).substring(prefixIndented.length)}${suffixIndented}`
     } else {
-      return `${prefix}${valueStrs.join(', ')}${suffix}`
+      return `${prefix}${valueStrs.join(' ')}${suffix}`
     }
   }
 
-  const stringifyValue = (v: ExpressibleValue | ArrayLike, indentLevel: number = 0): string => {
+  // const stringifyList = (list: NonEmptyList, indentLevel: number) => {
+  //   const prefix = '('
+  //   const suffix = ')'
+  //   const prefixIndented = prefix + indentString.substring(prefix.length)
+  //   const suffixIndented = suffix
+  //   const flattened = flattenListToArray(list)
+
+  //   ancestors.add(list)
+  //   const valueStrs = flattened.map(x => stringifyValue(x, 0))
+  //   ancestors.delete(list)
+
+  //   if (shouldMultiline(valueStrs)) {
+  //     // indent second element onwards to match with first element
+  //     return `${prefixIndented}${indentify(
+  //       indentString.repeat(indentLevel) + ' '.repeat(prefixIndented.length),
+  //       valueStrs.join(' \n')
+  //     ).substring(prefixIndented.length)}${suffixIndented}`
+  //   } else {
+  //     return `${prefix}${valueStrs.join(' ')}${suffix}`
+  //   }
+  // }
+
+  // Convert any proper lists expressed as pairs to NonEmptyList for convenience
+  // value = normaliseList(value)
+
+  const stringifyValue = (v: ExpressibleValue, indentLevel: number = 0): string => {
     if (ancestors.has(v)) {
       return '...<circular>'
     } else if (ancestors.size > MAX_LIST_DISPLAY_LENGTH) {
@@ -101,8 +155,6 @@ ${indentify(indentString.repeat(indentLevel), tailStr)})`
     }
 
     switch (v.type) {
-      case 'ArrayLike':
-        return stringifyArrayLike(v, indentLevel)
       case 'EVBool':
         return v.value ? '#t' : '#f'
       case 'EVNumber':
