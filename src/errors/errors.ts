@@ -1,6 +1,7 @@
 /* tslint:disable: max-classes-per-file */
 /* tslint:disable:max-line-length */
 import * as es from 'estree'
+import { ExpressibleValue } from '../interpreter/runtime'
 import { SchemeExpression } from '../lang/scheme'
 import { ErrorSeverity, ErrorType, SourceError, Value } from '../types'
 import { stringify } from '../utils/stringify'
@@ -109,33 +110,12 @@ export class MaximumStackLimitExceeded extends RuntimeSourceError {
 }
 
 export class CallingNonFunctionValue extends RuntimeSourceError {
-  constructor(private callee: Value, private node: SchemeExpression) {
+  constructor(private callee: ExpressibleValue, public node: SchemeExpression) {
     super(node)
   }
 
   public explain() {
     return `Calling non-function value ${stringify(this.callee)}.`
-  }
-
-  public elaborate() {
-    const calleeVal = this.callee
-    const calleeStr = stringify(calleeVal)
-    const argStr = ''
-
-    // const callArgs = (this.node as es.CallExpression).arguments
-
-    // To temporarily silence TS warnings
-    this.node
-    // argStr = callArgs.map(generate).join(', ')
-
-    const elabStr = `Because ${calleeStr} is not a function, you cannot run ${calleeStr}(${argStr}).`
-    const multStr = `If you were planning to perform multiplication by ${calleeStr}, you need to use the * operator.`
-
-    if (Number.isFinite(calleeVal)) {
-      return `${elabStr} ${multStr}`
-    } else {
-      return elabStr
-    }
   }
 }
 
