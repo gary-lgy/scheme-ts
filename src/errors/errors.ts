@@ -94,7 +94,7 @@ export class UnquoteInWrongContext extends RuntimeSourceError {
   }
 
   public explain() {
-    return `\`unquote' and \`unquote-splicing' can only appear within quasiquotations`
+    return `\`unquote' and \`unquote-splicing' can only appear within quasiquotations with right level of depth`
   }
 }
 

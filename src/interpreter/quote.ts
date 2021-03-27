@@ -8,7 +8,7 @@ import {
 } from '../lang/scheme'
 import { Context } from '../types'
 import { List, tryConvertToList } from '../utils/listHelpers'
-import { evaluate } from './interpreter'
+import { evaluate, ValueGenerator } from './interpreter'
 import { ExpressibleValue } from './runtime'
 import { handleRuntimeError, listOfValues } from './util'
 
@@ -80,72 +80,110 @@ export const quoteExpression = (
   }
 }
 
+// Quasiquote an expression in list context.
+// In a list context, unquote-splicing is allowed.
+// Therefore, this method returns an array instead of a single value.
+function* quasiquoteExpressionInListContext(
+  expression: SchemeExpression,
+  context: Context,
+  quoteLevel: number,
+  unquoteLevel: number
+): Generator<Context, ExpressibleValue[]> {
+  if (expression.type !== 'UnquoteSplicing') {
+    return [yield* quasiquoteExpression(expression, context, quoteLevel, unquoteLevel)]
+  }
+
+  if (quoteLevel === unquoteLevel) {
+    const unquoted = yield* evaluate(expression.expression, context)
+    if (unquoted.type === 'EVEmptyList') {
+      return []
+    }
+
+    let list: List | null
+    if (unquoted.type !== 'EVPair' || !(list = tryConvertToList(unquoted))) {
+      return handleRuntimeError(
+        context,
+        new errors.UnquoteSplicingEvaluatedToNonList(unquoted, expression)
+      )
+    }
+
+    return list.map(element => element.value)
+  } else if (quoteLevel > unquoteLevel) {
+    return [
+      listOfValues(
+        { type: 'EVSymbol', value: 'unquote-splicing' },
+        ...(yield* quasiquoteExpressionInListContext(
+          expression.expression,
+          context,
+          quoteLevel,
+          unquoteLevel + 1
+        ))
+      )
+    ]
+  } else {
+    return handleRuntimeError(
+      context,
+      new errors.UnreachableCodeReached('invalid quasiquotation depth')
+    )
+  }
+}
+
 export function* quasiquoteExpression(
   expression: SchemeExpression,
   context: Context,
   quoteLevel: number,
-  unquoteLevel: number,
-  isUnquoteSplicingAllowed: boolean
-): Generator<Context, ExpressibleValue[]> {
+  unquoteLevel: number
+): ValueGenerator {
   switch (expression.type) {
     case 'BoolLiteral':
     case 'NumberLiteral':
     case 'StringLiteral':
     case 'Identifier':
-      return [quoteLiteral(expression)]
+      return quoteLiteral(expression)
     case 'List': {
       const quoted: ExpressibleValue[] = []
       for (const element of expression.elements) {
         // Spread each result
         quoted.push(
-          ...(yield* quasiquoteExpression(element, context, quoteLevel, unquoteLevel, true))
+          ...(yield* quasiquoteExpressionInListContext(element, context, quoteLevel, unquoteLevel))
         )
       }
-      return [listOfValues(...quoted)]
+      return listOfValues(...quoted)
     }
     case 'Quote': {
-      return [
-        listOfValues(
-          { type: 'EVSymbol', value: 'quote' },
-          ...(yield* quasiquoteExpression(
+      return listOfValues(
+        { type: 'EVSymbol', value: 'quote' },
+        ...(yield* quasiquoteExpressionInListContext(
+          expression.expression,
+          context,
+          quoteLevel,
+          unquoteLevel
+        ))
+      )
+    }
+    case 'Quasiquote':
+      return listOfValues(
+        { type: 'EVSymbol', value: 'quosiquote' },
+        ...(yield* quasiquoteExpressionInListContext(
+          expression.expression,
+          context,
+          quoteLevel + 1,
+          unquoteLevel
+        ))
+      )
+    case 'Unquote': {
+      if (quoteLevel === unquoteLevel) {
+        return yield* evaluate(expression.expression, context)
+      } else if (quoteLevel > unquoteLevel) {
+        return listOfValues(
+          { type: 'EVSymbol', value: 'unquote' },
+          ...(yield* quasiquoteExpressionInListContext(
             expression.expression,
             context,
             quoteLevel,
-            unquoteLevel,
-            true
+            unquoteLevel + 1
           ))
         )
-      ]
-    }
-    case 'Quasiquote':
-      return [
-        listOfValues(
-          { type: 'EVSymbol', value: 'quosiquote' },
-          ...(yield* quasiquoteExpression(
-            expression.expression,
-            context,
-            quoteLevel + 1,
-            unquoteLevel,
-            true
-          ))
-        )
-      ]
-    case 'Unquote': {
-      if (quoteLevel === unquoteLevel) {
-        return [yield* evaluate(expression.expression, context)]
-      } else if (quoteLevel > unquoteLevel) {
-        return [
-          listOfValues(
-            { type: 'EVSymbol', value: 'unquote' },
-            ...(yield* quasiquoteExpression(
-              expression.expression,
-              context,
-              quoteLevel,
-              unquoteLevel + 1,
-              true
-            ))
-          )
-        ]
       } else {
         return handleRuntimeError(
           context,
@@ -154,41 +192,7 @@ export function* quasiquoteExpression(
       }
     }
     case 'UnquoteSplicing': {
-      if (!isUnquoteSplicingAllowed) {
-        return handleRuntimeError(context, new errors.UnquoteSplicingInNonListContext(expression))
-      }
-
-      if (quoteLevel === unquoteLevel) {
-        const unquoted = yield* evaluate(expression.expression, context)
-        let list: List | null
-        if (unquoted.type === 'EVEmptyList') {
-          return []
-        } else if (unquoted.type !== 'EVPair' || !(list = tryConvertToList(unquoted))) {
-          return handleRuntimeError(
-            context,
-            new errors.UnquoteSplicingEvaluatedToNonList(unquoted, expression)
-          )
-        }
-        return list.map(element => element.value)
-      } else if (quoteLevel > unquoteLevel) {
-        return [
-          listOfValues(
-            { type: 'EVSymbol', value: 'unquote-splicing' },
-            ...(yield* quasiquoteExpression(
-              expression.expression,
-              context,
-              quoteLevel,
-              unquoteLevel + 1,
-              true
-            ))
-          )
-        ]
-      } else {
-        return handleRuntimeError(
-          context,
-          new errors.UnreachableCodeReached('invalid quasiquotation depth')
-        )
-      }
+      return handleRuntimeError(context, new errors.UnquoteSplicingInNonListContext(expression))
     }
     case 'Program':
     case 'Sequence':
