@@ -2,7 +2,7 @@ import * as errors from '../errors/errors'
 import { SchemeList } from '../lang/scheme'
 import { Context } from '../types'
 import { evaluate, ValueGenerator } from './interpreter'
-import { quoteExpression } from './quote'
+import { quasiquoteExpression, quoteExpression } from './quote'
 import { SpecialForm } from './runtime'
 import { handleRuntimeError, isTruthy, setVariable } from './util'
 
@@ -44,13 +44,21 @@ export function* evaluateSpecialForm(form: SpecialForm, context: Context): Value
     case 'quote': {
       return quoteExpression(form.expression, context)
     }
-    case 'quasiquote':
+    case 'quasiquote': {
+      const quasiquoted = yield* quasiquoteExpression(form.expression, context, 1, 1, false)
+      if (quasiquoted.length !== 1) {
+        return handleRuntimeError(
+          context,
+          new errors.UnreachableCodeReached(
+            'top level quasiquote should return exactly 1 expression'
+          )
+        )
+      }
+      return quasiquoted[0]
+    }
     case 'unquote':
     case 'unquote-splicing':
-      return handleRuntimeError(
-        context,
-        new errors.BuiltinProcedureError(new Error('not implemented'))
-      )
+      return handleRuntimeError(context, new errors.UnquoteInWrongContext(form.expression))
   }
 }
 

@@ -1,8 +1,8 @@
 /* tslint:disable:max-classes-per-file */
 import { ANTLRInputStream, CommonTokenStream, ParserRuleContext } from 'antlr4ts'
+import { AbstractParseTreeVisitor } from 'antlr4ts/tree/AbstractParseTreeVisitor'
 import { ErrorNode } from 'antlr4ts/tree/ErrorNode'
 import { ParseTree } from 'antlr4ts/tree/ParseTree'
-import { RuleNode } from 'antlr4ts/tree/RuleNode'
 import { TerminalNode } from 'antlr4ts/tree/TerminalNode'
 import {
   SchemeBoolLiteral,
@@ -65,7 +65,28 @@ function contextToLocation(ctx: ParserRuleContext): SourceLocation {
   }
 }
 
-class ExpressionGenerator implements SchemeVisitor<SchemeExpression> {
+class ExpressionGenerator
+  extends AbstractParseTreeVisitor<SchemeExpression>
+  implements SchemeVisitor<SchemeExpression> {
+  protected defaultResult(): SchemeExpression {
+    // This method is called when there is no mathing parser rule
+    // Need to investigate what's the effect of returning an empty program here
+    return {
+      type: 'Sequence',
+      expressions: [],
+      loc: {
+        start: {
+          line: 0,
+          column: 0
+        },
+        end: {
+          line: 0,
+          column: 0
+        }
+      }
+    }
+  }
+
   visitList(ctx: ListContext): SchemeList {
     return {
       type: 'List',
@@ -158,10 +179,6 @@ class ExpressionGenerator implements SchemeVisitor<SchemeExpression> {
   }
 
   visitExpression?: ((ctx: ExpressionContext) => SchemeExpression) | undefined
-
-  visitChildren(_: RuleNode): SchemeExpression {
-    throw new Error('Method not implemented.')
-  }
 
   visitTerminal(node: TerminalNode): SchemeExpression {
     return node.accept(this)

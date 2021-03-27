@@ -1,8 +1,6 @@
 /* tslint:disable: max-classes-per-file */
-import * as es from 'estree'
 import { ExpressibleValue } from '../interpreter/runtime'
 import { SchemeExpression } from '../lang/scheme'
-import { ErrorSeverity, ErrorType, SourceError, Value } from '../types'
 import { stringify } from '../utils/stringify'
 import { RuntimeSourceError } from './runtimeSourceError'
 
@@ -90,34 +88,43 @@ export class UnexpectedQuotationError extends RuntimeSourceError {
   }
 }
 
-export class ModuleInternalError extends RuntimeSourceError {
-  constructor(public moduleName: string, node?: SchemeExpression) {
+export class UnquoteInWrongContext extends RuntimeSourceError {
+  constructor(node: SchemeExpression) {
     super(node)
   }
 
   public explain() {
-    return `Error(s) occured when executing the module "${this.moduleName}".`
-  }
-
-  public elaborate() {
-    return `
-      You may need to contact with the author for this module to fix this error.
-    `
+    return `\`unquote' and \`unquote-splicing' can only appear within quasiquotations`
   }
 }
 
-export class ExceptionError implements SourceError {
-  public type = ErrorType.RUNTIME
-  public severity = ErrorSeverity.ERROR
-
-  constructor(public error: Error, public location: es.SourceLocation) {}
-
-  public explain() {
-    return this.error.toString()
+export class UnquoteSplicingEvaluatedToNonList extends RuntimeSourceError {
+  constructor(public result: ExpressibleValue, node: SchemeExpression) {
+    super(node)
   }
 
-  public elaborate() {
-    return 'TODO'
+  public explain() {
+    return `\`unquote-splicing' should evaluate to a list, but evaluated to ${this.result.type}`
+  }
+}
+
+export class UnquoteSplicingInNonListContext extends RuntimeSourceError {
+  constructor(node: SchemeExpression) {
+    super(node)
+  }
+
+  public explain() {
+    return `\`unquote-splicing' can only appear within a list`
+  }
+}
+
+export class UnreachableCodeReached extends RuntimeSourceError {
+  constructor(public message: string) {
+    super()
+  }
+
+  public explain() {
+    return `Unreachable code reached: ${this.message}`
   }
 }
 
@@ -242,66 +249,5 @@ export class VariableRedeclaration extends RuntimeSourceError {
     } else {
       return ''
     }
-  }
-}
-
-export class ConstAssignment extends RuntimeSourceError {
-  constructor(node: SchemeExpression, private name: string) {
-    super(node)
-  }
-
-  public explain() {
-    return `Cannot assign new value to constant ${this.name}.`
-  }
-
-  public elaborate() {
-    return `As ${this.name} was declared as a constant, its value cannot be changed. You will have to declare a new variable.`
-  }
-}
-
-export class GetPropertyError extends RuntimeSourceError {
-  constructor(node: SchemeExpression, private obj: Value, private prop: string) {
-    super(node)
-  }
-
-  public explain() {
-    return `Cannot read property ${this.prop} of ${stringify(this.obj)}.`
-  }
-
-  public elaborate() {
-    return 'TODO'
-  }
-}
-
-export class GetInheritedPropertyError extends RuntimeSourceError {
-  public type = ErrorType.RUNTIME
-  public severity = ErrorSeverity.ERROR
-  public location: es.SourceLocation
-
-  constructor(node: SchemeExpression, private obj: Value, private prop: string) {
-    super(node)
-    this.location = node.loc!
-  }
-
-  public explain() {
-    return `Cannot read inherited property ${this.prop} of ${stringify(this.obj)}.`
-  }
-
-  public elaborate() {
-    return 'TODO'
-  }
-}
-
-export class SetPropertyError extends RuntimeSourceError {
-  constructor(node: SchemeExpression, private obj: Value, private prop: string) {
-    super(node)
-  }
-
-  public explain() {
-    return `Cannot assign property ${this.prop} of ${stringify(this.obj)}.`
-  }
-
-  public elaborate() {
-    return 'TODO'
   }
 }
