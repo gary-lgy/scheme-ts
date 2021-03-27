@@ -60,7 +60,15 @@ export type EVPair = {
 
 // Special syntax forms
 
-export type SpecialForm = DefineForm | SetForm | LambdaForm | ConditionalForm
+export type SpecialForm =
+  | DefineForm
+  | SetForm
+  | LambdaForm
+  | ConditionalForm
+  | QuoteSpecialForm
+  | QuasiquoteSpecialForm
+  | UnquoteSpecialForm
+  | UnquoteSplicingSpecialForm
 
 export type DefineForm = {
   tag: 'define'
@@ -91,4 +99,24 @@ export type ConditionalForm = {
   test: SchemeExpression
   consequent: SchemeExpression
   alternative?: SchemeExpression
+}
+
+export type QuoteSpecialForm = {
+  tag: 'quote'
+  expression: SchemeExpression
+}
+
+export type QuasiquoteSpecialForm = {
+  tag: 'quasiquote'
+  expression: SchemeExpression
+}
+
+export type UnquoteSpecialForm = {
+  tag: 'unquote'
+  expression: SchemeExpression
+}
+
+export type UnquoteSplicingSpecialForm = {
+  tag: 'unquote-splicing'
+  expression: SchemeExpression
 }

@@ -1,5 +1,4 @@
 /* tslint:disable: max-classes-per-file */
-/* tslint:disable:max-line-length */
 import * as es from 'estree'
 import { ExpressibleValue } from '../interpreter/runtime'
 import { SchemeExpression } from '../lang/scheme'
@@ -44,6 +43,31 @@ export class IfSyntaxError extends RuntimeSourceError {
 
   public explain() {
     return "Syntax for `if' is incorrect. Please use `(if (test) (consequent))' or `(if (test) (consequent) (alternative))'"
+  }
+}
+
+type QuoteType = 'quote' | 'quasiquote' | 'unquote' | 'unquote-splicing'
+const quoteTypeToShorthand = (type: QuoteType): string => {
+  switch (type) {
+    case 'quote':
+      return "'"
+    case 'quasiquote':
+      return '`'
+    case 'unquote':
+      return ','
+    case 'unquote-splicing':
+      return ',@'
+  }
+}
+export class QuoteSyntaxError extends RuntimeSourceError {
+  constructor(public quoteType: QuoteType, node: SchemeExpression) {
+    super(node)
+  }
+
+  public explain() {
+    return `Syntax for \`${this.quoteType}' is incorrect. Please use (${
+      this.quoteType
+    } expression) or ${quoteTypeToShorthand(this.quoteType)}expression`
   }
 }
 

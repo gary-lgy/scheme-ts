@@ -16,7 +16,6 @@ import {
 } from '../lang/scheme'
 import { Context } from '../types'
 import { apply, listOfArguments } from './procedure'
-import { quoteExpression } from './quote'
 import { ExpressibleValue } from './runtime'
 import { evaluateSpecialForm, listToSpecialForm } from './SpecialForm'
 import { extendCurrentEnvironment, getVariable, handleRuntimeError, pushEnvironment } from './util'
@@ -79,20 +78,72 @@ export const evaluators: { [key in SchemeExpressionType]: Evaluator<SchemeExpres
     return yield* apply(context, procedure, procedureName, args, node)
   },
 
+  // We need to convert quote shorthands to their list representations and evaluate them as special forms.
+  // We do not evaluate them directly because the identifier `quote', `quasiquote' etc might have been redefined.
+  // In that case we should use the new definition.
+  // Evaluating it as a list would take care of this situation.
   Quote: function* (node: SchemeQuote, context: Context): ValueGenerator {
-    return quoteExpression(node.expression, context)
+    const quoteListRepresentation: SchemeList = {
+      type: 'List',
+      elements: [
+        {
+          type: 'Identifier',
+          name: 'quote',
+          loc: node.loc
+        },
+        node.expression
+      ],
+      loc: node.loc
+    }
+    return yield* evaluate(quoteListRepresentation, context)
   },
 
   Quasiquote: function* (node: SchemeQuasiquote, context: Context): ValueGenerator {
-    throw new Error('quasiquote is not implemented')
+    const quasiQuoteListRepresentation: SchemeList = {
+      type: 'List',
+      elements: [
+        {
+          type: 'Identifier',
+          name: 'quasiquote',
+          loc: node.loc
+        },
+        node.expression
+      ],
+      loc: node.loc
+    }
+    return yield* evaluate(quasiQuoteListRepresentation, context)
   },
 
   Unquote: function* (node: SchemeUnquote, context: Context): ValueGenerator {
-    throw new Error('unquote is not implemented')
+    const unquoteListRepresentation: SchemeList = {
+      type: 'List',
+      elements: [
+        {
+          type: 'Identifier',
+          name: 'unquote',
+          loc: node.loc
+        },
+        node.expression
+      ],
+      loc: node.loc
+    }
+    return yield* evaluate(unquoteListRepresentation, context)
   },
 
   UnquoteSplicing: function* (node: SchemeUnquoteSplicing, context: Context): ValueGenerator {
-    throw new Error('unquote-splicing is not implemented')
+    const unquoteSplicingListRepresentation: SchemeList = {
+      type: 'List',
+      elements: [
+        {
+          type: 'Identifier',
+          name: 'unquote-splicing',
+          loc: node.loc
+        },
+        node.expression
+      ],
+      loc: node.loc
+    }
+    return yield* evaluate(unquoteSplicingListRepresentation, context)
   },
 
   StringLiteral: function* (node: SchemeStringLiteral, context: Context): ValueGenerator {
@@ -125,7 +176,6 @@ export const evaluators: { [key in SchemeExpressionType]: Evaluator<SchemeExpres
     }
   }
 }
-// tslint:enable:object-literal-shorthand
 
 export function* evaluate(
   node: SchemeExpression,

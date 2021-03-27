@@ -2,6 +2,7 @@ import * as errors from '../errors/errors'
 import { SchemeList } from '../lang/scheme'
 import { Context } from '../types'
 import { evaluate, ValueGenerator } from './interpreter'
+import { quoteExpression } from './quote'
 import { SpecialForm } from './runtime'
 import { handleRuntimeError, isTruthy, setVariable } from './util'
 
@@ -40,9 +41,21 @@ export function* evaluateSpecialForm(form: SpecialForm, context: Context): Value
         return { type: 'EVEmptyList' }
       }
     }
+    case 'quote': {
+      return quoteExpression(form.expression, context)
+    }
+    case 'quasiquote':
+    case 'unquote':
+    case 'unquote-splicing':
+      return handleRuntimeError(
+        context,
+        new errors.BuiltinProcedureError(new Error('not implemented'))
+      )
   }
 }
 
+// Convert a SchemeList to a special form, if the list has appropriate format.
+// If no conversion is possible, return undefined
 export const listToSpecialForm = (
   tag: string,
   list: SchemeList,
@@ -90,7 +103,7 @@ export const listToSpecialForm = (
       }
     }
   } else if (tag === 'set!') {
-    if (list.elements.length != 3 || list.elements[1].type !== 'Identifier') {
+    if (list.elements.length !== 3 || list.elements[1].type !== 'Identifier') {
       return handleRuntimeError(context, new errors.SetSyntaxError(list))
     }
     return {
@@ -107,6 +120,19 @@ export const listToSpecialForm = (
       test: list.elements[1],
       consequent: list.elements[2],
       alternative: list.elements[3]
+    }
+  } else if (
+    tag === 'quote' ||
+    tag === 'quasiquote' ||
+    tag === 'unquote' ||
+    tag === 'unquote-splicing'
+  ) {
+    if (list.elements.length !== 2) {
+      return handleRuntimeError(context, new errors.QuoteSyntaxError(tag, list))
+    }
+    return {
+      tag,
+      expression: list.elements[1]
     }
   } else {
     return undefined
