@@ -16,6 +16,7 @@ import {
 } from '../lang/scheme'
 import { Context } from '../types'
 import { apply, listOfArguments } from './procedure'
+import { quoteToListRepresentation } from './quote'
 import { ExpressibleValue } from './runtime'
 import { evaluateSpecialForm, listToSpecialForm } from './SpecialForm'
 import { extendCurrentEnvironment, getVariable, handleRuntimeError, pushEnvironment } from './util'
@@ -81,68 +82,38 @@ export const evaluators: { [key in SchemeExpressionType]: Evaluator<SchemeExpres
   // We need to convert quote shorthands to their list representations and evaluate them as special forms.
   // We do not evaluate them directly because the identifier `quote', `quasiquote' etc might have been redefined.
   // In that case we should use the new definition.
-  // Evaluating it as a list would take care of this situation.
+  // Evaluating it as a special form would take care of this situation.
   Quote: function* (node: SchemeQuote, context: Context): ValueGenerator {
-    const quoteListRepresentation: SchemeList = {
-      type: 'List',
-      elements: [
-        {
-          type: 'Identifier',
-          name: 'quote',
-          loc: node.loc
-        },
-        node.expression
-      ],
-      loc: node.loc
-    }
+    const quoteListRepresentation: SchemeList = quoteToListRepresentation({
+      type: 'quote',
+      quoteExpression: node
+    })
+    console.log('interpreting quote - quote in list representation')
+    console.log(quoteListRepresentation)
     return yield* evaluate(quoteListRepresentation, context)
   },
 
   Quasiquote: function* (node: SchemeQuasiquote, context: Context): ValueGenerator {
-    const quasiQuoteListRepresentation: SchemeList = {
-      type: 'List',
-      elements: [
-        {
-          type: 'Identifier',
-          name: 'quasiquote',
-          loc: node.loc
-        },
-        node.expression
-      ],
-      loc: node.loc
-    }
+    const quasiQuoteListRepresentation: SchemeList = quoteToListRepresentation({
+      type: 'quasiquote',
+      quoteExpression: node
+    })
     return yield* evaluate(quasiQuoteListRepresentation, context)
   },
 
   Unquote: function* (node: SchemeUnquote, context: Context): ValueGenerator {
-    const unquoteListRepresentation: SchemeList = {
-      type: 'List',
-      elements: [
-        {
-          type: 'Identifier',
-          name: 'unquote',
-          loc: node.loc
-        },
-        node.expression
-      ],
-      loc: node.loc
-    }
+    const unquoteListRepresentation: SchemeList = quoteToListRepresentation({
+      type: 'unquote',
+      quoteExpression: node
+    })
     return yield* evaluate(unquoteListRepresentation, context)
   },
 
   UnquoteSplicing: function* (node: SchemeUnquoteSplicing, context: Context): ValueGenerator {
-    const unquoteSplicingListRepresentation: SchemeList = {
-      type: 'List',
-      elements: [
-        {
-          type: 'Identifier',
-          name: 'unquote-splicing',
-          loc: node.loc
-        },
-        node.expression
-      ],
-      loc: node.loc
-    }
+    const unquoteSplicingListRepresentation: SchemeList = quoteToListRepresentation({
+      type: 'unquote-splicing',
+      quoteExpression: node
+    })
     return yield* evaluate(unquoteSplicingListRepresentation, context)
   },
 

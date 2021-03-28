@@ -45,7 +45,14 @@ export function* evaluateSpecialForm(form: SpecialForm, context: Context): Value
       return quoteExpression(form.expression, context)
     }
     case 'quasiquote': {
-      return yield* quasiquoteExpression(form.expression, context, 1, 1)
+      const quoted = yield* quasiquoteExpression(form.expression, context, 1, 1, false)
+      if (quoted.length !== 1) {
+        return handleRuntimeError(
+          context,
+          new errors.UnreachableCodeReached('top-level quasiquote should return a single value')
+        )
+      }
+      return quoted[0]
     }
     case 'unquote':
     case 'unquote-splicing':
