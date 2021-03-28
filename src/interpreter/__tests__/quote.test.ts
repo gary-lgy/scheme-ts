@@ -72,7 +72,7 @@ describe('quote', () => {
   })
 
   test('quote bool', () => {
-    const actual = evaluateUntilDone('#t')
+    const actual = evaluateUntilDone("'#t")
     const expected: EVBool = {
       type: 'EVBool',
       value: true
@@ -160,34 +160,8 @@ describe('quote', () => {
   })
 
   test('quote with quasiquote and unquote inside quoted expression', () => {
-    const actual = evaluateUntilDone(`'(1 2 \`(3 4 ,(+ 1 2) ,@(list a b)))`)
-    const expected = listOfValues(
-      { type: 'EVNumber', value: 1 },
-      { type: 'EVNumber', value: 2 },
-      listOfValues(
-        { type: 'EVSymbol', value: 'quasiquote' },
-        listOfValues(
-          { type: 'EVNumber', value: 3 },
-          { type: 'EVNumber', value: 4 },
-          listOfValues(
-            { type: 'EVSymbol', value: 'unquote' },
-            listOfValues(
-              { type: 'EVSymbol', value: '+' },
-              { type: 'EVNumber', value: 1 },
-              { type: 'EVNumber', value: 2 }
-            )
-          ),
-          listOfValues(
-            { type: 'EVSymbol', value: 'unquote-splicing' },
-            listOfValues(
-              { type: 'EVSymbol', value: 'list' },
-              { type: 'EVSymbol', value: 'a' },
-              { type: 'EVSymbol', value: 'b' }
-            )
-          )
-        )
-      )
-    )
+    const actual = stringify(evaluateUntilDone("'(1 2 `(3 4 ,(+ 1 2) ,@(list a b)))"))
+    const expected = '(1 2 (quasiquote (3 4 (unquote (+ 1 2)) (unquote-splicing (list a b)))))'
     expect(actual).toEqual(expected)
   })
 
