@@ -5,11 +5,7 @@ import {
   SchemeIdentifier,
   SchemeList,
   SchemeNumberLiteral,
-  SchemeQuasiquote,
-  SchemeQuote,
-  SchemeStringLiteral,
-  SchemeUnquote,
-  SchemeUnquoteSplicing
+  SchemeStringLiteral
 } from '../lang/scheme'
 import { Context } from '../types'
 import { List, tryConvertToList } from '../utils/listHelpers'
@@ -56,26 +52,6 @@ export const quoteExpression = (
       return quoteLiteral(expression)
     case 'List':
       return listOfValues(...expression.elements.map(elem => quoteExpression(elem, context)))
-    case 'Quote':
-      return listOfValues(
-        { type: 'EVSymbol', value: 'quote' },
-        quoteExpression(expression.expression, context)
-      )
-    case 'Quasiquote':
-      return listOfValues(
-        { type: 'EVSymbol', value: 'quasiquote' },
-        quoteExpression(expression.expression, context)
-      )
-    case 'Unquote':
-      return listOfValues(
-        { type: 'EVSymbol', value: 'unquote' },
-        quoteExpression(expression.expression, context)
-      )
-    case 'UnquoteSplicing':
-      return listOfValues(
-        { type: 'EVSymbol', value: 'unquote-splicing' },
-        quoteExpression(expression.expression, context)
-      )
     case 'Program':
     case 'Sequence':
       return handleRuntimeError(
@@ -238,86 +214,11 @@ export function* quasiquoteExpression(
       }
       return [listOfValues(...quoted)]
     }
-    case 'Quote': {
-      const listRepresentation = quoteToListRepresentation({
-        type: 'quote',
-        quoteExpression: expression
-      })
-      return yield* quasiquoteExpression(
-        listRepresentation,
-        context,
-        quoteLevel,
-        unquoteLevel,
-        isUnquoteSplicingAllowed
-      )
-    }
-    case 'Quasiquote':
-      const listRepresentation = quoteToListRepresentation({
-        type: 'quasiquote',
-        quoteExpression: expression
-      })
-      return yield* quasiquoteExpression(
-        listRepresentation,
-        context,
-        quoteLevel,
-        unquoteLevel,
-        isUnquoteSplicingAllowed
-      )
-    case 'Unquote': {
-      // Since `unquote' might have been redefined, we need to convert the shorthand syntax to its list representation
-      // and let the 'List' case of this method handle the rest
-      const listRepresentation = quoteToListRepresentation({
-        type: 'unquote',
-        quoteExpression: expression
-      })
-      return yield* quasiquoteExpression(
-        listRepresentation,
-        context,
-        quoteLevel,
-        unquoteLevel,
-        isUnquoteSplicingAllowed
-      )
-    }
-    case 'UnquoteSplicing': {
-      const listRepresentation = quoteToListRepresentation({
-        type: 'unquote-splicing',
-        quoteExpression: expression
-      })
-      return yield* quasiquoteExpression(
-        listRepresentation,
-        context,
-        quoteLevel,
-        unquoteLevel,
-        isUnquoteSplicingAllowed
-      )
-    }
     case 'Program':
     case 'Sequence':
       return handleRuntimeError(
         context,
         new errors.UnexpectedQuotationError(context.runtime.nodes[0])
       )
-  }
-}
-
-export const quoteToListRepresentation = (
-  quote:
-    | { type: 'quote'; quoteExpression: SchemeQuote }
-    | { type: 'quasiquote'; quoteExpression: SchemeQuasiquote }
-    | { type: 'unquote'; quoteExpression: SchemeUnquote }
-    | { type: 'unquote-splicing'; quoteExpression: SchemeUnquoteSplicing }
-): SchemeList => {
-  const quotedExpression = quote.quoteExpression.expression
-  return {
-    type: 'List',
-    elements: [
-      {
-        type: 'Identifier',
-        name: quote.type,
-        loc: quote.quoteExpression.loc
-      },
-      quotedExpression
-    ],
-    loc: quote.quoteExpression.loc
   }
 }

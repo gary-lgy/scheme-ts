@@ -11,12 +11,8 @@ import {
   SchemeList,
   SchemeNumberLiteral,
   SchemeProgram,
-  SchemeQuasiquote,
-  SchemeQuote,
   SchemeSequence,
   SchemeStringLiteral,
-  SchemeUnquote,
-  SchemeUnquoteSplicing,
   SourceLocation
 } from '../lang/scheme'
 import { SchemeLexer } from '../lang/SchemeLexer'
@@ -95,34 +91,46 @@ class ExpressionGenerator
     }
   }
 
-  visitQuote(ctx: QuoteContext): SchemeQuote {
+  visitQuote(ctx: QuoteContext): SchemeList {
     return {
-      type: 'Quote',
-      expression: ctx.expression().accept(this),
+      type: 'List',
+      elements: [
+        { type: 'Identifier', name: 'quote', loc: contextToLocation(ctx) },
+        ctx.expression().accept(this)
+      ],
       loc: contextToLocation(ctx)
     }
   }
 
-  visitQuasiquote(ctx: QuasiquoteContext): SchemeQuasiquote {
+  visitQuasiquote(ctx: QuasiquoteContext): SchemeList {
     return {
-      type: 'Quasiquote',
-      expression: ctx.expression().accept(this),
+      type: 'List',
+      elements: [
+        { type: 'Identifier', name: 'quasiquote', loc: contextToLocation(ctx) },
+        ctx.expression().accept(this)
+      ],
       loc: contextToLocation(ctx)
     }
   }
 
-  visitUnquote(ctx: UnquoteContext): SchemeUnquote {
+  visitUnquote(ctx: UnquoteContext): SchemeList {
     return {
-      type: 'Unquote',
-      expression: ctx.expression().accept(this),
+      type: 'List',
+      elements: [
+        { type: 'Identifier', name: 'unquote', loc: contextToLocation(ctx) },
+        ctx.expression().accept(this)
+      ],
       loc: contextToLocation(ctx)
     }
   }
 
-  visitUnquoteSplicing(ctx: UnquoteSplicingContext): SchemeUnquoteSplicing {
+  visitUnquoteSplicing(ctx: UnquoteSplicingContext): SchemeList {
     return {
-      type: 'UnquoteSplicing',
-      expression: ctx.expression().accept(this),
+      type: 'List',
+      elements: [
+        { type: 'Identifier', name: 'unquote-splicing', loc: contextToLocation(ctx) },
+        ctx.expression().accept(this)
+      ],
       loc: contextToLocation(ctx)
     }
   }
