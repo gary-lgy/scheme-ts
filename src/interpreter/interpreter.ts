@@ -88,8 +88,6 @@ export const evaluators: { [key in SchemeExpressionType]: Evaluator<SchemeExpres
       type: 'quote',
       quoteExpression: node
     })
-    console.log('interpreting quote - quote in list representation')
-    console.log(quoteListRepresentation)
     return yield* evaluate(quoteListRepresentation, context)
   },
 

@@ -1,4 +1,4 @@
-import { Frame } from '../types'
+import { Context, Frame } from '../types'
 import { EVNumber, EVPair, EVProcedure, ExpressibleValue } from './runtime'
 
 const defineBuiltin = (frame: Frame, name: string, value: ExpressibleValue) => {
@@ -118,7 +118,9 @@ const cdr: EVProcedure = {
     doOnPair('cdr', args[0], (pair: EVPair): ExpressibleValue => pair.tail)
 }
 
-export const defineBuiltins = (frame: Frame) => {
+export const importNativeBuiltins = (context: Context) => {
+  const frame = context.runtime.environments[0].head
+
   defineBuiltin(frame, '+', add)
   defineBuiltin(frame, '-', subtract)
   defineBuiltin(frame, '*', multiply)

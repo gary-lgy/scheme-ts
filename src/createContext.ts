@@ -1,6 +1,7 @@
 // Variable determining chapter of Source is contained in this file.
 
 import { GLOBAL } from './constants'
+import { importNativeBuiltins } from './interpreter/builtins'
 import { EVProcedure, ExpressibleValue } from './interpreter/runtime'
 import * as misc from './stdlib/misc'
 import { createTypeEnvironment } from './typeChecker/typeChecker'
@@ -70,6 +71,11 @@ export const importExternalSymbols = (context: Context, externalSymbols: string[
 export const importBuiltins = (context: Context, externalBuiltIns: CustomBuiltIns) => {
   ensureGlobalEnvironmentExist(context)
 
+  importExternalBuiltins(context, externalBuiltIns)
+  importNativeBuiltins(context)
+}
+
+const importExternalBuiltins = (context: Context, externalBuiltIns: CustomBuiltIns) => {
   const rawDisplay = (v: Value) =>
     externalBuiltIns.rawDisplay(
       v,

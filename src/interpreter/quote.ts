@@ -63,7 +63,7 @@ export const quoteExpression = (
       )
     case 'Quasiquote':
       return listOfValues(
-        { type: 'EVSymbol', value: 'quosiquote' },
+        { type: 'EVSymbol', value: 'quasiquote' },
         quoteExpression(expression.expression, context)
       )
     case 'Unquote':
@@ -123,7 +123,7 @@ function* handleSpecialQuotationForm(
     case 'quasiquote': {
       return [
         listOfValues(
-          { type: 'EVSymbol', value: 'quosiquote' },
+          { type: 'EVSymbol', value: 'quasiquote' },
           ...(yield* quasiquoteExpression(
             subExpression,
             context,
