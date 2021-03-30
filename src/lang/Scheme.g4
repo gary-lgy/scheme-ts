@@ -10,6 +10,10 @@ sequence
 
 expression
    : '(' elements=expression* ')' # List
+   | '\'' expression # Quote
+   | '`' expression # Quasiquote
+   | ',' expression # Unquote
+   | ',@' expression # UnquoteSplicing
    | STRING # String
    | NUMBER # Number
    | BOOL # Bool
@@ -29,13 +33,17 @@ BOOL
    | '#f'
    ;
 
+IDENTIFIER
+   : IDENTIFIER_INITIAL IDENTIFIER_SUBSEQUENT*
+   | PECULIAR_IDENTIFIER
+   ;
+
 WHITESPACE
    : (' ' | '\n' | '\t' | '\r')+ -> skip
    ;
 
-IDENTIFIER
-   : IDENTIFIER_INITIAL IDENTIFIER_SUBSEQUENT*
-   | PECULIAR_IDENTIFIER
+COMMENT
+   : ';' ~ ( '\r' | '\n' )* -> skip
    ;
 
 fragment LETTER

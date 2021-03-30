@@ -112,6 +112,5 @@ export function normaliseList(xs: ExpressibleValue): ExpressibleValue {
       }
     }
   }
-  console.log(getListObject(xs))
   return getListObject(xs)
 }

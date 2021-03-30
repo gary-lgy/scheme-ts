@@ -1,8 +1,8 @@
 /* tslint:disable:max-classes-per-file */
 import { ANTLRInputStream, CommonTokenStream, ParserRuleContext } from 'antlr4ts'
+import { AbstractParseTreeVisitor } from 'antlr4ts/tree/AbstractParseTreeVisitor'
 import { ErrorNode } from 'antlr4ts/tree/ErrorNode'
 import { ParseTree } from 'antlr4ts/tree/ParseTree'
-import { RuleNode } from 'antlr4ts/tree/RuleNode'
 import { TerminalNode } from 'antlr4ts/tree/TerminalNode'
 import {
   SchemeBoolLiteral,
@@ -23,9 +23,13 @@ import {
   ListContext,
   NumberContext,
   ProgramContext,
+  QuasiquoteContext,
+  QuoteContext,
   SchemeParser,
   SequenceContext,
-  StringContext
+  StringContext,
+  UnquoteContext,
+  UnquoteSplicingContext
 } from '../lang/SchemeParser'
 import { SchemeVisitor } from '../lang/SchemeVisitor'
 import { Context, ErrorSeverity, ErrorType, SourceError } from '../types'
@@ -44,34 +48,6 @@ export class FatalSyntaxError implements SourceError {
   }
 }
 
-export class MissingSemicolonError implements SourceError {
-  public type = ErrorType.SYNTAX
-  public severity = ErrorSeverity.ERROR
-  public constructor(public location: SourceLocation) {}
-
-  public explain() {
-    return 'Missing semicolon at the end of statement'
-  }
-
-  public elaborate() {
-    return 'Every statement must be terminated by a semicolon.'
-  }
-}
-
-export class TrailingCommaError implements SourceError {
-  public type: ErrorType.SYNTAX
-  public severity: ErrorSeverity.WARNING
-  public constructor(public location: SourceLocation) {}
-
-  public explain() {
-    return 'Trailing comma'
-  }
-
-  public elaborate() {
-    return 'Please remove the trailing comma'
-  }
-}
-
 function contextToLocation(ctx: ParserRuleContext): SourceLocation {
   return {
     start: {
@@ -85,11 +61,76 @@ function contextToLocation(ctx: ParserRuleContext): SourceLocation {
   }
 }
 
-class ExpressionGenerator implements SchemeVisitor<SchemeExpression> {
+class ExpressionGenerator
+  extends AbstractParseTreeVisitor<SchemeExpression>
+  implements SchemeVisitor<SchemeExpression> {
+  protected defaultResult(): SchemeExpression {
+    // This method is called when there is no mathing parser rule
+    // Need to investigate what's the effect of returning an empty program here
+    return {
+      type: 'Sequence',
+      expressions: [],
+      loc: {
+        start: {
+          line: 0,
+          column: 0
+        },
+        end: {
+          line: 0,
+          column: 0
+        }
+      }
+    }
+  }
+
   visitList(ctx: ListContext): SchemeList {
     return {
       type: 'List',
       elements: ctx.expression().map(ex => ex.accept(this)),
+      loc: contextToLocation(ctx)
+    }
+  }
+
+  visitQuote(ctx: QuoteContext): SchemeList {
+    return {
+      type: 'List',
+      elements: [
+        { type: 'Identifier', name: 'quote', loc: contextToLocation(ctx) },
+        ctx.expression().accept(this)
+      ],
+      loc: contextToLocation(ctx)
+    }
+  }
+
+  visitQuasiquote(ctx: QuasiquoteContext): SchemeList {
+    return {
+      type: 'List',
+      elements: [
+        { type: 'Identifier', name: 'quasiquote', loc: contextToLocation(ctx) },
+        ctx.expression().accept(this)
+      ],
+      loc: contextToLocation(ctx)
+    }
+  }
+
+  visitUnquote(ctx: UnquoteContext): SchemeList {
+    return {
+      type: 'List',
+      elements: [
+        { type: 'Identifier', name: 'unquote', loc: contextToLocation(ctx) },
+        ctx.expression().accept(this)
+      ],
+      loc: contextToLocation(ctx)
+    }
+  }
+
+  visitUnquoteSplicing(ctx: UnquoteSplicingContext): SchemeList {
+    return {
+      type: 'List',
+      elements: [
+        { type: 'Identifier', name: 'unquote-splicing', loc: contextToLocation(ctx) },
+        ctx.expression().accept(this)
+      ],
       loc: contextToLocation(ctx)
     }
   }
@@ -147,10 +188,6 @@ class ExpressionGenerator implements SchemeVisitor<SchemeExpression> {
 
   visitExpression?: ((ctx: ExpressionContext) => SchemeExpression) | undefined
 
-  visitChildren(_: RuleNode): SchemeExpression {
-    throw new Error('Method not implemented.')
-  }
-
   visitTerminal(node: TerminalNode): SchemeExpression {
     return node.accept(this)
   }
@@ -158,17 +195,6 @@ class ExpressionGenerator implements SchemeVisitor<SchemeExpression> {
   visit(tree: ParseTree): SchemeExpression {
     return tree.accept(this)
   }
-
-  // visitChildren(node: RuleNode): es.Expression {
-  //   const expressions: es.Expression[] = []
-  //   for (let i = 0; i < node.childCount; i++) {
-  //     expressions.push(node.getChild(i).accept(this))
-  //   }
-  //   return {
-  //     type: 'SequenceExpression',
-  //     expressions
-  //   }
-  // }
 
   visitErrorNode(node: ErrorNode): SchemeExpression {
     throw new FatalSyntaxError(

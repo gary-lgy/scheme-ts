@@ -2,6 +2,7 @@ import { MAX_LIST_DISPLAY_LENGTH } from '../constants'
 import { EVPair, ExpressibleValue } from '../interpreter/runtime'
 import { NonEmptyList } from '../stdlib/list'
 import { Type } from '../types'
+import { List, tryConvertToList } from './listHelpers'
 
 function makeIndent(indent: number | string): string {
   if (typeof indent === 'number') {
@@ -22,34 +23,6 @@ function indentify(indent: string, s: string): string {
     .split('\n')
     .map(v => indent + v)
     .join('\n')
-}
-
-// For flattening pairs into list
-type ListElement = {
-  value: ExpressibleValue
-  pair: EVPair
-}
-type List = ListElement[]
-
-function tryConvertToList(pair: EVPair): List | null {
-  const seen: Set<EVPair> = new Set()
-  const flattened: List = []
-  while (true) {
-    if (seen.has(pair)) {
-      return null
-    }
-    seen.add(pair)
-    flattened.push({ value: pair.head, pair })
-
-    const tail = pair.tail
-    if (tail.type === 'EVEmptyList') {
-      return flattened
-    }
-    if (tail.type !== 'EVPair') {
-      return null
-    }
-    pair = tail
-  }
 }
 
 export const stringify = (
@@ -162,6 +135,8 @@ ${indentify(indentString.repeat(indentLevel), tailStr)})`
       case 'EVEmptyList':
         return '()'
       case 'EVString':
+        return `"${v.value}"`
+      case 'EVSymbol':
         return v.value
       case 'EVPair':
         return stringifyPair(v, indentLevel)

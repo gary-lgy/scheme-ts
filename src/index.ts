@@ -1,6 +1,5 @@
 import { SourceMapConsumer } from 'source-map'
 import createContext from './createContext'
-import { defineBuiltins } from './interpreter/builtins'
 import { evaluate } from './interpreter/interpreter'
 import { parse } from './parser/parser'
 import { PreemptiveScheduler } from './schedulers'
@@ -94,7 +93,6 @@ export async function runInContext(
     return runInContext(code, context, options)
   }
 
-  defineBuiltins(context.runtime.environments[0].head)
   const it = evaluate(program, context)
   const scheduler: Scheduler = new PreemptiveScheduler(theOptions.steps)
   return scheduler.run(it, context)

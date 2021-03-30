@@ -21,27 +21,45 @@ import { SchemeVisitor } from './SchemeVisitor'
 export class SchemeParser extends Parser {
   public static readonly T__0 = 1
   public static readonly T__1 = 2
-  public static readonly STRING = 3
-  public static readonly NUMBER = 4
-  public static readonly BOOL = 5
-  public static readonly WHITESPACE = 6
-  public static readonly IDENTIFIER = 7
+  public static readonly T__2 = 3
+  public static readonly T__3 = 4
+  public static readonly T__4 = 5
+  public static readonly T__5 = 6
+  public static readonly STRING = 7
+  public static readonly NUMBER = 8
+  public static readonly BOOL = 9
+  public static readonly IDENTIFIER = 10
+  public static readonly WHITESPACE = 11
+  public static readonly COMMENT = 12
   public static readonly RULE_program = 0
   public static readonly RULE_sequence = 1
   public static readonly RULE_expression = 2
   // tslint:disable:no-trailing-whitespace
   public static readonly ruleNames: string[] = ['program', 'sequence', 'expression']
 
-  private static readonly _LITERAL_NAMES: Array<string | undefined> = [undefined, "'('", "')'"]
+  private static readonly _LITERAL_NAMES: Array<string | undefined> = [
+    undefined,
+    "'('",
+    "')'",
+    "'''",
+    "'`'",
+    "','",
+    "',@'"
+  ]
   private static readonly _SYMBOLIC_NAMES: Array<string | undefined> = [
+    undefined,
+    undefined,
+    undefined,
+    undefined,
     undefined,
     undefined,
     undefined,
     'STRING',
     'NUMBER',
     'BOOL',
+    'IDENTIFIER',
     'WHITESPACE',
-    'IDENTIFIER'
+    'COMMENT'
   ]
   public static readonly VOCABULARY: Vocabulary = new VocabularyImpl(
     SchemeParser._LITERAL_NAMES,
@@ -122,6 +140,10 @@ export class SchemeParser extends Parser {
           (_la & ~0x1f) === 0 &&
           ((1 << _la) &
             ((1 << SchemeParser.T__0) |
+              (1 << SchemeParser.T__2) |
+              (1 << SchemeParser.T__3) |
+              (1 << SchemeParser.T__4) |
+              (1 << SchemeParser.T__5) |
               (1 << SchemeParser.STRING) |
               (1 << SchemeParser.NUMBER) |
               (1 << SchemeParser.BOOL) |
@@ -158,7 +180,7 @@ export class SchemeParser extends Parser {
     this.enterRule(_localctx, 4, SchemeParser.RULE_expression)
     let _la: number
     try {
-      this.state = 27
+      this.state = 35
       this._errHandler.sync(this)
       switch (this._input.LA(1)) {
         case SchemeParser.T__0:
@@ -174,6 +196,10 @@ export class SchemeParser extends Parser {
               (_la & ~0x1f) === 0 &&
               ((1 << _la) &
                 ((1 << SchemeParser.T__0) |
+                  (1 << SchemeParser.T__2) |
+                  (1 << SchemeParser.T__3) |
+                  (1 << SchemeParser.T__4) |
+                  (1 << SchemeParser.T__5) |
                   (1 << SchemeParser.STRING) |
                   (1 << SchemeParser.NUMBER) |
                   (1 << SchemeParser.BOOL) |
@@ -194,35 +220,75 @@ export class SchemeParser extends Parser {
             this.match(SchemeParser.T__1)
           }
           break
-        case SchemeParser.STRING:
-          _localctx = new StringContext(_localctx)
+        case SchemeParser.T__2:
+          _localctx = new QuoteContext(_localctx)
           this.enterOuterAlt(_localctx, 2)
           {
             this.state = 23
+            this.match(SchemeParser.T__2)
+            this.state = 24
+            this.expression()
+          }
+          break
+        case SchemeParser.T__3:
+          _localctx = new QuasiquoteContext(_localctx)
+          this.enterOuterAlt(_localctx, 3)
+          {
+            this.state = 25
+            this.match(SchemeParser.T__3)
+            this.state = 26
+            this.expression()
+          }
+          break
+        case SchemeParser.T__4:
+          _localctx = new UnquoteContext(_localctx)
+          this.enterOuterAlt(_localctx, 4)
+          {
+            this.state = 27
+            this.match(SchemeParser.T__4)
+            this.state = 28
+            this.expression()
+          }
+          break
+        case SchemeParser.T__5:
+          _localctx = new UnquoteSplicingContext(_localctx)
+          this.enterOuterAlt(_localctx, 5)
+          {
+            this.state = 29
+            this.match(SchemeParser.T__5)
+            this.state = 30
+            this.expression()
+          }
+          break
+        case SchemeParser.STRING:
+          _localctx = new StringContext(_localctx)
+          this.enterOuterAlt(_localctx, 6)
+          {
+            this.state = 31
             this.match(SchemeParser.STRING)
           }
           break
         case SchemeParser.NUMBER:
           _localctx = new NumberContext(_localctx)
-          this.enterOuterAlt(_localctx, 3)
+          this.enterOuterAlt(_localctx, 7)
           {
-            this.state = 24
+            this.state = 32
             this.match(SchemeParser.NUMBER)
           }
           break
         case SchemeParser.BOOL:
           _localctx = new BoolContext(_localctx)
-          this.enterOuterAlt(_localctx, 4)
+          this.enterOuterAlt(_localctx, 8)
           {
-            this.state = 25
+            this.state = 33
             this.match(SchemeParser.BOOL)
           }
           break
         case SchemeParser.IDENTIFIER:
           _localctx = new IdentifierContext(_localctx)
-          this.enterOuterAlt(_localctx, 5)
+          this.enterOuterAlt(_localctx, 9)
           {
-            this.state = 26
+            this.state = 34
             this.match(SchemeParser.IDENTIFIER)
           }
           break
@@ -244,22 +310,26 @@ export class SchemeParser extends Parser {
   }
 
   public static readonly _serializedATN: string =
-    '\x03\uC91D\uCABA\u058D\uAFBA\u4F53\u0607\uEA8B\uC241\x03\t \x04\x02\t' +
-    '\x02\x04\x03\t\x03\x04\x04\t\x04\x03\x02\x03\x02\x03\x02\x03\x03\x07\x03' +
-    '\r\n\x03\f\x03\x0E\x03\x10\v\x03\x03\x04\x03\x04\x07\x04\x14\n\x04\f\x04' +
-    '\x0E\x04\x17\v\x04\x03\x04\x03\x04\x03\x04\x03\x04\x03\x04\x05\x04\x1E' +
-    '\n\x04\x03\x04\x02\x02\x02\x05\x02\x02\x04\x02\x06\x02\x02\x02\x02"\x02' +
-    '\b\x03\x02\x02\x02\x04\x0E\x03\x02\x02\x02\x06\x1D\x03\x02\x02\x02\b\t' +
-    '\x05\x04\x03\x02\t\n\x07\x02\x02\x03\n\x03\x03\x02\x02\x02\v\r\x05\x06' +
-    '\x04\x02\f\v\x03\x02\x02\x02\r\x10\x03\x02\x02\x02\x0E\f\x03\x02\x02\x02' +
-    '\x0E\x0F\x03\x02\x02\x02\x0F\x05\x03\x02\x02\x02\x10\x0E\x03\x02\x02\x02' +
-    '\x11\x15\x07\x03\x02\x02\x12\x14\x05\x06\x04\x02\x13\x12\x03\x02\x02\x02' +
-    '\x14\x17\x03\x02\x02\x02\x15\x13\x03\x02\x02\x02\x15\x16\x03\x02\x02\x02' +
-    '\x16\x18\x03\x02\x02\x02\x17\x15\x03\x02\x02\x02\x18\x1E\x07\x04\x02\x02' +
-    '\x19\x1E\x07\x05\x02\x02\x1A\x1E\x07\x06\x02\x02\x1B\x1E\x07\x07\x02\x02' +
-    '\x1C\x1E\x07\t\x02\x02\x1D\x11\x03\x02\x02\x02\x1D\x19\x03\x02\x02\x02' +
-    '\x1D\x1A\x03\x02\x02\x02\x1D\x1B\x03\x02\x02\x02\x1D\x1C\x03\x02\x02\x02' +
-    '\x1E\x07\x03\x02\x02\x02\x05\x0E\x15\x1D'
+    '\x03\uC91D\uCABA\u058D\uAFBA\u4F53\u0607\uEA8B\uC241\x03\x0E(\x04\x02' +
+    '\t\x02\x04\x03\t\x03\x04\x04\t\x04\x03\x02\x03\x02\x03\x02\x03\x03\x07' +
+    '\x03\r\n\x03\f\x03\x0E\x03\x10\v\x03\x03\x04\x03\x04\x07\x04\x14\n\x04' +
+    '\f\x04\x0E\x04\x17\v\x04\x03\x04\x03\x04\x03\x04\x03\x04\x03\x04\x03\x04' +
+    '\x03\x04\x03\x04\x03\x04\x03\x04\x03\x04\x03\x04\x03\x04\x05\x04&\n\x04' +
+    '\x03\x04\x02\x02\x02\x05\x02\x02\x04\x02\x06\x02\x02\x02\x02.\x02\b\x03' +
+    '\x02\x02\x02\x04\x0E\x03\x02\x02\x02\x06%\x03\x02\x02\x02\b\t\x05\x04' +
+    '\x03\x02\t\n\x07\x02\x02\x03\n\x03\x03\x02\x02\x02\v\r\x05\x06\x04\x02' +
+    '\f\v\x03\x02\x02\x02\r\x10\x03\x02\x02\x02\x0E\f\x03\x02\x02\x02\x0E\x0F' +
+    '\x03\x02\x02\x02\x0F\x05\x03\x02\x02\x02\x10\x0E\x03\x02\x02\x02\x11\x15' +
+    '\x07\x03\x02\x02\x12\x14\x05\x06\x04\x02\x13\x12\x03\x02\x02\x02\x14\x17' +
+    '\x03\x02\x02\x02\x15\x13\x03\x02\x02\x02\x15\x16\x03\x02\x02\x02\x16\x18' +
+    '\x03\x02\x02\x02\x17\x15\x03\x02\x02\x02\x18&\x07\x04\x02\x02\x19\x1A' +
+    '\x07\x05\x02\x02\x1A&\x05\x06\x04\x02\x1B\x1C\x07\x06\x02\x02\x1C&\x05' +
+    '\x06\x04\x02\x1D\x1E\x07\x07\x02\x02\x1E&\x05\x06\x04\x02\x1F \x07\b\x02' +
+    '\x02 &\x05\x06\x04\x02!&\x07\t\x02\x02"&\x07\n\x02\x02#&\x07\v\x02\x02' +
+    '$&\x07\f\x02\x02%\x11\x03\x02\x02\x02%\x19\x03\x02\x02\x02%\x1B\x03\x02' +
+    '\x02\x02%\x1D\x03\x02\x02\x02%\x1F\x03\x02\x02\x02%!\x03\x02\x02\x02%' +
+    '"\x03\x02\x02\x02%#\x03\x02\x02\x02%$\x03\x02\x02\x02&\x07\x03\x02\x02' +
+    '\x02\x05\x0E\x15%'
   public static __ATN: ATN
   public static get _ATN(): ATN {
     if (!SchemeParser.__ATN) {
@@ -390,6 +460,122 @@ export class ListContext extends ExpressionContext {
   public accept<Result>(visitor: SchemeVisitor<Result>): Result {
     if (visitor.visitList) {
       return visitor.visitList(this)
+    } else {
+      return visitor.visitChildren(this)
+    }
+  }
+}
+export class QuoteContext extends ExpressionContext {
+  public expression(): ExpressionContext {
+    return this.getRuleContext(0, ExpressionContext)
+  }
+  constructor(ctx: ExpressionContext) {
+    super(ctx.parent, ctx.invokingState)
+    this.copyFrom(ctx)
+  }
+  // @Override
+  public enterRule(listener: SchemeListener): void {
+    if (listener.enterQuote) {
+      listener.enterQuote(this)
+    }
+  }
+  // @Override
+  public exitRule(listener: SchemeListener): void {
+    if (listener.exitQuote) {
+      listener.exitQuote(this)
+    }
+  }
+  // @Override
+  public accept<Result>(visitor: SchemeVisitor<Result>): Result {
+    if (visitor.visitQuote) {
+      return visitor.visitQuote(this)
+    } else {
+      return visitor.visitChildren(this)
+    }
+  }
+}
+export class QuasiquoteContext extends ExpressionContext {
+  public expression(): ExpressionContext {
+    return this.getRuleContext(0, ExpressionContext)
+  }
+  constructor(ctx: ExpressionContext) {
+    super(ctx.parent, ctx.invokingState)
+    this.copyFrom(ctx)
+  }
+  // @Override
+  public enterRule(listener: SchemeListener): void {
+    if (listener.enterQuasiquote) {
+      listener.enterQuasiquote(this)
+    }
+  }
+  // @Override
+  public exitRule(listener: SchemeListener): void {
+    if (listener.exitQuasiquote) {
+      listener.exitQuasiquote(this)
+    }
+  }
+  // @Override
+  public accept<Result>(visitor: SchemeVisitor<Result>): Result {
+    if (visitor.visitQuasiquote) {
+      return visitor.visitQuasiquote(this)
+    } else {
+      return visitor.visitChildren(this)
+    }
+  }
+}
+export class UnquoteContext extends ExpressionContext {
+  public expression(): ExpressionContext {
+    return this.getRuleContext(0, ExpressionContext)
+  }
+  constructor(ctx: ExpressionContext) {
+    super(ctx.parent, ctx.invokingState)
+    this.copyFrom(ctx)
+  }
+  // @Override
+  public enterRule(listener: SchemeListener): void {
+    if (listener.enterUnquote) {
+      listener.enterUnquote(this)
+    }
+  }
+  // @Override
+  public exitRule(listener: SchemeListener): void {
+    if (listener.exitUnquote) {
+      listener.exitUnquote(this)
+    }
+  }
+  // @Override
+  public accept<Result>(visitor: SchemeVisitor<Result>): Result {
+    if (visitor.visitUnquote) {
+      return visitor.visitUnquote(this)
+    } else {
+      return visitor.visitChildren(this)
+    }
+  }
+}
+export class UnquoteSplicingContext extends ExpressionContext {
+  public expression(): ExpressionContext {
+    return this.getRuleContext(0, ExpressionContext)
+  }
+  constructor(ctx: ExpressionContext) {
+    super(ctx.parent, ctx.invokingState)
+    this.copyFrom(ctx)
+  }
+  // @Override
+  public enterRule(listener: SchemeListener): void {
+    if (listener.enterUnquoteSplicing) {
+      listener.enterUnquoteSplicing(this)
+    }
+  }
+  // @Override
+  public exitRule(listener: SchemeListener): void {
+    if (listener.exitUnquoteSplicing) {
+      listener.exitUnquoteSplicing(this)
+    }
+  }
+  // @Override
+  public accept<Result>(visitor: SchemeVisitor<Result>): Result {
+    if (visitor.visitUnquoteSplicing) {
+      return visitor.visitUnquoteSplicing(this)
     } else {
       return visitor.visitChildren(this)
     }

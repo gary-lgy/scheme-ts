@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 import { start } from 'repl' // 'repl' here refers to the module named 'repl' in index.d.ts
-import { inspect } from 'util'
 import { sourceLanguages } from '../constants'
 import { createContext, IOptions, parseError, runInContext } from '../index'
 import { ExecutionMethod, Variant } from '../types'
+import { stringify } from '../utils/stringify'
 
 function startRepl(
   executionMethod: ExecutionMethod = 'interpreter',
@@ -20,7 +20,9 @@ function startRepl(
   }
   runInContext(prelude, context, options).then(preludeResult => {
     if (preludeResult.status === 'finished' || preludeResult.status === 'suspended-non-det') {
-      console.dir(preludeResult.value, { depth: null })
+      if (preludeResult.value) {
+        console.log(stringify(preludeResult.value))
+      }
       if (!useRepl) {
         return
       }
@@ -36,15 +38,11 @@ function startRepl(
               }
             })
           },
-          // set depth to a large number so that `parse()` output will not be folded,
-          // setting to null also solves the problem, however a reference loop might crash
           writer: output => {
-            return output.type === 'EVProcedure'
-              ? '[Procedure]'
-              : inspect(output, {
-                  depth: 1000,
-                  colors: true
-                })
+            if (output instanceof Error) {
+              return output.message
+            }
+            return stringify(output)
           }
         }
       )
@@ -67,7 +65,7 @@ function validChapterVariant(variant: any): boolean {
 function main() {
   const opt = require('node-getopt')
     .create([
-      ['v', 'variant=VARIANT', 'set the Source variant (i.e., calc)', 'calc'],
+      ['v', 'variant=VARIANT', 'set the Source variant (i.e., s1)', 's1'],
       ['h', 'help', 'display this help'],
       ['e', 'eval', "don't show REPL, only display output of evaluation"]
     ])

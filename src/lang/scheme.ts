@@ -24,7 +24,7 @@ export type SchemeExpressionType =
   | 'Identifier'
 
 /**
- * Represents a language construct in Scheme.
+ * Represents a syntax fragment in Scheme.
  */
 export type SchemeExpression =
   | SchemeProgram

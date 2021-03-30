@@ -1,8 +1,6 @@
 /* tslint:disable: max-classes-per-file */
-/* tslint:disable:max-line-length */
-import * as es from 'estree'
+import { ExpressibleValue } from '../interpreter/runtime'
 import { SchemeExpression } from '../lang/scheme'
-import { ErrorSeverity, ErrorType, SourceError, Value } from '../types'
 import { stringify } from '../utils/stringify'
 import { RuntimeSourceError } from './runtimeSourceError'
 
@@ -46,6 +44,31 @@ export class IfSyntaxError extends RuntimeSourceError {
   }
 }
 
+type QuoteType = 'quote' | 'quasiquote' | 'unquote' | 'unquote-splicing'
+const quoteTypeToShorthand = (type: QuoteType): string => {
+  switch (type) {
+    case 'quote':
+      return "'"
+    case 'quasiquote':
+      return '`'
+    case 'unquote':
+      return ','
+    case 'unquote-splicing':
+      return ',@'
+  }
+}
+export class QuoteSyntaxError extends RuntimeSourceError {
+  constructor(public quoteType: QuoteType, node: SchemeExpression) {
+    super(node)
+  }
+
+  public explain() {
+    return `Syntax for \`${this.quoteType}' is incorrect. Please use (${
+      this.quoteType
+    } expression) or ${quoteTypeToShorthand(this.quoteType)}expression`
+  }
+}
+
 export class BuiltinProcedureError extends RuntimeSourceError {
   constructor(public cause: Error, node?: SchemeExpression) {
     super(node)
@@ -55,50 +78,53 @@ export class BuiltinProcedureError extends RuntimeSourceError {
   }
 }
 
-export class ModuleNotFound extends RuntimeSourceError {
-  constructor(public moduleName: string, node?: SchemeExpression) {
+export class UnexpectedQuotationError extends RuntimeSourceError {
+  constructor(node: SchemeExpression) {
     super(node)
   }
 
   public explain() {
-    return `Module "${this.moduleName}" not found.`
-  }
-
-  public elaborate() {
-    return `
-      You should check your Internet connection, and ensure you have used the correct module path.
-    `
+    return `Unexpected quotation`
   }
 }
 
-export class ModuleInternalError extends RuntimeSourceError {
-  constructor(public moduleName: string, node?: SchemeExpression) {
+export class UnquoteInWrongContext extends RuntimeSourceError {
+  constructor(node: SchemeExpression) {
     super(node)
   }
 
   public explain() {
-    return `Error(s) occured when executing the module "${this.moduleName}".`
-  }
-
-  public elaborate() {
-    return `
-      You may need to contact with the author for this module to fix this error.
-    `
+    return `\`unquote' and \`unquote-splicing' can only appear within quasiquotations with right level of depth`
   }
 }
 
-export class ExceptionError implements SourceError {
-  public type = ErrorType.RUNTIME
-  public severity = ErrorSeverity.ERROR
-
-  constructor(public error: Error, public location: es.SourceLocation) {}
-
-  public explain() {
-    return this.error.toString()
+export class UnquoteSplicingEvaluatedToNonList extends RuntimeSourceError {
+  constructor(public result: ExpressibleValue, node: SchemeExpression) {
+    super(node)
   }
 
-  public elaborate() {
-    return 'TODO'
+  public explain() {
+    return `\`unquote-splicing' should evaluate to a list, but evaluated to ${this.result.type}`
+  }
+}
+
+export class UnquoteSplicingInNonListContext extends RuntimeSourceError {
+  constructor(node: SchemeExpression) {
+    super(node)
+  }
+
+  public explain() {
+    return `\`unquote-splicing' can only appear within a list`
+  }
+}
+
+export class UnreachableCodeReached extends RuntimeSourceError {
+  constructor(public message: string) {
+    super()
+  }
+
+  public explain() {
+    return `Unreachable code reached: ${this.message}`
   }
 }
 
@@ -115,33 +141,12 @@ export class MaximumStackLimitExceeded extends RuntimeSourceError {
 }
 
 export class CallingNonFunctionValue extends RuntimeSourceError {
-  constructor(private callee: Value, private node: SchemeExpression) {
+  constructor(private callee: ExpressibleValue, public node: SchemeExpression) {
     super(node)
   }
 
   public explain() {
     return `Calling non-function value ${stringify(this.callee)}.`
-  }
-
-  public elaborate() {
-    const calleeVal = this.callee
-    const calleeStr = stringify(calleeVal)
-    const argStr = ''
-
-    // const callArgs = (this.node as es.CallExpression).arguments
-
-    // To temporarily silence TS warnings
-    this.node
-    // argStr = callArgs.map(generate).join(', ')
-
-    const elabStr = `Because ${calleeStr} is not a function, you cannot run ${calleeStr}(${argStr}).`
-    const multStr = `If you were planning to perform multiplication by ${calleeStr}, you need to use the * operator.`
-
-    if (Number.isFinite(calleeVal)) {
-      return `${elabStr} ${multStr}`
-    } else {
-      return elabStr
-    }
   }
 }
 
@@ -244,66 +249,5 @@ export class VariableRedeclaration extends RuntimeSourceError {
     } else {
       return ''
     }
-  }
-}
-
-export class ConstAssignment extends RuntimeSourceError {
-  constructor(node: SchemeExpression, private name: string) {
-    super(node)
-  }
-
-  public explain() {
-    return `Cannot assign new value to constant ${this.name}.`
-  }
-
-  public elaborate() {
-    return `As ${this.name} was declared as a constant, its value cannot be changed. You will have to declare a new variable.`
-  }
-}
-
-export class GetPropertyError extends RuntimeSourceError {
-  constructor(node: SchemeExpression, private obj: Value, private prop: string) {
-    super(node)
-  }
-
-  public explain() {
-    return `Cannot read property ${this.prop} of ${stringify(this.obj)}.`
-  }
-
-  public elaborate() {
-    return 'TODO'
-  }
-}
-
-export class GetInheritedPropertyError extends RuntimeSourceError {
-  public type = ErrorType.RUNTIME
-  public severity = ErrorSeverity.ERROR
-  public location: es.SourceLocation
-
-  constructor(node: SchemeExpression, private obj: Value, private prop: string) {
-    super(node)
-    this.location = node.loc!
-  }
-
-  public explain() {
-    return `Cannot read inherited property ${this.prop} of ${stringify(this.obj)}.`
-  }
-
-  public elaborate() {
-    return 'TODO'
-  }
-}
-
-export class SetPropertyError extends RuntimeSourceError {
-  constructor(node: SchemeExpression, private obj: Value, private prop: string) {
-    super(node)
-  }
-
-  public explain() {
-    return `Cannot assign property ${this.prop} of ${stringify(this.obj)}.`
-  }
-
-  public elaborate() {
-    return 'TODO'
   }
 }

@@ -1,0 +1,29 @@
+import { createContext } from '.'
+import { evaluate } from './interpreter/interpreter'
+import { ExpressibleValue } from './interpreter/runtime'
+import { parse } from './parser/parser'
+
+export const evaluateUntilDone = (code: string): ExpressibleValue => {
+  const context = createContext('s1', undefined, undefined)
+  context.errors = []
+
+  const program = parse(code, context)
+  if (!program || context.errors.length > 0) {
+    throw new Error('parse unsuccessful')
+  }
+
+  const it = evaluate(program, context)
+
+  context.runtime.isRunning = true
+  let itValue = it.next()
+  try {
+    while (!itValue.done) {
+      itValue = it.next()
+    }
+  } catch (e) {
+    context.runtime.isRunning = false
+    throw e
+  }
+
+  return itValue.value
+}
