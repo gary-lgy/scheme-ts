@@ -10,7 +10,7 @@ export class DefineSyntaxError extends RuntimeSourceError {
   }
 
   public explain() {
-    return "Syntax for `define' is incorrect. Please use `(define variable value)'"
+    return "Syntax for `define' is incorrect. Please use `(define variable value) or `(define (procedureName arg1 ...) body1 body2...)'"
   }
 }
 

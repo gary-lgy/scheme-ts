@@ -1,7 +1,7 @@
 import * as errors from '../errors/errors'
 import { SchemeExpression, SchemeIdentifier, SchemeList, SchemeSequence } from '../lang/scheme'
 import { Context, Frame } from '../types'
-import { makeEmptyList } from './ExpressibleValue'
+import { ExpressibleValue, makeEmptyList } from './ExpressibleValue'
 import { evaluate, ValueGenerator } from './interpreter'
 import { quasiquoteExpression, quoteExpression } from './quote'
 import {
@@ -30,9 +30,20 @@ export type SpecialForm =
 
 export type DefineForm = {
   tag: 'define'
-  name: SchemeIdentifier
-  value: SchemeExpression
-}
+} & (
+  | {
+      variant: 'basic'
+      name: SchemeIdentifier
+      value: SchemeExpression
+    }
+  | {
+      variant: 'procedure'
+      name: SchemeIdentifier
+      parameters: SchemeIdentifier[]
+      argumentPassingStyle: LambdaArgumentPassingStyle
+      body: SchemeExpression[]
+    }
+)
 
 export type SetForm = {
   tag: 'set!'
@@ -109,10 +120,23 @@ export function* evaluateSpecialForm(form: SpecialForm, context: Context): Value
   switch (form.tag) {
     case 'define': {
       // TODO: disallow mixing of definitions and expressions?
-      const value = yield* evaluate(form.value, context)
+      let value: ExpressibleValue
+      if (form.variant === 'basic') {
+        value = yield* evaluate(form.value, context)
+      } else {
+        value = {
+          type: 'EVProcedure',
+          argumentPassingStyle: form.argumentPassingStyle,
+          parameters: form.parameters.map(param => param.name),
+          variant: 'CompoundProcedure',
+          body: form.body,
+          environment
+        }
+      }
+
       const frame = context.runtime.environments[0].head
       frame[form.name.name] = value
-      return { type: 'EVEmptyList' }
+      return makeEmptyList()
     }
     case 'lambda': {
       return {
@@ -215,14 +239,41 @@ export const listToSpecialForm = (
 ): SpecialForm | undefined => {
   switch (tag) {
     case 'define': {
-      // TODO: allow procedure definition using `define'?
-      if (list.elements.length !== 3) {
+      if (list.elements.length < 3) {
         return handleRuntimeError(context, new errors.DefineSyntaxError(list))
       }
-      const identifier = list.elements[1]
-      if (identifier.type === 'Identifier') {
+
+      if (list.elements[1].type === 'List') {
+        if (list.elements[1].elements.length < 1) {
+          return handleRuntimeError(context, new errors.DefineSyntaxError(list))
+        }
+
+        const argsList: SchemeIdentifier[] = list.elements[1].elements.map(element => {
+          if (element.type !== 'Identifier') {
+            return handleRuntimeError(context, new errors.DefineSyntaxError(list))
+          }
+          return element
+        })
+
         return {
           tag,
+          variant: 'procedure',
+          name: argsList[0],
+          parameters: argsList.slice(1),
+          argumentPassingStyle: {
+            style: 'fixed-args',
+            numParams: argsList.length - 1
+          },
+          body: list.elements.slice(2)
+        }
+      } else if (list.elements[1].type === 'Identifier') {
+        if (list.elements.length !== 3) {
+          return handleRuntimeError(context, new errors.DefineSyntaxError(list))
+        }
+        const identifier = list.elements[1]
+        return {
+          tag,
+          variant: 'basic',
           name: identifier,
           value: list.elements[2]
         }

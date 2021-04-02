@@ -1,5 +1,6 @@
 import {
   BuiltinProcedureError,
+  DefineSyntaxError,
   InvalidNumberOfArguments,
   LetSyntaxError,
   NotEnoughArguments
@@ -163,6 +164,41 @@ describe('pair procedures', () => {
 })
 
 describe('binding constructs', () => {
+  describe('define', () => {
+    test('invalid syntax', () => {
+      const programs: string[] = [
+        '(define)',
+        '(define x)',
+        '(define 1 x)',
+        '(define x 1 2)',
+        '(define (x))',
+        '(define (x y))',
+        '(define (fn (x)) (+ x 1))',
+        '(define ((fn) x) (+ x 1))'
+      ]
+      programs.forEach(program => {
+        expect(() => evaluateUntilDone(program)).toThrow(DefineSyntaxError)
+      })
+    })
+
+    test('basic variant', () => {
+      const actual = evaluateUntilDone(`
+        (define x (+ 5 5))
+        (+ x 10)
+      `)
+      expect(actual).toEqual(makeNumber(20))
+    })
+
+    test('procedure variant', () => {
+      const actual = evaluateUntilDone(`
+        (define (fn x y)
+          (+ x y))
+        (fn 1 2)
+      `)
+      expect(actual).toEqual(makeNumber(3))
+    })
+  })
+
   describe('let', () => {
     test('basic', () => {
       const actual = evaluateUntilDone(`
