@@ -1,10 +1,11 @@
 import {
   BuiltinProcedureError,
   InvalidNumberOfArguments,
+  LetSyntaxError,
   NotEnoughArguments
 } from '../../errors/errors'
 import { evaluateUntilDone } from '../../testHelpers'
-import { makeList, makeNumber, makePair } from '../ExpressibleValue'
+import { makeBool, makeList, makeNumber, makePair } from '../ExpressibleValue'
 
 describe('arithmetic procedures', () => {
   describe('+', () => {
@@ -157,6 +158,83 @@ describe('pair procedures', () => {
 
     test('on proper list', () => {
       expect(evaluateUntilDone("(cdr '(1 2 3))")).toEqual(makeList(makeNumber(2), makeNumber(3)))
+    })
+  })
+})
+
+describe('binding constructs', () => {
+  describe('let', () => {
+    test('basic', () => {
+      const actual = evaluateUntilDone(`
+        (let ((x 2) (y 3))
+          (* x y))
+      `)
+      expect(actual).toEqual(makeNumber(6))
+    })
+
+    test('with shadowing binding', () => {
+      const actual = evaluateUntilDone(`
+        (let ((x 2) (y 3))
+          (let ((x 7)
+                (z (+ x y)))
+            (* z x)))
+      `)
+      expect(actual).toEqual(makeNumber(35))
+    })
+
+    test('no body', () => {
+      expect(() => evaluateUntilDone(`(let ((x 10)))`)).toThrow(LetSyntaxError)
+    })
+
+    test('no bindings', () => {
+      expect(evaluateUntilDone(`(let () (+ 1 2))`)).toEqual(makeNumber(3))
+    })
+  })
+
+  describe('let*', () => {
+    test('basic', () => {
+      const actual = evaluateUntilDone(`
+        (let ((x 2) (y 3))
+          (let* ((x 7)
+                (z (+ x y)))
+            (* z x)))
+      `)
+      expect(actual).toEqual(makeNumber(70))
+    })
+
+    test('no body', () => {
+      expect(() => evaluateUntilDone(`(let* ((x 10)))`)).toThrow(LetSyntaxError)
+    })
+
+    test('no bindings', () => {
+      expect(evaluateUntilDone(`(let* () (+ 1 2))`)).toEqual(makeNumber(3))
+    })
+  })
+
+  describe('letrec', () => {
+    test('basic', () => {
+      const actual = evaluateUntilDone(`
+        (letrec ((even?
+                  (lambda (n)
+                    (if (= n 0)
+                        #t
+                        (odd? (- n 1)))))
+                (odd?
+                  (lambda (n)
+                    (if (= n 0)
+                        #f
+                        (even? (- n 1))))))
+          (even? 88))
+      `)
+      expect(actual).toEqual(makeBool(true))
+    })
+
+    test('no body', () => {
+      expect(() => evaluateUntilDone(`(letrec ((x 10)))`)).toThrow(LetSyntaxError)
+    })
+
+    test('no bindings', () => {
+      expect(evaluateUntilDone(`(letrec () (+ 1 2))`)).toEqual(makeNumber(3))
     })
   })
 })

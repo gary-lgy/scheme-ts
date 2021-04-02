@@ -89,9 +89,22 @@ export function* apply(
       args
     )
     pushEnvironment(context, environment)
-    const result = yield* evaluate(procedure.body, context)
+
+    if (procedure.body.length === 0) {
+      return handleRuntimeError(
+        context,
+        new errors.UnreachableCodeReached('lambda body should have one or more expressions')
+      )
+    }
+
+    let result: ExpressibleValue
+    for (const expression of procedure.body) {
+      result = yield* evaluate(expression, context)
+    }
+
     popEnvironment(context)
-    return result
+
+    return result!
   } else {
     try {
       return procedure.body(args)

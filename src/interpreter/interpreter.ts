@@ -11,7 +11,7 @@ import {
   SchemeStringLiteral
 } from '../lang/scheme'
 import { Context } from '../types'
-import { ExpressibleValue } from './ExpressibleValue'
+import { ExpressibleValue, makeEmptyList } from './ExpressibleValue'
 import { apply, listOfArguments } from './procedure'
 import { evaluateSpecialForm, listToSpecialForm } from './SpecialForm'
 import { extendCurrentEnvironment, getVariable, handleRuntimeError, pushEnvironment } from './util'
@@ -49,7 +49,7 @@ export const evaluators: { [key in SchemeExpressionType]: Evaluator<SchemeExpres
   List: function* (node: SchemeList, context: Context): ValueGenerator {
     if (node.elements.length === 0) {
       // Empty list - return empty list
-      return { type: 'EVEmptyList' }
+      return makeEmptyList()
     }
 
     const firstElement = node.elements[0]

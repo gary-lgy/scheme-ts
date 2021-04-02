@@ -1,9 +1,17 @@
 import * as errors from '../errors/errors'
 import { SchemeExpression, SchemeIdentifier, SchemeList, SchemeSequence } from '../lang/scheme'
-import { Context } from '../types'
+import { Context, Frame } from '../types'
+import { makeEmptyList } from './ExpressibleValue'
 import { evaluate, ValueGenerator } from './interpreter'
 import { quasiquoteExpression, quoteExpression } from './quote'
-import { handleRuntimeError, isTruthy, setVariable } from './util'
+import {
+  extendCurrentEnvironment,
+  handleRuntimeError,
+  isTruthy,
+  popEnvironment,
+  pushEnvironment,
+  setVariable
+} from './util'
 
 // Special forms definitions
 
@@ -12,6 +20,9 @@ export type SpecialForm =
   | SetForm
   | LambdaForm
   | IfForm
+  | LetForm
+  | LetStarForm
+  | LetRecForm
   | QuoteForm
   | QuasiquoteForm
   | UnquoteForm
@@ -37,7 +48,7 @@ export type LambdaArgumentPassingStyle =
 export type LambdaForm = {
   tag: 'lambda'
   parameters: SchemeIdentifier[]
-  body: SchemeSequence
+  body: SchemeExpression[]
   argumentPassingStyle: LambdaArgumentPassingStyle
 }
 
@@ -46,6 +57,29 @@ export type IfForm = {
   test: SchemeExpression
   consequent: SchemeExpression
   alternative?: SchemeExpression
+}
+
+export type LetBinding = {
+  name: SchemeIdentifier
+  value: SchemeExpression
+}
+
+export type LetForm = {
+  tag: 'let'
+  bindings: LetBinding[]
+  body: SchemeSequence
+}
+
+export type LetStarForm = {
+  tag: 'let*'
+  bindings: LetBinding[]
+  body: SchemeSequence
+}
+
+export type LetRecForm = {
+  tag: 'letrec'
+  bindings: LetBinding[]
+  body: SchemeSequence
 }
 
 export type QuoteForm = {
@@ -105,6 +139,54 @@ export function* evaluateSpecialForm(form: SpecialForm, context: Context): Value
         return { type: 'EVEmptyList' }
       }
     }
+    case 'let': {
+      const frame: Frame = {}
+      for (const binding of form.bindings) {
+        frame[binding.name.name] = yield* evaluate(binding.value, context)
+      }
+      const newEnvironment = extendCurrentEnvironment(context, 'letEnvironment', frame)
+
+      pushEnvironment(context, newEnvironment)
+      const result = yield* evaluate(form.body, context)
+      popEnvironment(context)
+
+      return result
+    }
+    case 'let*': {
+      let numNewFrames = 0
+      for (const binding of form.bindings) {
+        const frame: Frame = {}
+        frame[binding.name.name] = yield* evaluate(binding.value, context)
+        const newEnvironment = extendCurrentEnvironment(context, 'let*Environment', frame)
+        pushEnvironment(context, newEnvironment)
+        numNewFrames++
+      }
+
+      const result = yield* evaluate(form.body, context)
+
+      while (numNewFrames--) {
+        popEnvironment(context)
+      }
+
+      return result
+    }
+    case 'letrec': {
+      const frame: Frame = {}
+      for (const binding of form.bindings) {
+        frame[binding.name.name] = makeEmptyList()
+      }
+      const newEnvironment = extendCurrentEnvironment(context, 'letrecEnvironment', frame)
+      pushEnvironment(context, newEnvironment)
+
+      for (const binding of form.bindings) {
+        frame[binding.name.name] = yield* evaluate(binding.value, context)
+      }
+
+      const result = yield* evaluate(form.body, context)
+      popEnvironment(context)
+
+      return result
+    }
     case 'quote': {
       return quoteExpression(form.expression, context)
     }
@@ -131,80 +213,111 @@ export const listToSpecialForm = (
   list: SchemeList,
   context: Context
 ): SpecialForm | undefined => {
-  if (tag === 'define') {
-    // TODO: allow procedure definition using `define'?
-    if (list.elements.length !== 3) {
-      return handleRuntimeError(context, new errors.DefineSyntaxError(list))
-    }
-    const identifier = list.elements[1]
-    if (identifier.type === 'Identifier') {
-      return {
-        tag,
-        name: identifier,
-        value: list.elements[2]
+  switch (tag) {
+    case 'define': {
+      // TODO: allow procedure definition using `define'?
+      if (list.elements.length !== 3) {
+        return handleRuntimeError(context, new errors.DefineSyntaxError(list))
       }
-    } else {
-      return handleRuntimeError(context, new errors.DefineSyntaxError(list))
-    }
-  } else if (tag === 'lambda') {
-    // TODO: varargs?
-    if (list.elements.length <= 2 || list.elements[1].type !== 'List') {
-      return handleRuntimeError(context, new errors.LambdaSyntaxError(list))
-    }
-    const parameters: SchemeIdentifier[] = []
-    list.elements[1].elements.forEach(element => {
-      if (element.type === 'Identifier') {
-        return parameters.push(element)
+      const identifier = list.elements[1]
+      if (identifier.type === 'Identifier') {
+        return {
+          tag,
+          name: identifier,
+          value: list.elements[2]
+        }
       } else {
+        return handleRuntimeError(context, new errors.DefineSyntaxError(list))
+      }
+    }
+    case 'lambda': {
+      // TODO: varargs?
+      if (list.elements.length <= 2 || list.elements[1].type !== 'List') {
         return handleRuntimeError(context, new errors.LambdaSyntaxError(list))
       }
-    })
-    return {
-      tag,
-      parameters,
-      body: {
-        type: 'Sequence',
-        expressions: list.elements.slice(2),
-        loc: list.loc
-      },
-      argumentPassingStyle: {
-        style: 'fixed-args',
-        numParams: parameters.length
+      const parameters: SchemeIdentifier[] = []
+      list.elements[1].elements.forEach(element => {
+        if (element.type === 'Identifier') {
+          return parameters.push(element)
+        } else {
+          return handleRuntimeError(context, new errors.LambdaSyntaxError(list))
+        }
+      })
+      return {
+        tag,
+        parameters,
+        body: list.elements.slice(2),
+        argumentPassingStyle: {
+          style: 'fixed-args',
+          numParams: parameters.length
+        }
       }
     }
-  } else if (tag === 'set!') {
-    if (list.elements.length !== 3 || list.elements[1].type !== 'Identifier') {
-      return handleRuntimeError(context, new errors.SetSyntaxError(list))
+    case 'set!': {
+      if (list.elements.length !== 3 || list.elements[1].type !== 'Identifier') {
+        return handleRuntimeError(context, new errors.SetSyntaxError(list))
+      }
+      return {
+        tag,
+        name: list.elements[1],
+        value: list.elements[2]
+      }
     }
-    return {
-      tag,
-      name: list.elements[1],
-      value: list.elements[2]
+    case 'if': {
+      if (list.elements.length < 3 || list.elements.length > 4) {
+        return handleRuntimeError(context, new errors.IfSyntaxError(list))
+      }
+      return {
+        tag,
+        test: list.elements[1],
+        consequent: list.elements[2],
+        alternative: list.elements[3]
+      }
     }
-  } else if (tag === 'if') {
-    if (list.elements.length < 3 || list.elements.length > 4) {
-      return handleRuntimeError(context, new errors.IfSyntaxError(list))
+    case 'let':
+    case 'let*':
+    case 'letrec': {
+      if (list.elements.length < 3 || list.elements[1].type !== 'List') {
+        return handleRuntimeError(context, new errors.LetSyntaxError(list))
+      }
+      const bindings: LetBinding[] = list.elements[1].elements.map(pair => {
+        if (
+          pair.type !== 'List' ||
+          pair.elements.length !== 2 ||
+          pair.elements[0].type !== 'Identifier'
+        ) {
+          return handleRuntimeError(context, new errors.LetSyntaxError(list))
+        }
+
+        return {
+          name: pair.elements[0],
+          value: pair.elements[1]
+        }
+      })
+
+      return {
+        tag,
+        bindings,
+        body: {
+          type: 'Sequence',
+          expressions: list.elements.slice(2),
+          loc: list.loc
+        }
+      }
     }
-    return {
-      tag,
-      test: list.elements[1],
-      consequent: list.elements[2],
-      alternative: list.elements[3]
+    case 'quote':
+    case 'quasiquote':
+    case 'unquote':
+    case 'unquote-splicing': {
+      if (list.elements.length !== 2) {
+        return handleRuntimeError(context, new errors.QuoteSyntaxError(tag, list))
+      }
+      return {
+        tag,
+        expression: list.elements[1]
+      }
     }
-  } else if (
-    tag === 'quote' ||
-    tag === 'quasiquote' ||
-    tag === 'unquote' ||
-    tag === 'unquote-splicing'
-  ) {
-    if (list.elements.length !== 2) {
-      return handleRuntimeError(context, new errors.QuoteSyntaxError(tag, list))
-    }
-    return {
-      tag,
-      expression: list.elements[1]
-    }
-  } else {
-    return undefined
+    default:
+      return undefined
   }
 }

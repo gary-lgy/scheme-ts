@@ -20,7 +20,7 @@ export class LambdaSyntaxError extends RuntimeSourceError {
   }
 
   public explain() {
-    return "Syntax for `lambda' is incorrect. Please use `(lambda (arg1 arg2 ...) body)'"
+    return "Syntax for `lambda' is incorrect. Please use `(lambda (arg1 ...) body1 body2 ...)'"
   }
 }
 
@@ -41,6 +41,16 @@ export class IfSyntaxError extends RuntimeSourceError {
 
   public explain() {
     return "Syntax for `if' is incorrect. Please use `(if (test) (consequent))' or `(if (test) (consequent) (alternative))'"
+  }
+}
+
+export class LetSyntaxError extends RuntimeSourceError {
+  constructor(node: SchemeExpression) {
+    super(node)
+  }
+
+  public explain() {
+    return "Syntax for `let' is incorrect. Please use `(if ((name value) ...) body1 body2 ...)'"
   }
 }
 

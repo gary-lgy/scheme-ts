@@ -1,4 +1,4 @@
-import { SchemeSequence } from '../lang/scheme'
+import { SchemeExpression } from '../lang/scheme'
 import { Environment } from '../types'
 import { LambdaArgumentPassingStyle } from './SpecialForm'
 
@@ -68,7 +68,7 @@ export type EVProcedure = {
 export type EVCompoundProcedure = {
   variant: 'CompoundProcedure'
   parameters: string[]
-  body: SchemeSequence
+  body: SchemeExpression[]
   environment: Environment
 }
 
