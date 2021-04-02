@@ -10,8 +10,8 @@ import {
 import { Context } from '../types'
 import { List, tryConvertToList } from '../utils/listHelpers'
 import { evaluate } from './interpreter'
-import { ExpressibleValue } from './runtime'
-import { getVariable, handleRuntimeError, listOfValues } from './util'
+import { ExpressibleValue, makeList } from './runtime'
+import { getVariable, handleRuntimeError } from './util'
 
 const quoteLiteral = (
   literal: SchemeBoolLiteral | SchemeNumberLiteral | SchemeStringLiteral | SchemeIdentifier
@@ -51,7 +51,7 @@ export const quoteExpression = (
     case 'Identifier':
       return quoteLiteral(expression)
     case 'List':
-      return listOfValues(...expression.elements.map(elem => quoteExpression(elem, context)))
+      return makeList(...expression.elements.map(elem => quoteExpression(elem, context)))
     case 'Program':
     case 'Sequence':
       return handleRuntimeError(
@@ -98,7 +98,7 @@ function* handleSpecialQuotationForm(
   switch (quoteType) {
     case 'quasiquote': {
       return [
-        listOfValues(
+        makeList(
           { type: 'EVSymbol', value: 'quasiquote' },
           ...(yield* quasiquoteExpression(
             subExpression,
@@ -115,7 +115,7 @@ function* handleSpecialQuotationForm(
         return [yield* evaluate(subExpression, context)]
       } else if (quoteLevel > unquoteLevel) {
         return [
-          listOfValues(
+          makeList(
             { type: 'EVSymbol', value: 'unquote' },
             ...(yield* quasiquoteExpression(
               subExpression,
@@ -155,7 +155,7 @@ function* handleSpecialQuotationForm(
         return list.map(element => element.value)
       } else if (quoteLevel > unquoteLevel) {
         return [
-          listOfValues(
+          makeList(
             { type: 'EVSymbol', value: 'unquote-splicing' },
             ...(yield* quasiquoteExpression(
               subExpression,
@@ -212,7 +212,7 @@ export function* quasiquoteExpression(
           ...(yield* quasiquoteExpression(element, context, quoteLevel, unquoteLevel, true))
         )
       }
-      return [listOfValues(...quoted)]
+      return [makeList(...quoted)]
     }
     case 'Program':
     case 'Sequence':

@@ -16,9 +16,23 @@ export type EVNumber = {
   value: number
 }
 
+export const makeNumber = (value: number): EVNumber => {
+  return {
+    type: 'EVNumber',
+    value
+  }
+}
+
 export type EVString = {
   type: 'EVString'
   value: string
+}
+
+export const makeString = (value: string): EVString => {
+  return {
+    type: 'EVString',
+    value
+  }
 }
 
 export type EVSymbol = {
@@ -26,9 +40,23 @@ export type EVSymbol = {
   value: string
 }
 
+export const makeSymbol = (value: string): EVSymbol => {
+  return {
+    type: 'EVSymbol',
+    value
+  }
+}
+
 export type EVBool = {
   type: 'EVBool'
   value: boolean
+}
+
+export const makeBool = (value: boolean): EVBool => {
+  return {
+    type: 'EVBool',
+    value
+  }
 }
 
 export type EVProcedure = {
@@ -52,10 +80,29 @@ export type EVEmptyList = {
   type: 'EVEmptyList'
 }
 
+export const makeEmptyList = (): EVEmptyList => {
+  return { type: 'EVEmptyList' }
+}
+
 export type EVPair = {
   type: 'EVPair'
   head: ExpressibleValue
   tail: ExpressibleValue
+}
+
+export const makePair = (head: ExpressibleValue, tail: ExpressibleValue): EVPair => {
+  return { type: 'EVPair', head, tail }
+}
+
+export const makeList = (...values: ExpressibleValue[]): EVPair | EVEmptyList => {
+  const sentinel: { tail: EVPair | EVEmptyList } = { tail: makeEmptyList() }
+  let prev: typeof sentinel | EVPair = sentinel
+  for (const value of values) {
+    const newTail = makePair(value, makeEmptyList())
+    prev.tail = newTail
+    prev = newTail
+  }
+  return sentinel.tail
 }
 
 // Special syntax forms
