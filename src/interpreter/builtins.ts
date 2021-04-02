@@ -102,7 +102,7 @@ const cons: EVProcedure = {
 
 const mustDoOnPair = <T>(opName: string, pair: ExpressibleValue, op: (pair: EVPair) => T): T => {
   if (pair.type !== 'EVPair') {
-    throw new Error(opName + ' expects a pair as the only argument, but encoundered ' + pair.type)
+    throw new Error(opName + ' expects a pair as the only argument, but encountered ' + pair.type)
   }
   return op(pair)
 }
