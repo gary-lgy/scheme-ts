@@ -1,5 +1,6 @@
-import { SchemeExpression, SchemeSequence } from '../lang/scheme'
+import { SchemeSequence } from '../lang/scheme'
 import { Environment } from '../types'
+import { LambdaArgumentPassingStyle } from './SpecialForm'
 
 // An expressible value is a value that can be the result of an evaluation
 export type ExpressibleValue =
@@ -103,67 +104,4 @@ export const makeList = (...values: ExpressibleValue[]): EVPair | EVEmptyList =>
     prev = newTail
   }
   return sentinel.tail
-}
-
-// Special syntax forms
-
-export type SpecialForm =
-  | DefineForm
-  | SetForm
-  | LambdaForm
-  | ConditionalForm
-  | QuoteSpecialForm
-  | QuasiquoteSpecialForm
-  | UnquoteSpecialForm
-  | UnquoteSplicingSpecialForm
-
-export type DefineForm = {
-  tag: 'define'
-  name: string
-  value: SchemeExpression
-}
-
-export type SetForm = {
-  tag: 'set!'
-  name: string
-  value: SchemeExpression
-}
-
-export type LambdaArgumentPassingStyle =
-  | { style: 'fixed-args'; numParams: number }
-  | { style: 'var-args'; minNumParams: number }
-  | { style: 'rest-args' }
-
-export type LambdaForm = {
-  tag: 'lambda'
-  parameters: string[]
-  body: SchemeSequence
-  argumentPassingStyle: LambdaArgumentPassingStyle
-}
-
-export type ConditionalForm = {
-  tag: 'if'
-  test: SchemeExpression
-  consequent: SchemeExpression
-  alternative?: SchemeExpression
-}
-
-export type QuoteSpecialForm = {
-  tag: 'quote'
-  expression: SchemeExpression
-}
-
-export type QuasiquoteSpecialForm = {
-  tag: 'quasiquote'
-  expression: SchemeExpression
-}
-
-export type UnquoteSpecialForm = {
-  tag: 'unquote'
-  expression: SchemeExpression
-}
-
-export type UnquoteSplicingSpecialForm = {
-  tag: 'unquote-splicing'
-  expression: SchemeExpression
 }

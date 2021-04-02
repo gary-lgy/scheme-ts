@@ -1,10 +1,74 @@
 import * as errors from '../errors/errors'
-import { SchemeList } from '../lang/scheme'
+import { SchemeExpression, SchemeList, SchemeSequence } from '../lang/scheme'
 import { Context } from '../types'
 import { evaluate, ValueGenerator } from './interpreter'
 import { quasiquoteExpression, quoteExpression } from './quote'
-import { SpecialForm } from './runtime'
 import { handleRuntimeError, isTruthy, setVariable } from './util'
+
+// Special forms definitions
+
+export type SpecialForm =
+  | DefineForm
+  | SetForm
+  | LambdaForm
+  | IfForm
+  | QuoteForm
+  | QuasiquoteForm
+  | UnquoteForm
+  | UnquoteSplicingForm
+
+export type DefineForm = {
+  tag: 'define'
+  name: string
+  value: SchemeExpression
+}
+
+export type SetForm = {
+  tag: 'set!'
+  name: string
+  value: SchemeExpression
+}
+
+export type LambdaArgumentPassingStyle =
+  | { style: 'fixed-args'; numParams: number }
+  | { style: 'var-args'; minNumParams: number }
+  | { style: 'rest-args' }
+
+export type LambdaForm = {
+  tag: 'lambda'
+  parameters: string[]
+  body: SchemeSequence
+  argumentPassingStyle: LambdaArgumentPassingStyle
+}
+
+export type IfForm = {
+  tag: 'if'
+  test: SchemeExpression
+  consequent: SchemeExpression
+  alternative?: SchemeExpression
+}
+
+export type QuoteForm = {
+  tag: 'quote'
+  expression: SchemeExpression
+}
+
+export type QuasiquoteForm = {
+  tag: 'quasiquote'
+  expression: SchemeExpression
+}
+
+export type UnquoteForm = {
+  tag: 'unquote'
+  expression: SchemeExpression
+}
+
+export type UnquoteSplicingForm = {
+  tag: 'unquote-splicing'
+  expression: SchemeExpression
+}
+
+// Evaluation of special forms
 
 export function* evaluateSpecialForm(form: SpecialForm, context: Context): ValueGenerator {
   const environment = context.runtime.environments[0]
