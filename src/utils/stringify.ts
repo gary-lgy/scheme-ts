@@ -1,5 +1,5 @@
 import { MAX_LIST_DISPLAY_LENGTH } from '../constants'
-import { EVPair, ExpressibleValue } from '../interpreter/runtime'
+import { EVPair, ExpressibleValue } from '../interpreter/ExpressibleValue'
 import { NonEmptyList } from '../stdlib/list'
 import { Type } from '../types'
 import { List, tryConvertToList } from './listHelpers'

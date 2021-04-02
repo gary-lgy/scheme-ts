@@ -4,7 +4,7 @@ import {
   NotEnoughArguments
 } from '../../errors/errors'
 import { evaluateUntilDone } from '../../testHelpers'
-import { makeList, makeNumber, makePair } from '../runtime'
+import { makeList, makeNumber, makePair } from '../ExpressibleValue'
 
 describe('arithmetic procedures', () => {
   describe('+', () => {

@@ -1,4 +1,4 @@
-import { EVEmptyList, EVPair, ExpressibleValue } from '../interpreter/runtime'
+import { EVEmptyList, EVPair, ExpressibleValue } from '../interpreter/ExpressibleValue'
 
 // List type for convenience
 export type NonEmptyList = { type: 'NonEmptyList'; value: [ExpressibleValue | NonEmptyList, List] }

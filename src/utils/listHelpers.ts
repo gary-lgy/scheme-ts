@@ -1,4 +1,4 @@
-import { EVPair, ExpressibleValue } from '../interpreter/runtime'
+import { EVPair, ExpressibleValue } from '../interpreter/ExpressibleValue'
 
 // For flattening pairs into list
 export type ListElement = {

@@ -1,5 +1,5 @@
 /* tslint:disable: max-classes-per-file */
-import { ExpressibleValue } from '../interpreter/runtime'
+import { ExpressibleValue } from '../interpreter/ExpressibleValue'
 import { SchemeExpression } from '../lang/scheme'
 import { stringify } from '../utils/stringify'
 import { RuntimeSourceError } from './runtimeSourceError'

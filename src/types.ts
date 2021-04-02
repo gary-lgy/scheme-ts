@@ -7,7 +7,7 @@
 
 import { SourceLocation } from 'acorn'
 import * as es from 'estree'
-import { ExpressibleValue } from './interpreter/runtime'
+import { ExpressibleValue } from './interpreter/ExpressibleValue'
 import { SchemeExpression } from './lang/scheme'
 
 /**

@@ -2,7 +2,7 @@
 
 import { GLOBAL } from './constants'
 import { importNativeBuiltins } from './interpreter/builtins'
-import { EVProcedure, ExpressibleValue } from './interpreter/runtime'
+import { EVProcedure, ExpressibleValue } from './interpreter/ExpressibleValue'
 import * as misc from './stdlib/misc'
 import { createTypeEnvironment } from './typeChecker/typeChecker'
 import { Context, CustomBuiltIns, Value, Variant } from './types'

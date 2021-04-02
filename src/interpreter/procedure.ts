@@ -2,8 +2,8 @@ import { Context } from '..'
 import * as errors from '../errors/errors'
 import { SchemeExpression, SchemeList } from '../lang/scheme'
 import { Environment } from '../types'
+import { EVProcedure, ExpressibleValue } from './ExpressibleValue'
 import { evaluate } from './interpreter'
-import { EVProcedure, ExpressibleValue } from './runtime'
 import { handleRuntimeError, popEnvironment, pushEnvironment } from './util'
 
 const checkNumberOfArguments = (

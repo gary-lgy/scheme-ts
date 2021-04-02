@@ -1,6 +1,6 @@
 import { createContext } from '.'
+import { ExpressibleValue } from './interpreter/ExpressibleValue'
 import { evaluate } from './interpreter/interpreter'
-import { ExpressibleValue } from './interpreter/runtime'
 import { parse } from './parser/parser'
 
 export const evaluateUntilDone = (code: string): ExpressibleValue => {

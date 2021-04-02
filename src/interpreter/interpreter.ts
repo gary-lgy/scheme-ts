@@ -11,8 +11,8 @@ import {
   SchemeStringLiteral
 } from '../lang/scheme'
 import { Context } from '../types'
+import { ExpressibleValue } from './ExpressibleValue'
 import { apply, listOfArguments } from './procedure'
-import { ExpressibleValue } from './runtime'
 import { evaluateSpecialForm, listToSpecialForm } from './SpecialForm'
 import { extendCurrentEnvironment, getVariable, handleRuntimeError, pushEnvironment } from './util'
 

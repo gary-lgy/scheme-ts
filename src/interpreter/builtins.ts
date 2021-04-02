@@ -1,5 +1,12 @@
 import { Context, Frame } from '../types'
-import { EVNumber, EVPair, EVProcedure, ExpressibleValue, makeNumber, makePair } from './runtime'
+import {
+  EVNumber,
+  EVPair,
+  EVProcedure,
+  ExpressibleValue,
+  makeNumber,
+  makePair
+} from './ExpressibleValue'
 
 const defineBuiltin = (frame: Frame, name: string, value: ExpressibleValue) => {
   frame[name] = value

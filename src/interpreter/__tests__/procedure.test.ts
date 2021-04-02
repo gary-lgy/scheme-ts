@@ -1,6 +1,6 @@
 import { InvalidNumberOfArguments } from '../../errors/errors'
 import { evaluateUntilDone } from '../../testHelpers'
-import { makeList, makeNumber } from '../runtime'
+import { makeList, makeNumber } from '../ExpressibleValue'
 
 describe('number of arguments', () => {
   describe('fixed number of arguments', () => {

@@ -16,7 +16,7 @@ import {
   makeNumber,
   makeString,
   makeSymbol
-} from '../runtime'
+} from '../ExpressibleValue'
 
 describe('synatx', () => {
   test('must take exactly one argument', () => {

@@ -9,8 +9,8 @@ import {
 } from '../lang/scheme'
 import { Context } from '../types'
 import { List, tryConvertToList } from '../utils/listHelpers'
+import { ExpressibleValue, makeList } from './ExpressibleValue'
 import { evaluate } from './interpreter'
-import { ExpressibleValue, makeList } from './runtime'
 import { getVariable, handleRuntimeError } from './util'
 
 const quoteLiteral = (
