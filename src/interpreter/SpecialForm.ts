@@ -1,5 +1,5 @@
 import * as errors from '../errors/errors'
-import { SchemeExpression, SchemeList, SchemeSequence } from '../lang/scheme'
+import { SchemeExpression, SchemeIdentifier, SchemeList, SchemeSequence } from '../lang/scheme'
 import { Context } from '../types'
 import { evaluate, ValueGenerator } from './interpreter'
 import { quasiquoteExpression, quoteExpression } from './quote'
@@ -19,13 +19,13 @@ export type SpecialForm =
 
 export type DefineForm = {
   tag: 'define'
-  name: string
+  name: SchemeIdentifier
   value: SchemeExpression
 }
 
 export type SetForm = {
   tag: 'set!'
-  name: string
+  name: SchemeIdentifier
   value: SchemeExpression
 }
 
@@ -36,7 +36,7 @@ export type LambdaArgumentPassingStyle =
 
 export type LambdaForm = {
   tag: 'lambda'
-  parameters: string[]
+  parameters: SchemeIdentifier[]
   body: SchemeSequence
   argumentPassingStyle: LambdaArgumentPassingStyle
 }
@@ -77,13 +77,13 @@ export function* evaluateSpecialForm(form: SpecialForm, context: Context): Value
       // TODO: disallow mixing of definitions and expressions?
       const value = yield* evaluate(form.value, context)
       const frame = context.runtime.environments[0].head
-      frame[form.name] = value
+      frame[form.name.name] = value
       return { type: 'EVEmptyList' }
     }
     case 'lambda': {
       return {
         type: 'EVProcedure',
-        parameters: form.parameters,
+        parameters: form.parameters.map(id => id.name),
         argumentPassingStyle: form.argumentPassingStyle,
         variant: 'CompoundProcedure',
         body: form.body,
@@ -92,7 +92,7 @@ export function* evaluateSpecialForm(form: SpecialForm, context: Context): Value
     }
     case 'set!': {
       const value = yield* evaluate(form.value, context)
-      setVariable(context, form.name, value)
+      setVariable(context, form.name.name, value)
       return { type: 'EVEmptyList' }
     }
     case 'if': {
@@ -140,7 +140,7 @@ export const listToSpecialForm = (
     if (identifier.type === 'Identifier') {
       return {
         tag,
-        name: identifier.name,
+        name: identifier,
         value: list.elements[2]
       }
     } else {
@@ -151,10 +151,10 @@ export const listToSpecialForm = (
     if (list.elements.length <= 2 || list.elements[1].type !== 'List') {
       return handleRuntimeError(context, new errors.LambdaSyntaxError(list))
     }
-    const parameters: string[] = []
+    const parameters: SchemeIdentifier[] = []
     list.elements[1].elements.forEach(element => {
       if (element.type === 'Identifier') {
-        return parameters.push(element.name)
+        return parameters.push(element)
       } else {
         return handleRuntimeError(context, new errors.LambdaSyntaxError(list))
       }
@@ -178,7 +178,7 @@ export const listToSpecialForm = (
     }
     return {
       tag,
-      name: list.elements[1].name,
+      name: list.elements[1],
       value: list.elements[2]
     }
   } else if (tag === 'if') {
