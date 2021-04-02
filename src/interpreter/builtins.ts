@@ -1,11 +1,11 @@
 import { Context, Frame } from '../types'
-import { EVNumber, EVPair, EVProcedure, ExpressibleValue } from './runtime'
+import { EVNumber, EVPair, EVProcedure, ExpressibleValue, makeNumber, makePair } from './runtime'
 
 const defineBuiltin = (frame: Frame, name: string, value: ExpressibleValue) => {
   frame[name] = value
 }
 
-const mapNumericalArguments = (opName: string, args: ExpressibleValue[]): number[] => {
+const mustMapToNumbers = (opName: string, args: ExpressibleValue[]): number[] => {
   const mapped: number[] = []
   for (const arg of args) {
     if (arg.type !== 'EVNumber') {
@@ -21,10 +21,7 @@ const reduceNumericalArgs = (
   init: number,
   args: number[]
 ): EVNumber => {
-  return {
-    type: 'EVNumber',
-    value: args.reduce(op, init)
-  }
+  return makeNumber(args.reduce(op, init))
 }
 
 const add: EVProcedure = {
@@ -35,7 +32,7 @@ const add: EVProcedure = {
     minNumParams: 0
   },
   body: (args: ExpressibleValue[]) =>
-    reduceNumericalArgs((acc, next) => acc + next, 0, mapNumericalArguments('+', args))
+    reduceNumericalArgs((acc, next) => acc + next, 0, mustMapToNumbers('+', args))
 }
 
 const subtract: EVProcedure = {
@@ -46,7 +43,10 @@ const subtract: EVProcedure = {
     minNumParams: 1
   },
   body: (args: ExpressibleValue[]) => {
-    const mappedArgs = mapNumericalArguments('-', args)
+    const mappedArgs = mustMapToNumbers('-', args)
+    if (mappedArgs.length === 1) {
+      return makeNumber(-mappedArgs[0])
+    }
     return reduceNumericalArgs((acc, next) => acc - next, mappedArgs[0], mappedArgs.slice(1))
   }
 }
@@ -59,7 +59,7 @@ const multiply: EVProcedure = {
     minNumParams: 0
   },
   body: (args: ExpressibleValue[]) =>
-    reduceNumericalArgs((acc, next) => acc * next, 1, mapNumericalArguments('*', args))
+    reduceNumericalArgs((acc, next) => acc * next, 1, mustMapToNumbers('*', args))
 }
 
 const divide: EVProcedure = {
@@ -70,8 +70,23 @@ const divide: EVProcedure = {
     minNumParams: 1
   },
   body: (args: ExpressibleValue[]) => {
-    const mappedArgs = mapNumericalArguments('/', args)
-    return reduceNumericalArgs((acc, next) => acc / next, mappedArgs[0], mappedArgs.slice(1))
+    const mappedArgs = mustMapToNumbers('/', args)
+    if (mappedArgs.length === 1) {
+      if (mappedArgs[0] === 0) {
+        throw new Error('division by zero')
+      }
+      return makeNumber(1 / mappedArgs[0])
+    }
+    return reduceNumericalArgs(
+      (acc, next) => {
+        if (next === 0) {
+          throw new Error('division by zero')
+        }
+        return acc / next
+      },
+      mappedArgs[0],
+      mappedArgs.slice(1)
+    )
   }
 }
 
@@ -82,14 +97,10 @@ const cons: EVProcedure = {
     style: 'fixed-args',
     numParams: 2
   },
-  body: (args: ExpressibleValue[]) => ({
-    type: 'EVPair',
-    head: args[0],
-    tail: args[1]
-  })
+  body: (args: ExpressibleValue[]) => makePair(args[0], args[1])
 }
 
-const doOnPair = <T>(opName: string, pair: ExpressibleValue, op: (pair: EVPair) => T) => {
+const mustDoOnPair = <T>(opName: string, pair: ExpressibleValue, op: (pair: EVPair) => T): T => {
   if (pair.type !== 'EVPair') {
     throw new Error(opName + ' expects a pair as the only argument, but encoundered ' + pair.type)
   }
@@ -104,7 +115,7 @@ const car: EVProcedure = {
     numParams: 1
   },
   body: (args: ExpressibleValue[]) =>
-    doOnPair('car', args[0], (pair: EVPair): ExpressibleValue => pair.head)
+    mustDoOnPair('car', args[0], (pair: EVPair): ExpressibleValue => pair.head)
 }
 
 const cdr: EVProcedure = {
@@ -115,7 +126,7 @@ const cdr: EVProcedure = {
     numParams: 1
   },
   body: (args: ExpressibleValue[]) =>
-    doOnPair('cdr', args[0], (pair: EVPair): ExpressibleValue => pair.tail)
+    mustDoOnPair('cdr', args[0], (pair: EVPair): ExpressibleValue => pair.tail)
 }
 
 export const importNativeBuiltins = (context: Context) => {
@@ -146,7 +157,7 @@ export const importNativeBuiltins = (context: Context) => {
         numParams: 2
       },
       body: (args: ExpressibleValue[]) => {
-        const mappedArgs = mapNumericalArguments(opName, args)
+        const mappedArgs = mustMapToNumbers(opName, args)
         return {
           type: 'EVBool',
           value: op(mappedArgs[0], mappedArgs[1])
