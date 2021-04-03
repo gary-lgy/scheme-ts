@@ -35,7 +35,8 @@ const add: EVProcedure = {
   type: 'EVProcedure',
   variant: 'BuiltInProcedure',
   argumentPassingStyle: {
-    style: 'var-args'
+    style: 'var-args',
+    numCompulsoryParameters: 0
   },
   body: (args: ExpressibleValue[]) =>
     reduceNumericalArgs((acc, next) => acc + next, 0, mustMapToNumbers('+', args))
@@ -45,7 +46,7 @@ const subtract: EVProcedure = {
   type: 'EVProcedure',
   variant: 'BuiltInProcedure',
   argumentPassingStyle: {
-    style: 'rest-args',
+    style: 'var-args',
     numCompulsoryParameters: 1
   },
   body: (args: ExpressibleValue[]) => {
@@ -61,7 +62,8 @@ const multiply: EVProcedure = {
   type: 'EVProcedure',
   variant: 'BuiltInProcedure',
   argumentPassingStyle: {
-    style: 'var-args'
+    style: 'var-args',
+    numCompulsoryParameters: 0
   },
   body: (args: ExpressibleValue[]) =>
     reduceNumericalArgs((acc, next) => acc * next, 1, mustMapToNumbers('*', args))
@@ -71,7 +73,7 @@ const divide: EVProcedure = {
   type: 'EVProcedure',
   variant: 'BuiltInProcedure',
   argumentPassingStyle: {
-    style: 'rest-args',
+    style: 'var-args',
     numCompulsoryParameters: 1
   },
   body: (args: ExpressibleValue[]) => {

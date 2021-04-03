@@ -8,28 +8,22 @@ import { handleRuntimeError, popEnvironment, pushEnvironment } from './util'
 
 // For BuiltIn procedures, we only need to check the number of arguments
 // The parameter names are meaningless and unnecessary
-export type BuiltInProcedureArgumentPassingStyle = FixedArgs | RestArgs | VarArgs
+export type BuiltInProcedureArgumentPassingStyle = FixedArgs | VarArgs
 
 type FixedArgs = { style: 'fixed-args'; numParams: number }
-type RestArgs = {
-  style: 'rest-args'
-  numCompulsoryParameters: number
-}
-type VarArgs = { style: 'var-args' }
+type VarArgs = { style: 'var-args'; numCompulsoryParameters: number }
 
 // For compound procedures, we need both the number of arguments and the parameter names
 // in order to extend the function environment with the arguments
 export type CompoundProcedureArgumentPassingStyle =
   | FixedArgsWithParameterNames
-  | RestArgsWithParameterNames
   | VarArgsWithParameterNames
 
 type FixedArgsWithParameterNames = FixedArgs & { parameters: SchemeIdentifier[] }
-type RestArgsWithParameterNames = RestArgs & {
+type VarArgsWithParameterNames = VarArgs & {
   compulsoryParameters: SchemeIdentifier[]
   restParameters: SchemeIdentifier
 }
-type VarArgsWithParameterNames = VarArgs & { parameters: SchemeIdentifier }
 
 const checkNumberOfArguments = (
   context: Context,
@@ -52,7 +46,7 @@ const checkNumberOfArguments = (
       )
     )
   } else if (
-    procedure.argumentPassingStyle.style === 'rest-args' &&
+    procedure.argumentPassingStyle.style === 'var-args' &&
     numArgs < procedure.argumentPassingStyle.numCompulsoryParameters
   ) {
     handleRuntimeError(
@@ -152,11 +146,6 @@ const makeArguments = (
     return {
       parameters: argumentPassingStyle.parameters.map(param => param.name),
       args
-    }
-  } else if (argumentPassingStyle.style === 'var-args') {
-    return {
-      parameters: [argumentPassingStyle.parameters.name],
-      args: [makeList(...args)]
     }
   } else {
     return {
