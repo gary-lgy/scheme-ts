@@ -4,7 +4,8 @@ import {
   NotEnoughArguments
 } from '../../errors/errors'
 import { evaluateUntilDone } from '../../testHelpers'
-import { makeList, makeNumber, makePair } from '../ExpressibleValue'
+import { stringify } from '../../utils/stringify'
+import { makeEmptyList, makeList, makeNumber, makePair, makeString } from '../ExpressibleValue'
 
 describe('arithmetic procedures', () => {
   describe('+', () => {
@@ -157,6 +158,59 @@ describe('pair procedures', () => {
 
     test('on proper list', () => {
       expect(evaluateUntilDone("(cdr '(1 2 3))")).toEqual(makeList(makeNumber(2), makeNumber(3)))
+    })
+  })
+
+  describe('set-car!', () => {
+    test('basic', () => {
+      expect(
+        evaluateUntilDone(`
+      (define my-pair (cons 1 2))
+      (set-car! my-pair 3)
+      my-pair
+      `)
+      ).toEqual(makePair(makeNumber(3), makeNumber(2)))
+    })
+  })
+
+  describe('set-cdr!', () => {
+    test('basic', () => {
+      expect(
+        evaluateUntilDone(`
+      (define my-pair (cons 1 2))
+      (set-cdr! my-pair 3)
+      my-pair
+      `)
+      ).toEqual(makePair(makeNumber(1), makeNumber(3)))
+    })
+
+    test('circular', () => {
+      expect(
+        stringify(
+          evaluateUntilDone(`
+      (define my-pair (cons 1 2))
+      (set-cdr! my-pair my-pair)
+      my-pair
+      `)
+        )
+      ).toEqual('(1 . ...<circular>)')
+    })
+  })
+
+  describe('list', () => {
+    test('no arguments', () => {
+      expect(evaluateUntilDone('(list)')).toEqual(makeEmptyList())
+    })
+
+    test('with arguments', () => {
+      expect(evaluateUntilDone('(list 1 2 (list 3 4) "str")')).toEqual(
+        makeList(
+          makeNumber(1),
+          makeNumber(2),
+          makeList(makeNumber(3), makeNumber(4)),
+          makeString('str')
+        )
+      )
     })
   })
 })

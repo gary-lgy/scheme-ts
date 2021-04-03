@@ -1,4 +1,12 @@
-import { EVPair, EVProcedure, ExpressibleValue, makePair } from '../ExpressibleValue'
+import {
+  EVEmptyList,
+  EVPair,
+  EVProcedure,
+  ExpressibleValue,
+  makeEmptyList,
+  makeList,
+  makePair
+} from '../ExpressibleValue'
 
 export const cons: EVProcedure = {
   type: 'EVProcedure',
@@ -41,4 +49,50 @@ export const cdr: EVProcedure = {
   },
   body: (args: ExpressibleValue[]) =>
     mustDoOnPair('cdr', args[0], (pair: EVPair): ExpressibleValue => pair.tail)
+}
+
+export const setCar: EVProcedure = {
+  type: 'EVProcedure',
+  variant: 'BuiltInProcedure',
+  argumentPassingStyle: {
+    style: 'fixed-args',
+    numParams: 2
+  },
+  body: (args: ExpressibleValue[]) =>
+    mustDoOnPair(
+      'set-car!',
+      args[0],
+      (pair: EVPair): EVEmptyList => {
+        pair.head = args[1]
+        return makeEmptyList()
+      }
+    )
+}
+
+export const setCdr: EVProcedure = {
+  type: 'EVProcedure',
+  variant: 'BuiltInProcedure',
+  argumentPassingStyle: {
+    style: 'fixed-args',
+    numParams: 2
+  },
+  body: (args: ExpressibleValue[]) =>
+    mustDoOnPair(
+      'set-cdr!',
+      args[0],
+      (pair: EVPair): EVEmptyList => {
+        pair.tail = args[1]
+        return makeEmptyList()
+      }
+    )
+}
+
+export const list: EVProcedure = {
+  type: 'EVProcedure',
+  variant: 'BuiltInProcedure',
+  argumentPassingStyle: {
+    style: 'var-args',
+    numCompulsoryParameters: 0
+  },
+  body: (args: ExpressibleValue[]) => makeList(...args)
 }

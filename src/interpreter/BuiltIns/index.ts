@@ -13,7 +13,7 @@ import {
   remainder,
   subtract
 } from './Arithmetic'
-import { car, cdr, cons } from './Pair'
+import { car, cdr, cons, list, setCar, setCdr } from './Pair'
 import { isNull, isNumber, isPair, isProcedure, isString, isSymbol } from './TypePredicates'
 
 export const defineBuiltin = (frame: Frame, name: string, value: ExpressibleValue) => {
@@ -39,6 +39,9 @@ export const importNativeBuiltins = (context: Context) => {
   defineBuiltin(frame, 'cons', cons)
   defineBuiltin(frame, 'car', car)
   defineBuiltin(frame, 'cdr', cdr)
+  defineBuiltin(frame, 'set-car!', setCar)
+  defineBuiltin(frame, 'set-cdr!', setCdr)
+  defineBuiltin(frame, 'list', list)
 
   defineBuiltin(frame, 'number?', isNumber)
   defineBuiltin(frame, 'string?', isString)
