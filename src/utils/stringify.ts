@@ -1,8 +1,7 @@
 import { MAX_LIST_DISPLAY_LENGTH } from '../constants'
 import { EVPair, ExpressibleValue } from '../interpreter/ExpressibleValue'
-import { NonEmptyList } from '../stdlib/list'
 import { Type } from '../types'
-import { List, tryConvertToList } from './listHelpers'
+import { flattenPairToList, ImproperList, List } from './listHelpers'
 
 function makeIndent(indent: number | string): string {
   if (typeof indent === 'number') {
@@ -31,7 +30,7 @@ export const stringify = (
   splitlineThreshold = 80
 ): string => {
   // Used to check if there are any cyclic structures
-  const ancestors = new Set<ExpressibleValue | NonEmptyList>()
+  const ancestors = new Set<ExpressibleValue>()
 
   // Precompute useful strings
   const indentString = makeIndent(indent)
@@ -48,26 +47,11 @@ export const stringify = (
   // The real one is stringifyValue
 
   const stringifyPair = (pair: EVPair, indentLevel: number) => {
-    const maybeList = tryConvertToList(pair)
-    if (maybeList) {
-      return stringifyList(maybeList, indentLevel)
-    }
-
-    ancestors.add(pair)
-    const headStr = stringifyValue(pair.head, 0)
-    const tailStr = stringifyValue(pair.tail, 0)
-    ancestors.delete(pair)
-
-    if (shouldMultiline([headStr, tailStr])) {
-      // It's (probably) a source list
-      // Don't increase indent on second element
-      // so long lists don't look like crap
-      return `(${indentify(indentString.repeat(indentLevel + 1), headStr).substring(
-        indentString.length
-      )} .
-${indentify(indentString.repeat(indentLevel), tailStr)})`
+    const list = flattenPairToList(pair)
+    if (list.type === 'List') {
+      return stringifyList(list.value, indentLevel)
     } else {
-      return `(${headStr} . ${tailStr})`
+      return stringifyImproperList(list.value, indentLevel)
     }
   }
 
@@ -80,9 +64,10 @@ ${indentify(indentString.repeat(indentLevel), tailStr)})`
     const valueStrs = list.map(x => {
       ancestors.add(x.pair)
       const value = stringifyValue(x.value, 0)
-      ancestors.delete(x.pair)
       return value
     })
+
+    list.forEach(x => ancestors.delete(x.pair))
 
     if (shouldMultiline(valueStrs)) {
       // indent second element onwards to match with first element
@@ -95,30 +80,33 @@ ${indentify(indentString.repeat(indentLevel), tailStr)})`
     }
   }
 
-  // const stringifyList = (list: NonEmptyList, indentLevel: number) => {
-  //   const prefix = '('
-  //   const suffix = ')'
-  //   const prefixIndented = prefix + indentString.substring(prefix.length)
-  //   const suffixIndented = suffix
-  //   const flattened = flattenListToArray(list)
+  const stringifyImproperList = (list: ImproperList, indentLevel: number) => {
+    const prefix = '('
+    const suffix = ')'
+    const prefixIndented = prefix + indentString.substring(prefix.length)
+    const suffixIndented = suffix
 
-  //   ancestors.add(list)
-  //   const valueStrs = flattened.map(x => stringifyValue(x, 0))
-  //   ancestors.delete(list)
+    const preStrs = list.properPart.map(x => {
+      ancestors.add(x.pair)
+      return stringifyValue(x.value, 0)
+    })
+    ancestors.add(list.lastPair)
+    const postStrs = [stringifyValue(list.lastPair.head), '.', stringifyValue(list.lastPair.tail)]
+    const valueStrs = preStrs.concat(postStrs)
 
-  //   if (shouldMultiline(valueStrs)) {
-  //     // indent second element onwards to match with first element
-  //     return `${prefixIndented}${indentify(
-  //       indentString.repeat(indentLevel) + ' '.repeat(prefixIndented.length),
-  //       valueStrs.join(' \n')
-  //     ).substring(prefixIndented.length)}${suffixIndented}`
-  //   } else {
-  //     return `${prefix}${valueStrs.join(' ')}${suffix}`
-  //   }
-  // }
+    list.properPart.forEach(x => ancestors.delete(x.pair))
+    ancestors.delete(list.lastPair)
 
-  // Convert any proper lists expressed as pairs to NonEmptyList for convenience
-  // value = normaliseList(value)
+    if (shouldMultiline(valueStrs)) {
+      // indent second element onwards to match with first element
+      return `${prefixIndented}${indentify(
+        indentString.repeat(indentLevel) + ' '.repeat(prefixIndented.length),
+        valueStrs.join(' \n')
+      ).substring(prefixIndented.length)}${suffixIndented}`
+    } else {
+      return `${prefix}${valueStrs.join(' ')}${suffix}`
+    }
+  }
 
   const stringifyValue = (v: ExpressibleValue, indentLevel: number = 0): string => {
     if (ancestors.has(v)) {

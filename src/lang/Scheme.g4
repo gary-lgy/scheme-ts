@@ -9,15 +9,16 @@ sequence
    ;
 
 expression
-   : '(' elements=expression* ')' # List
+   : STRING # String
+   | NUMBER # Number
+   | BOOL # Bool
+   | IDENTIFIER # Identifier
    | '\'' expression # Quote
    | '`' expression # Quasiquote
    | ',' expression # Unquote
    | ',@' expression # UnquoteSplicing
-   | STRING # String
-   | NUMBER # Number
-   | BOOL # Bool
-   | IDENTIFIER # Identifier
+   | '(' elements=expression* ')' # List
+   | '(' pre=expression+ '.' post=expression ')' # DottedList
    ;
 
 STRING
@@ -56,6 +57,7 @@ fragment DIGIT
 
 fragment IDENTIFIER_INITIAL
    : LETTER
+   | '!'
    | '$'
    | '%'
    | '&'
@@ -68,6 +70,7 @@ fragment IDENTIFIER_INITIAL
    | '?'
    | '^'
    | '_'
+   | '~'
    ;
 
 fragment IDENTIFIER_SUBSEQUENT
@@ -77,8 +80,7 @@ fragment IDENTIFIER_SUBSEQUENT
    | '-'
    | '.'
    | '@'
-   | '!'
-;
+   ;
 
 fragment PECULIAR_IDENTIFIER
    : '+'

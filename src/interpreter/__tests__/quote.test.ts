@@ -14,6 +14,7 @@ import {
   makeBool,
   makeList,
   makeNumber,
+  makePair,
   makeString,
   makeSymbol
 } from '../ExpressibleValue'
@@ -151,6 +152,14 @@ describe('quote', () => {
   test('quoted quasiquote and unquote', () => {
     const actual = stringify(evaluateUntilDone(`'(quasiquote (list (unquote (+ 1 2)) 4))`))
     const expected = '(quasiquote (list (unquote (+ 1 2)) 4))'
+    expect(actual).toEqual(expected)
+  })
+
+  test('quote dotted list', () => {
+    const actual = evaluateUntilDone(`
+      '(1 2 . 3)
+    `)
+    const expected = makePair(makeNumber(1), makePair(makeNumber(2), makeNumber(3)))
     expect(actual).toEqual(expected)
   })
 })

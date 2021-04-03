@@ -4,6 +4,7 @@
 import { ParseTreeVisitor } from 'antlr4ts/tree/ParseTreeVisitor'
 import {
   BoolContext,
+  DottedListContext,
   ExpressionContext,
   IdentifierContext,
   ListContext,
@@ -26,12 +27,36 @@ import {
  */
 export interface SchemeVisitor<Result> extends ParseTreeVisitor<Result> {
   /**
-   * Visit a parse tree produced by the `List`
+   * Visit a parse tree produced by the `String`
    * labeled alternative in `SchemeParser.expression`.
    * @param ctx the parse tree
    * @return the visitor result
    */
-  visitList?: (ctx: ListContext) => Result
+  visitString?: (ctx: StringContext) => Result
+
+  /**
+   * Visit a parse tree produced by the `Number`
+   * labeled alternative in `SchemeParser.expression`.
+   * @param ctx the parse tree
+   * @return the visitor result
+   */
+  visitNumber?: (ctx: NumberContext) => Result
+
+  /**
+   * Visit a parse tree produced by the `Bool`
+   * labeled alternative in `SchemeParser.expression`.
+   * @param ctx the parse tree
+   * @return the visitor result
+   */
+  visitBool?: (ctx: BoolContext) => Result
+
+  /**
+   * Visit a parse tree produced by the `Identifier`
+   * labeled alternative in `SchemeParser.expression`.
+   * @param ctx the parse tree
+   * @return the visitor result
+   */
+  visitIdentifier?: (ctx: IdentifierContext) => Result
 
   /**
    * Visit a parse tree produced by the `Quote`
@@ -66,36 +91,20 @@ export interface SchemeVisitor<Result> extends ParseTreeVisitor<Result> {
   visitUnquoteSplicing?: (ctx: UnquoteSplicingContext) => Result
 
   /**
-   * Visit a parse tree produced by the `String`
+   * Visit a parse tree produced by the `List`
    * labeled alternative in `SchemeParser.expression`.
    * @param ctx the parse tree
    * @return the visitor result
    */
-  visitString?: (ctx: StringContext) => Result
+  visitList?: (ctx: ListContext) => Result
 
   /**
-   * Visit a parse tree produced by the `Number`
+   * Visit a parse tree produced by the `DottedList`
    * labeled alternative in `SchemeParser.expression`.
    * @param ctx the parse tree
    * @return the visitor result
    */
-  visitNumber?: (ctx: NumberContext) => Result
-
-  /**
-   * Visit a parse tree produced by the `Bool`
-   * labeled alternative in `SchemeParser.expression`.
-   * @param ctx the parse tree
-   * @return the visitor result
-   */
-  visitBool?: (ctx: BoolContext) => Result
-
-  /**
-   * Visit a parse tree produced by the `Identifier`
-   * labeled alternative in `SchemeParser.expression`.
-   * @param ctx the parse tree
-   * @return the visitor result
-   */
-  visitIdentifier?: (ctx: IdentifierContext) => Result
+  visitDottedList?: (ctx: DottedListContext) => Result
 
   /**
    * Visit a parse tree produced by `SchemeParser.program`.

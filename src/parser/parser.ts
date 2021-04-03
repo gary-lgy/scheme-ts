@@ -6,6 +6,7 @@ import { ParseTree } from 'antlr4ts/tree/ParseTree'
 import { TerminalNode } from 'antlr4ts/tree/TerminalNode'
 import {
   SchemeBoolLiteral,
+  SchemeDottedList,
   SchemeExpression,
   SchemeIdentifier,
   SchemeList,
@@ -18,6 +19,7 @@ import {
 import { SchemeLexer } from '../lang/SchemeLexer'
 import {
   BoolContext,
+  DottedListContext,
   ExpressionContext,
   IdentifierContext,
   ListContext,
@@ -87,6 +89,18 @@ class ExpressionGenerator
     return {
       type: 'List',
       elements: ctx.expression().map(ex => ex.accept(this)),
+      loc: contextToLocation(ctx)
+    }
+  }
+
+  visitDottedList(ctx: DottedListContext): SchemeDottedList {
+    const expressions = ctx.expression()
+    const preExpressions = expressions.slice(0, -1)
+    const postExpression = expressions[expressions.length - 1]
+    return {
+      type: 'DottedList',
+      pre: preExpressions.map(ex => ex.accept(this)),
+      post: postExpression.accept(this),
       loc: contextToLocation(ctx)
     }
   }

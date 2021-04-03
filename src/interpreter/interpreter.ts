@@ -1,6 +1,7 @@
 import * as errors from '../errors/errors'
 import {
   SchemeBoolLiteral,
+  SchemeDottedList,
   SchemeExpression,
   SchemeExpressionType,
   SchemeIdentifier,
@@ -73,6 +74,10 @@ export const evaluators: { [key in SchemeExpressionType]: Evaluator<SchemeExpres
     const procedureName =
       firstElement.type === 'Identifier' ? firstElement.name : '[Anonymous procedure]'
     return yield* apply(context, procedure, procedureName, args, node)
+  },
+
+  DottedList: function* (node: SchemeDottedList, context: Context): ValueGenerator {
+    return handleRuntimeError(context, new errors.UnexpectedDottedList(node))
   },
 
   StringLiteral: function* (node: SchemeStringLiteral, context: Context): ValueGenerator {

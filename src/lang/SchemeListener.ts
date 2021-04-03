@@ -4,6 +4,7 @@
 import { ParseTreeListener } from 'antlr4ts/tree/ParseTreeListener'
 import {
   BoolContext,
+  DottedListContext,
   ExpressionContext,
   IdentifierContext,
   ListContext,
@@ -23,17 +24,56 @@ import {
  */
 export interface SchemeListener extends ParseTreeListener {
   /**
-   * Enter a parse tree produced by the `List`
+   * Enter a parse tree produced by the `String`
    * labeled alternative in `SchemeParser.expression`.
    * @param ctx the parse tree
    */
-  enterList?: (ctx: ListContext) => void
+  enterString?: (ctx: StringContext) => void
   /**
-   * Exit a parse tree produced by the `List`
+   * Exit a parse tree produced by the `String`
    * labeled alternative in `SchemeParser.expression`.
    * @param ctx the parse tree
    */
-  exitList?: (ctx: ListContext) => void
+  exitString?: (ctx: StringContext) => void
+
+  /**
+   * Enter a parse tree produced by the `Number`
+   * labeled alternative in `SchemeParser.expression`.
+   * @param ctx the parse tree
+   */
+  enterNumber?: (ctx: NumberContext) => void
+  /**
+   * Exit a parse tree produced by the `Number`
+   * labeled alternative in `SchemeParser.expression`.
+   * @param ctx the parse tree
+   */
+  exitNumber?: (ctx: NumberContext) => void
+
+  /**
+   * Enter a parse tree produced by the `Bool`
+   * labeled alternative in `SchemeParser.expression`.
+   * @param ctx the parse tree
+   */
+  enterBool?: (ctx: BoolContext) => void
+  /**
+   * Exit a parse tree produced by the `Bool`
+   * labeled alternative in `SchemeParser.expression`.
+   * @param ctx the parse tree
+   */
+  exitBool?: (ctx: BoolContext) => void
+
+  /**
+   * Enter a parse tree produced by the `Identifier`
+   * labeled alternative in `SchemeParser.expression`.
+   * @param ctx the parse tree
+   */
+  enterIdentifier?: (ctx: IdentifierContext) => void
+  /**
+   * Exit a parse tree produced by the `Identifier`
+   * labeled alternative in `SchemeParser.expression`.
+   * @param ctx the parse tree
+   */
+  exitIdentifier?: (ctx: IdentifierContext) => void
 
   /**
    * Enter a parse tree produced by the `Quote`
@@ -88,56 +128,30 @@ export interface SchemeListener extends ParseTreeListener {
   exitUnquoteSplicing?: (ctx: UnquoteSplicingContext) => void
 
   /**
-   * Enter a parse tree produced by the `String`
+   * Enter a parse tree produced by the `List`
    * labeled alternative in `SchemeParser.expression`.
    * @param ctx the parse tree
    */
-  enterString?: (ctx: StringContext) => void
+  enterList?: (ctx: ListContext) => void
   /**
-   * Exit a parse tree produced by the `String`
+   * Exit a parse tree produced by the `List`
    * labeled alternative in `SchemeParser.expression`.
    * @param ctx the parse tree
    */
-  exitString?: (ctx: StringContext) => void
+  exitList?: (ctx: ListContext) => void
 
   /**
-   * Enter a parse tree produced by the `Number`
+   * Enter a parse tree produced by the `DottedList`
    * labeled alternative in `SchemeParser.expression`.
    * @param ctx the parse tree
    */
-  enterNumber?: (ctx: NumberContext) => void
+  enterDottedList?: (ctx: DottedListContext) => void
   /**
-   * Exit a parse tree produced by the `Number`
+   * Exit a parse tree produced by the `DottedList`
    * labeled alternative in `SchemeParser.expression`.
    * @param ctx the parse tree
    */
-  exitNumber?: (ctx: NumberContext) => void
-
-  /**
-   * Enter a parse tree produced by the `Bool`
-   * labeled alternative in `SchemeParser.expression`.
-   * @param ctx the parse tree
-   */
-  enterBool?: (ctx: BoolContext) => void
-  /**
-   * Exit a parse tree produced by the `Bool`
-   * labeled alternative in `SchemeParser.expression`.
-   * @param ctx the parse tree
-   */
-  exitBool?: (ctx: BoolContext) => void
-
-  /**
-   * Enter a parse tree produced by the `Identifier`
-   * labeled alternative in `SchemeParser.expression`.
-   * @param ctx the parse tree
-   */
-  enterIdentifier?: (ctx: IdentifierContext) => void
-  /**
-   * Exit a parse tree produced by the `Identifier`
-   * labeled alternative in `SchemeParser.expression`.
-   * @param ctx the parse tree
-   */
-  exitIdentifier?: (ctx: IdentifierContext) => void
+  exitDottedList?: (ctx: DottedListContext) => void
 
   /**
    * Enter a parse tree produced by `SchemeParser.program`.

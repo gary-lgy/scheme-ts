@@ -164,6 +164,16 @@ export class UnquoteSplicingInNonListContext extends RuntimeSourceError {
   }
 }
 
+export class UnexpectedDottedList extends RuntimeSourceError {
+  constructor(node: SchemeExpression) {
+    super(node)
+  }
+
+  public explain() {
+    return 'Unexpected dotted list'
+  }
+}
+
 export class UnreachableCodeReached extends RuntimeSourceError {
   constructor(public message: string) {
     super()

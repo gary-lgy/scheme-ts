@@ -108,3 +108,17 @@ export const makeList = (...values: ExpressibleValue[]): EVPair | EVEmptyList =>
   }
   return sentinel.tail
 }
+
+/** Create an improper list where the values before the dot are `beforeDot` and the value after the dot is `afterDot`. */
+export const makeImproperList = (
+  beforeDot: ExpressibleValue[],
+  afterDot: ExpressibleValue
+): EVPair => {
+  const preList = makeList(...beforeDot) as EVPair
+  let curr = preList
+  while (curr.tail.type !== 'EVEmptyList') {
+    curr = curr.tail as EVPair
+  }
+  curr.tail = afterDot
+  return preList
+}

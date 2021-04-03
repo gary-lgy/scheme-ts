@@ -8,8 +8,8 @@ import {
   SchemeStringLiteral
 } from '../lang/scheme'
 import { Context } from '../types'
-import { List, tryConvertToList } from '../utils/listHelpers'
-import { ExpressibleValue, makeList } from './ExpressibleValue'
+import { flattenPairToList } from '../utils/listHelpers'
+import { ExpressibleValue, makeImproperList, makeList } from './ExpressibleValue'
 import { evaluate, ValueGenerator } from './interpreter'
 import { handleRuntimeError, isDefined } from './util'
 
@@ -52,6 +52,11 @@ export const quoteExpression = (
       return quoteLiteral(expression)
     case 'List':
       return makeList(...expression.elements.map(elem => quoteExpression(elem, context)))
+    case 'DottedList':
+      return makeImproperList(
+        expression.pre.map(elem => quoteExpression(elem, context)),
+        quoteExpression(expression.post, context)
+      )
     case 'Program':
     case 'Sequence':
       return handleRuntimeError(
@@ -140,15 +145,21 @@ function* handleSpecialQuotationForm(
           return []
         }
 
-        let list: List | null
-        if (unquoted.type !== 'EVPair' || !(list = tryConvertToList(unquoted))) {
+        if (unquoted.type !== 'EVPair') {
+          return handleRuntimeError(
+            context,
+            new errors.UnquoteSplicingEvaluatedToNonList(unquoted, expression)
+          )
+        }
+        const list = flattenPairToList(unquoted)
+        if (list.type !== 'List') {
           return handleRuntimeError(
             context,
             new errors.UnquoteSplicingEvaluatedToNonList(unquoted, expression)
           )
         }
 
-        return list.map(element => element.value)
+        return list.value.map(element => element.value)
       } else if (quoteLevel > unquoteLevel) {
         return [
           makeList(
@@ -223,6 +234,24 @@ function* quasiquoteExpressionInner(
         )
       }
       return [makeList(...quoted)]
+    }
+    case 'DottedList': {
+      const beforeDot: ExpressibleValue[] = []
+      for (const element of expression.pre) {
+        // Allow unquote-splicing and spread each result
+        beforeDot.push(
+          ...(yield* quasiquoteExpressionInner(element, context, quoteLevel, unquoteLevel, true))
+        )
+      }
+      // Do not allow splicing unquote at the tail
+      const afterDot = (yield* quasiquoteExpressionInner(
+        expression.post,
+        context,
+        quoteLevel,
+        unquoteLevel,
+        false
+      ))[0]
+      return [makeImproperList(beforeDot, afterDot)]
     }
     case 'Program':
     case 'Sequence':
