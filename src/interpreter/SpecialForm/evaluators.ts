@@ -15,6 +15,7 @@ import {
   setVariable
 } from '../util'
 import {
+  BeginForm,
   CondForm,
   DefineForm,
   IfForm,
@@ -38,6 +39,8 @@ export function* evaluateSpecialForm(form: SpecialForm, context: Context): Value
       return yield* evaluateIfForm(form, context)
     case 'cond':
       return yield* evaluateCondForm(form, context)
+    case 'begin':
+      return yield* evaluateBeginForm(form, context)
     case 'let':
       return yield* evaluateLetForm(form, context)
     case 'let*':
@@ -195,4 +198,8 @@ function* evaluateLetRecForm(letRecForm: LetRecForm, context: Context): ValueGen
   popEnvironment(context)
 
   return result
+}
+
+function* evaluateBeginForm(beginForm: BeginForm, context: Context): ValueGenerator {
+  return yield* evaluate(beginForm.body, context)
 }

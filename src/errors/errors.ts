@@ -80,6 +80,16 @@ export class CondProcedureClauseError extends RuntimeSourceError {
   }
 }
 
+export class BeginSyntaxError extends RuntimeSourceError {
+  constructor(node: SchemeExpression) {
+    super(node)
+  }
+
+  public explain() {
+    return "Syntax for `begin' is incorrect. Please use `(begin expression1 expression2 ...)'."
+  }
+}
+
 type QuoteType = 'quote' | 'quasiquote' | 'unquote' | 'unquote-splicing'
 const quoteTypeToShorthand = (type: QuoteType): string => {
   switch (type) {

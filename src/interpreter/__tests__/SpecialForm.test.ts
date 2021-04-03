@@ -1,4 +1,5 @@
 import {
+  BeginSyntaxError,
   CondProcedureClauseError,
   CondSyntaxError,
   DefineSyntaxError,
@@ -218,5 +219,21 @@ describe('cond', () => {
       `)
       expect(actual).toEqual(makeNumber(11))
     })
+  })
+})
+
+describe('begin', () => {
+  test('invalid syntax', () => {
+    expect(() => evaluateUntilDone('(begin)')).toThrow(BeginSyntaxError)
+  })
+
+  test('basic', () => {
+    expect(
+      evaluateUntilDone(`
+      (define x 0)
+      (begin (set! x 5)
+            (+ x 1))
+    `)
+    ).toEqual(makeNumber(6))
   })
 })

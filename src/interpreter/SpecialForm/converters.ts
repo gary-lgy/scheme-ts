@@ -3,6 +3,7 @@ import { SchemeExpression, SchemeIdentifier, SchemeList } from '../../lang/schem
 import { Context } from '../../types'
 import { handleRuntimeError, isDefined } from '../util'
 import {
+  BeginForm,
   CondClause,
   CondElseClause,
   CondForm,
@@ -43,6 +44,8 @@ export const listToSpecialForm = (
       return listToLet(tag, list, context)
     case 'cond':
       return listToCond(list, context)
+    case 'begin':
+      return listToBegin(list, context)
     case 'quote':
     case 'quasiquote':
     case 'unquote':
@@ -252,6 +255,21 @@ const parseCondClause = (
         test,
         body: clause.elements.slice(1)
       }
+    }
+  }
+}
+
+const listToBegin = (list: SchemeList, context: Context): BeginForm | undefined => {
+  if (list.elements.length <= 1) {
+    return handleRuntimeError(context, new errors.BeginSyntaxError(list))
+  }
+
+  return {
+    tag: 'begin',
+    body: {
+      type: 'Sequence',
+      expressions: list.elements.slice(1),
+      loc: list.elements[1].loc
     }
   }
 }

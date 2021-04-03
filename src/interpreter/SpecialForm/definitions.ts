@@ -9,6 +9,7 @@ export type SpecialForm =
   | LetStarForm
   | LetRecForm
   | CondForm
+  | BeginForm
   | QuoteForm
   | QuasiquoteForm
   | UnquoteForm
@@ -89,6 +90,11 @@ export type CondForm = {
   tag: 'cond'
   clauses: CondClause[]
   elseClause?: CondElseClause
+}
+
+export type BeginForm = {
+  tag: 'begin'
+  body: SchemeSequence
 }
 
 export type QuoteForm = {
