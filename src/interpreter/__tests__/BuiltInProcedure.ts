@@ -5,7 +5,14 @@ import {
 } from '../../errors/errors'
 import { evaluateUntilDone } from '../../testHelpers'
 import { stringify } from '../../utils/stringify'
-import { makeEmptyList, makeList, makeNumber, makePair, makeString } from '../ExpressibleValue'
+import {
+  makeBool,
+  makeEmptyList,
+  makeList,
+  makeNumber,
+  makePair,
+  makeString
+} from '../ExpressibleValue'
 
 describe('arithmetic procedures', () => {
   describe('+', () => {
@@ -211,6 +218,141 @@ describe('pair procedures', () => {
           makeString('str')
         )
       )
+    })
+  })
+})
+
+describe('equivalence predicates', () => {
+  describe('eqv?', () => {
+    test('bool', () => {
+      expect(evaluateUntilDone('(eqv? #t #t)')).toEqual(makeBool(true))
+      expect(evaluateUntilDone('(eqv? #f #f)')).toEqual(makeBool(true))
+      expect(evaluateUntilDone('(eqv? #t #f)')).toEqual(makeBool(false))
+      expect(evaluateUntilDone('(eqv? #f #t)')).toEqual(makeBool(false))
+    })
+
+    test('symbols', () => {
+      expect(evaluateUntilDone("(eqv? 'a 'a)")).toEqual(makeBool(true))
+      expect(evaluateUntilDone("(eqv? 'a 'b)")).toEqual(makeBool(false))
+    })
+
+    test('numbers', () => {
+      expect(evaluateUntilDone('(eqv? 1 1)')).toEqual(makeBool(true))
+      expect(evaluateUntilDone('(eqv? 1 2)')).toEqual(makeBool(false))
+    })
+
+    test('empty list', () => {
+      expect(evaluateUntilDone("(eqv? '() '())")).toEqual(makeBool(true))
+      expect(evaluateUntilDone("(eqv? '() '(1))")).toEqual(makeBool(false))
+    })
+
+    test('pair', () => {
+      expect(evaluateUntilDone('(eqv? (cons 1 2) (cons 1 2))')).toEqual(makeBool(false))
+      expect(evaluateUntilDone('(let ((my-pair (cons 1 2))) (eqv? my-pair my-pair))')).toEqual(
+        makeBool(true)
+      )
+    })
+
+    test('procedure', () => {
+      expect(evaluateUntilDone('(eqv? (lambda () 1) (lambda () 1))')).toEqual(makeBool(false))
+      expect(
+        evaluateUntilDone('(let ((my-procedure (lambda () 1))) (eqv? my-procedure my-procedure))')
+      ).toEqual(makeBool(true))
+    })
+
+    test('different types', () => {
+      expect(evaluateUntilDone("(eqv? #f 'nil)")).toEqual(makeBool(false))
+      expect(evaluateUntilDone('(eqv? (lambda () 1) 1)')).toEqual(makeBool(false))
+      expect(evaluateUntilDone(`(eqv? "a" 'a)`)).toEqual(makeBool(false))
+    })
+  })
+
+  describe('eq?', () => {
+    test('bool', () => {
+      expect(evaluateUntilDone('(eq? #t #t)')).toEqual(makeBool(true))
+      expect(evaluateUntilDone('(eq? #f #f)')).toEqual(makeBool(true))
+      expect(evaluateUntilDone('(eq? #t #f)')).toEqual(makeBool(false))
+      expect(evaluateUntilDone('(eq? #f #t)')).toEqual(makeBool(false))
+    })
+
+    test('symbols', () => {
+      expect(evaluateUntilDone("(eq? 'a 'a)")).toEqual(makeBool(true))
+      expect(evaluateUntilDone("(eq? 'a 'b)")).toEqual(makeBool(false))
+    })
+
+    test('numbers', () => {
+      expect(evaluateUntilDone('(eq? 1 1)')).toEqual(makeBool(true))
+      expect(evaluateUntilDone('(eq? 1 2)')).toEqual(makeBool(false))
+    })
+
+    test('empty list', () => {
+      expect(evaluateUntilDone("(eq? '() '())")).toEqual(makeBool(true))
+      expect(evaluateUntilDone("(eq? '() '(1))")).toEqual(makeBool(false))
+    })
+
+    test('pair', () => {
+      expect(evaluateUntilDone('(eq? (cons 1 2) (cons 1 2))')).toEqual(makeBool(false))
+      expect(evaluateUntilDone('(let ((my-pair (cons 1 2))) (eq? my-pair my-pair))')).toEqual(
+        makeBool(true)
+      )
+    })
+
+    test('procedure', () => {
+      expect(evaluateUntilDone('(eq? (lambda () 1) (lambda () 1))')).toEqual(makeBool(false))
+      expect(
+        evaluateUntilDone('(let ((my-procedure (lambda () 1))) (eq? my-procedure my-procedure))')
+      ).toEqual(makeBool(true))
+    })
+
+    test('different types', () => {
+      expect(evaluateUntilDone("(eq? #f 'nil)")).toEqual(makeBool(false))
+      expect(evaluateUntilDone('(eq? (lambda () 1) 1)')).toEqual(makeBool(false))
+      expect(evaluateUntilDone(`(eq? "a" 'a)`)).toEqual(makeBool(false))
+    })
+  })
+
+  describe('equal?', () => {
+    test('bool', () => {
+      expect(evaluateUntilDone('(equal? #t #t)')).toEqual(makeBool(true))
+      expect(evaluateUntilDone('(equal? #f #f)')).toEqual(makeBool(true))
+      expect(evaluateUntilDone('(equal? #t #f)')).toEqual(makeBool(false))
+      expect(evaluateUntilDone('(equal? #f #t)')).toEqual(makeBool(false))
+    })
+
+    test('symbols', () => {
+      expect(evaluateUntilDone("(equal? 'a 'a)")).toEqual(makeBool(true))
+      expect(evaluateUntilDone("(equal? 'a 'b)")).toEqual(makeBool(false))
+    })
+
+    test('numbers', () => {
+      expect(evaluateUntilDone('(equal? 1 1)')).toEqual(makeBool(true))
+      expect(evaluateUntilDone('(equal? 1 2)')).toEqual(makeBool(false))
+    })
+
+    test('empty list', () => {
+      expect(evaluateUntilDone("(equal? '() '())")).toEqual(makeBool(true))
+      expect(evaluateUntilDone("(equal? '() '(1))")).toEqual(makeBool(false))
+    })
+
+    test('pair', () => {
+      expect(evaluateUntilDone('(equal? (cons 1 2) (cons 1 2))')).toEqual(makeBool(true))
+      expect(evaluateUntilDone(`(equal? '(a (b) c) '(a (b) c))`)).toEqual(makeBool(true))
+      expect(evaluateUntilDone('(let ((my-pair (cons 1 2))) (equal? my-pair my-pair))')).toEqual(
+        makeBool(true)
+      )
+    })
+
+    test('procedure', () => {
+      expect(evaluateUntilDone('(equal? (lambda () 1) (lambda () 1))')).toEqual(makeBool(false))
+      expect(
+        evaluateUntilDone('(let ((my-procedure (lambda () 1))) (equal? my-procedure my-procedure))')
+      ).toEqual(makeBool(true))
+    })
+
+    test('different types', () => {
+      expect(evaluateUntilDone("(equal? #f 'nil)")).toEqual(makeBool(false))
+      expect(evaluateUntilDone('(equal? (lambda () 1) 1)')).toEqual(makeBool(false))
+      expect(evaluateUntilDone(`(equal? "a" 'a)`)).toEqual(makeBool(false))
     })
   })
 })

@@ -13,6 +13,7 @@ import {
   remainder,
   subtract
 } from './Arithmetic'
+import { eq, equal } from './Equal'
 import { car, cdr, cons, list, setCar, setCdr } from './Pair'
 import { isNull, isNumber, isPair, isProcedure, isString, isSymbol } from './TypePredicates'
 
@@ -49,4 +50,8 @@ export const importNativeBuiltins = (context: Context) => {
   defineBuiltin(frame, 'procedure?', isProcedure)
   defineBuiltin(frame, 'pair?', isPair)
   defineBuiltin(frame, 'null?', isNull)
+
+  defineBuiltin(frame, 'eq?', eq)
+  defineBuiltin(frame, 'eqv?', eq)
+  defineBuiltin(frame, 'equal?', equal)
 }
