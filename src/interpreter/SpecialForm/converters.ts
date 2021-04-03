@@ -77,10 +77,10 @@ const listToDefine = (list: SchemeList, context: Context): DefineForm | undefine
       tag: 'define',
       variant: 'procedure',
       name: argsList[0],
-      parameters: argsList.slice(1),
       argumentPassingStyle: {
         style: 'fixed-args',
-        numParams: argsList.length - 1
+        numParams: argsList.length - 1,
+        parameters: argsList.slice(1)
       },
       body: list.elements.slice(2)
     }
@@ -115,11 +115,11 @@ const listToLambda = (list: SchemeList, context: Context): LambdaForm | undefine
   })
   return {
     tag: 'lambda',
-    parameters,
     body: list.elements.slice(2),
     argumentPassingStyle: {
       style: 'fixed-args',
-      numParams: parameters.length
+      numParams: parameters.length,
+      parameters
     }
   }
 }

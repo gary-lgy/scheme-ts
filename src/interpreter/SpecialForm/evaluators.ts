@@ -66,7 +66,6 @@ function* evaluateDefineForm(defineForm: DefineForm, context: Context): ValueGen
     value = {
       type: 'EVProcedure',
       argumentPassingStyle: defineForm.argumentPassingStyle,
-      parameters: defineForm.parameters.map(param => param.name),
       variant: 'CompoundProcedure',
       body: defineForm.body,
       environment: context.runtime.environments[0]
@@ -81,7 +80,6 @@ function* evaluateDefineForm(defineForm: DefineForm, context: Context): ValueGen
 function* evaluateLambdaForm(lambdaForm: LambdaForm, context: Context): ValueGenerator {
   return {
     type: 'EVProcedure',
-    parameters: lambdaForm.parameters.map(id => id.name),
     argumentPassingStyle: lambdaForm.argumentPassingStyle,
     variant: 'CompoundProcedure',
     body: lambdaForm.body,

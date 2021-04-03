@@ -1,4 +1,5 @@
 import { SchemeExpression, SchemeIdentifier, SchemeList, SchemeSequence } from '../../lang/scheme'
+import { CompoundProcedureArgumentPassingStyle } from '../procedure'
 
 export type SpecialForm =
   | DefineForm
@@ -26,8 +27,7 @@ export type DefineForm = {
   | {
       variant: 'procedure'
       name: SchemeIdentifier
-      parameters: SchemeIdentifier[]
-      argumentPassingStyle: LambdaArgumentPassingStyle
+      argumentPassingStyle: CompoundProcedureArgumentPassingStyle
       body: SchemeExpression[]
     }
 )
@@ -38,16 +38,10 @@ export type SetBangForm = {
   value: SchemeExpression
 }
 
-export type LambdaArgumentPassingStyle =
-  | { style: 'fixed-args'; numParams: number }
-  | { style: 'var-args'; minNumParams: number }
-  | { style: 'rest-args' }
-
 export type LambdaForm = {
   tag: 'lambda'
-  parameters: SchemeIdentifier[]
   body: SchemeExpression[]
-  argumentPassingStyle: LambdaArgumentPassingStyle
+  argumentPassingStyle: CompoundProcedureArgumentPassingStyle
 }
 
 export type IfForm = {

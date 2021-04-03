@@ -1,6 +1,9 @@
 import { SchemeExpression } from '../lang/scheme'
 import { Environment } from '../types'
-import { LambdaArgumentPassingStyle } from './SpecialForm/definitions'
+import {
+  BuiltInProcedureArgumentPassingStyle,
+  CompoundProcedureArgumentPassingStyle
+} from './procedure'
 
 // An expressible value is a value that can be the result of an evaluation
 export type ExpressibleValue =
@@ -62,18 +65,18 @@ export const makeBool = (value: boolean): EVBool => {
 
 export type EVProcedure = {
   type: 'EVProcedure'
-  argumentPassingStyle: LambdaArgumentPassingStyle
 } & (EVCompoundProcedure | EVBuiltInProcedure)
 
 export type EVCompoundProcedure = {
   variant: 'CompoundProcedure'
-  parameters: string[]
+  argumentPassingStyle: CompoundProcedureArgumentPassingStyle
   body: SchemeExpression[]
   environment: Environment
 }
 
 export type EVBuiltInProcedure = {
   variant: 'BuiltInProcedure'
+  argumentPassingStyle: BuiltInProcedureArgumentPassingStyle
   body: (args: ExpressibleValue[]) => ExpressibleValue
 }
 
