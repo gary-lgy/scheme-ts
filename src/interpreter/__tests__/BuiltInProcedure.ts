@@ -356,3 +356,28 @@ describe('equivalence predicates', () => {
     })
   })
 })
+
+describe('apply', () => {
+  test('basic', () => {
+    expect(evaluateUntilDone('(apply + (list 3 4))')).toEqual(makeNumber(7))
+  })
+
+  test('without spreading arguments', () => {
+    expect(
+      evaluateUntilDone(`
+        (define compose
+          (lambda (f g)
+            (lambda args
+              (f (apply g args)))))
+
+        ((compose / *) 2 5)
+      `)
+    ).toEqual(makeNumber(0.1))
+  })
+
+  test('with spreading arguments', () => {
+    expect(evaluateUntilDone("(apply (lambda x x) 1 2 '(3 4 5))")).toEqual(
+      makeList(makeNumber(1), makeNumber(2), makeNumber(3), makeNumber(4), makeNumber(5))
+    )
+  })
+})

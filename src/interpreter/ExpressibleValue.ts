@@ -1,5 +1,6 @@
 import { SchemeExpression } from '../lang/scheme'
-import { Environment } from '../types'
+import { Context, Environment } from '../types'
+import { ValueGenerator } from './interpreter'
 import {
   BuiltInProcedureArgumentPassingStyle,
   CompoundProcedureArgumentPassingStyle
@@ -77,7 +78,9 @@ export type EVCompoundProcedure = {
 export type EVBuiltInProcedure = {
   variant: 'BuiltInProcedure'
   argumentPassingStyle: BuiltInProcedureArgumentPassingStyle
-  body: (args: ExpressibleValue[]) => ExpressibleValue
+  body:
+    | ((args: ExpressibleValue[], context: Context) => ExpressibleValue)
+    | ((args: ExpressibleValue[], context: Context) => ValueGenerator)
 }
 
 export type EVEmptyList = {
