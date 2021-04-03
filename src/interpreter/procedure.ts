@@ -10,9 +10,9 @@ const checkNumberOfArguments = (
   context: Context,
   procedure: EVProcedure,
   procedureName: string,
+  numArgs: number,
   callExpression: SchemeList
 ) => {
-  const numArgs = callExpression.elements.length - 1
   if (
     procedure.argumentPassingStyle.style === 'fixed-args' &&
     procedure.argumentPassingStyle.numParams !== numArgs
@@ -80,7 +80,7 @@ export function* apply(
   node: SchemeList
 ) {
   // TODO: TCO
-  checkNumberOfArguments(context, procedure, procedureName, node)
+  checkNumberOfArguments(context, procedure, procedureName, args.length, node)
   if (procedure.variant === 'CompoundProcedure') {
     const environment = extendProcedureEnvironment(
       procedure.environment,

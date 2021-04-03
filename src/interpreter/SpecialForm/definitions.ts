@@ -1,4 +1,4 @@
-import { SchemeExpression, SchemeIdentifier, SchemeSequence } from '../../lang/scheme'
+import { SchemeExpression, SchemeIdentifier, SchemeList, SchemeSequence } from '../../lang/scheme'
 
 export type SpecialForm =
   | DefineForm
@@ -8,6 +8,7 @@ export type SpecialForm =
   | LetForm
   | LetStarForm
   | LetRecForm
+  | CondForm
   | QuoteForm
   | QuasiquoteForm
   | UnquoteForm
@@ -76,6 +77,18 @@ export type LetRecForm = {
   tag: 'letrec'
   bindings: LetBinding[]
   body: SchemeSequence
+}
+
+export type CondClause = { node: SchemeList } & (
+  | { type: 'basic'; test: SchemeExpression; body: SchemeExpression[] }
+  | { type: 'procedure'; test: SchemeExpression; body: SchemeExpression }
+)
+export type CondElseClause = { type: 'else'; node: SchemeList; body: SchemeExpression[] }
+
+export type CondForm = {
+  tag: 'cond'
+  clauses: CondClause[]
+  elseClause?: CondElseClause
 }
 
 export type QuoteForm = {

@@ -11,7 +11,7 @@ import { Context } from '../types'
 import { List, tryConvertToList } from '../utils/listHelpers'
 import { ExpressibleValue, makeList } from './ExpressibleValue'
 import { evaluate, ValueGenerator } from './interpreter'
-import { getVariable, handleRuntimeError } from './util'
+import { handleRuntimeError, isDefined } from './util'
 
 const quoteLiteral = (
   literal: SchemeBoolLiteral | SchemeNumberLiteral | SchemeStringLiteral | SchemeIdentifier
@@ -61,10 +61,6 @@ export const quoteExpression = (
   }
 }
 
-const isRedefined = (context: Context, name: string): boolean => {
-  return !!getVariable(context, name)
-}
-
 // Handle (quasiquote expr), (unquote expr), and (unquote-splicing expr) specially, if they have not been redefined
 function* handleSpecialQuotationForm(
   expression: SchemeList,
@@ -80,7 +76,7 @@ function* handleSpecialQuotationForm(
       (expression.elements[0].name === 'quasiquote' ||
         expression.elements[0].name === 'unquote' ||
         expression.elements[0].name === 'unquote-splicing') &&
-      !isRedefined(context, expression.elements[0].name)
+      !isDefined(context, expression.elements[0].name)
     )
   ) {
     return null

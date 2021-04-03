@@ -1,8 +1,11 @@
 import * as errors from '../../errors/errors'
-import { SchemeIdentifier, SchemeList } from '../../lang/scheme'
+import { SchemeExpression, SchemeIdentifier, SchemeList } from '../../lang/scheme'
 import { Context } from '../../types'
-import { handleRuntimeError } from '../util'
+import { handleRuntimeError, isDefined } from '../util'
 import {
+  CondClause,
+  CondElseClause,
+  CondForm,
   DefineForm,
   IfForm,
   LambdaForm,
@@ -38,6 +41,8 @@ export const listToSpecialForm = (
     case 'let*':
     case 'letrec':
       return listToLet(tag, list, context)
+    case 'cond':
+      return listToCond(list, context)
     case 'quote':
     case 'quasiquote':
     case 'unquote':
@@ -169,6 +174,84 @@ const listToLet = (
       type: 'Sequence',
       expressions: list.elements.slice(2),
       loc: list.loc
+    }
+  }
+}
+
+const listToCond = (list: SchemeList, context: Context): CondForm | undefined => {
+  if (list.elements.length <= 1) {
+    return handleRuntimeError(context, new errors.CondSyntaxError(list))
+  }
+
+  const clauses: CondClause[] = []
+  let elseClause: CondElseClause | undefined = undefined
+
+  const throwSyntaxError = () => handleRuntimeError(context, new errors.CondSyntaxError(list))
+
+  for (let i = 1; i < list.elements.length; i++) {
+    const clause = parseCondClause(list.elements[i], context, throwSyntaxError)
+    if (clause.type === 'else') {
+      if (i !== list.elements.length - 1) {
+        throwSyntaxError()
+      }
+      elseClause = clause
+    } else {
+      clauses.push(clause)
+    }
+  }
+
+  return { tag: 'cond', clauses, elseClause }
+}
+
+const parseCondClause = (
+  clause: SchemeExpression,
+  context: Context,
+  throwSyntaxError: () => never
+): CondClause | CondElseClause => {
+  if (clause.type !== 'List' || clause.elements.length < 1) {
+    throwSyntaxError()
+  }
+
+  const test = clause.elements[0]
+  if (test.type === 'Identifier' && test.name === 'else' && !isDefined(context, 'else')) {
+    // else clause
+    if (clause.elements.length === 1) {
+      throwSyntaxError()
+    }
+    return { type: 'else', body: clause.elements.slice(1), node: clause }
+  } else if (clause.elements.length === 1) {
+    // basic clause with no body
+    return {
+      type: 'basic',
+      test,
+      node: clause,
+      body: []
+    }
+  } else {
+    const secondElement = clause.elements[1]
+    if (
+      secondElement.type === 'Identifier' &&
+      secondElement.name === '=>' &&
+      !isDefined(context, '=>')
+    ) {
+      // procedure clause
+      if (clause.elements.length !== 3) {
+        throwSyntaxError()
+      }
+      return {
+        type: 'procedure',
+        test,
+        node: clause,
+        body: clause.elements[2]
+      }
+    } else {
+      // basic clause with at least one body expression
+      return {
+        type: 'basic',
+        node: clause,
+        test,
+        body: clause.elements.slice(1)
+      }
     }
   }
 }

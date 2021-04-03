@@ -50,6 +50,10 @@ export const setVariable = (context: Context, name: string, value: any) => {
   return handleRuntimeError(context, new errors.UndefinedVariable(name, context.runtime.nodes[0]))
 }
 
+export const isDefined = (context: Context, name: string): boolean => {
+  return !!getVariable(context, name)
+}
+
 // ======================= Evaluation ===========================
 
 export const isTruthy = (value: ExpressibleValue) => value.type !== 'EVBool' || value.value

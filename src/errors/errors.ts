@@ -54,6 +54,32 @@ export class LetSyntaxError extends RuntimeSourceError {
   }
 }
 
+export class CondSyntaxError extends RuntimeSourceError {
+  constructor(node: SchemeExpression) {
+    super(node)
+  }
+
+  public explain() {
+    return (
+      "Syntax for `cond' is incorrect. " +
+      "Please use `(cond clause1 clause2 ...)', " +
+      'where a clause is either ' +
+      "`(test expression ...), (test => expression), or (else expression1 expression2 ...)' " +
+      'An else clause must be the last clause of the expression.'
+    )
+  }
+}
+
+export class CondProcedureClauseError extends RuntimeSourceError {
+  constructor(node: SchemeExpression) {
+    super(node)
+  }
+
+  public explain() {
+    return 'expression in (test => expression) in a cond expression must evaluate to a procedure'
+  }
+}
+
 type QuoteType = 'quote' | 'quasiquote' | 'unquote' | 'unquote-splicing'
 const quoteTypeToShorthand = (type: QuoteType): string => {
   switch (type) {

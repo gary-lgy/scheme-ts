@@ -4,6 +4,7 @@ import * as errors from '../../errors/errors'
 import { Context, Frame } from '../../types'
 import { ExpressibleValue, makeEmptyList } from '../ExpressibleValue'
 import { evaluate, ValueGenerator } from '../interpreter'
+import { apply } from '../procedure'
 import { quasiquoteExpression, quoteExpression } from '../quote'
 import {
   extendCurrentEnvironment,
@@ -14,6 +15,7 @@ import {
   setVariable
 } from '../util'
 import {
+  CondForm,
   DefineForm,
   IfForm,
   LambdaForm,
@@ -34,6 +36,8 @@ export function* evaluateSpecialForm(form: SpecialForm, context: Context): Value
       return yield* evaluateSetBangForm(form, context)
     case 'if':
       return yield* evaluateIfForm(form, context)
+    case 'cond':
+      return yield* evaluateCondForm(form, context)
     case 'let':
       return yield* evaluateLetForm(form, context)
     case 'let*':
@@ -97,6 +101,49 @@ function* evaluateIfForm(ifForm: IfForm, context: Context): ValueGenerator {
   } else {
     return { type: 'EVEmptyList' }
   }
+}
+
+function* evaluateCondForm(condForm: CondForm, context: Context): ValueGenerator {
+  for (const clause of condForm.clauses) {
+    const testResult = yield* evaluate(clause.test, context)
+    if (!isTruthy(testResult)) {
+      continue
+    }
+
+    if (clause.type === 'basic') {
+      let result = testResult
+      for (const bodyExpression of clause.body) {
+        result = yield* evaluate(bodyExpression, context)
+      }
+
+      return result
+    } else {
+      const procedure = yield* evaluate(clause.body, context)
+
+      if (procedure.type !== 'EVProcedure') {
+        return handleRuntimeError(
+          context,
+          new errors.CondProcedureClauseError(context.runtime.nodes[0])
+        )
+      }
+
+      const procedureName =
+        clause.body.type === 'Identifier' ? clause.body.name : '[Anonymous procedure]'
+
+      return yield* apply(context, procedure, procedureName, [testResult], clause.node)
+    }
+  }
+
+  // none of the clauses were evaluated, evaluate the else clause
+  if (!condForm.elseClause) {
+    return makeEmptyList()
+  }
+
+  let result: ExpressibleValue = makeEmptyList()
+  for (const bodyExpression of condForm.elseClause.body) {
+    result = yield* evaluate(bodyExpression, context)
+  }
+  return result
 }
 
 function* evaluateLetForm(letForm: LetForm, context: Context): ValueGenerator {
