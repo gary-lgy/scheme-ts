@@ -1,7 +1,7 @@
 // Variable determining chapter of Source is contained in this file.
 
 import { GLOBAL } from './constants'
-import { importNativeBuiltins } from './interpreter/builtins'
+import { importNativeBuiltins } from './interpreter/BuiltIns'
 import { EVProcedure, ExpressibleValue } from './interpreter/ExpressibleValue'
 import * as misc from './stdlib/misc'
 import { createTypeEnvironment } from './typeChecker/typeChecker'

@@ -1,16 +1,4 @@
-import { Context, Frame } from '../types'
-import {
-  EVNumber,
-  EVPair,
-  EVProcedure,
-  ExpressibleValue,
-  makeNumber,
-  makePair
-} from './ExpressibleValue'
-
-const defineBuiltin = (frame: Frame, name: string, value: ExpressibleValue) => {
-  frame[name] = value
-}
+import { EVNumber, EVProcedure, ExpressibleValue, makeNumber } from '../ExpressibleValue'
 
 const mustMapToNumbers = (opName: string, args: ExpressibleValue[]): number[] => {
   const mapped: number[] = []
@@ -31,7 +19,7 @@ const reduceNumericalArgs = (
   return makeNumber(args.reduce(op, init))
 }
 
-const add: EVProcedure = {
+export const add: EVProcedure = {
   type: 'EVProcedure',
   variant: 'BuiltInProcedure',
   argumentPassingStyle: {
@@ -42,7 +30,7 @@ const add: EVProcedure = {
     reduceNumericalArgs((acc, next) => acc + next, 0, mustMapToNumbers('+', args))
 }
 
-const subtract: EVProcedure = {
+export const subtract: EVProcedure = {
   type: 'EVProcedure',
   variant: 'BuiltInProcedure',
   argumentPassingStyle: {
@@ -58,7 +46,7 @@ const subtract: EVProcedure = {
   }
 }
 
-const multiply: EVProcedure = {
+export const multiply: EVProcedure = {
   type: 'EVProcedure',
   variant: 'BuiltInProcedure',
   argumentPassingStyle: {
@@ -69,7 +57,7 @@ const multiply: EVProcedure = {
     reduceNumericalArgs((acc, next) => acc * next, 1, mustMapToNumbers('*', args))
 }
 
-const divide: EVProcedure = {
+export const divide: EVProcedure = {
   type: 'EVProcedure',
   variant: 'BuiltInProcedure',
   argumentPassingStyle: {
@@ -97,79 +85,82 @@ const divide: EVProcedure = {
   }
 }
 
-const cons: EVProcedure = {
+export const numberEqual: EVProcedure = {
   type: 'EVProcedure',
   variant: 'BuiltInProcedure',
   argumentPassingStyle: {
     style: 'fixed-args',
     numParams: 2
   },
-  body: (args: ExpressibleValue[]) => makePair(args[0], args[1])
-}
-
-const mustDoOnPair = <T>(opName: string, pair: ExpressibleValue, op: (pair: EVPair) => T): T => {
-  if (pair.type !== 'EVPair') {
-    throw new Error(opName + ' expects a pair as the only argument, but encountered ' + pair.type)
+  body: (args: ExpressibleValue[]) => {
+    const mappedArgs = mustMapToNumbers('=', args)
+    return {
+      type: 'EVBool',
+      value: mappedArgs[0] === mappedArgs[1]
+    }
   }
-  return op(pair)
 }
 
-const car: EVProcedure = {
+export const lessThan: EVProcedure = {
   type: 'EVProcedure',
   variant: 'BuiltInProcedure',
   argumentPassingStyle: {
     style: 'fixed-args',
-    numParams: 1
+    numParams: 2
   },
-  body: (args: ExpressibleValue[]) =>
-    mustDoOnPair('car', args[0], (pair: EVPair): ExpressibleValue => pair.head)
+  body: (args: ExpressibleValue[]) => {
+    const mappedArgs = mustMapToNumbers('<', args)
+    return {
+      type: 'EVBool',
+      value: mappedArgs[0] < mappedArgs[1]
+    }
+  }
 }
 
-const cdr: EVProcedure = {
+export const lessThanOrEqual: EVProcedure = {
   type: 'EVProcedure',
   variant: 'BuiltInProcedure',
   argumentPassingStyle: {
     style: 'fixed-args',
-    numParams: 1
+    numParams: 2
   },
-  body: (args: ExpressibleValue[]) =>
-    mustDoOnPair('cdr', args[0], (pair: EVPair): ExpressibleValue => pair.tail)
+  body: (args: ExpressibleValue[]) => {
+    const mappedArgs = mustMapToNumbers('<=', args)
+    return {
+      type: 'EVBool',
+      value: mappedArgs[0] <= mappedArgs[1]
+    }
+  }
 }
 
-export const importNativeBuiltins = (context: Context) => {
-  const frame = context.runtime.environments[0].head
+export const greaterThan: EVProcedure = {
+  type: 'EVProcedure',
+  variant: 'BuiltInProcedure',
+  argumentPassingStyle: {
+    style: 'fixed-args',
+    numParams: 2
+  },
+  body: (args: ExpressibleValue[]) => {
+    const mappedArgs = mustMapToNumbers('>', args)
+    return {
+      type: 'EVBool',
+      value: mappedArgs[0] > mappedArgs[1]
+    }
+  }
+}
 
-  defineBuiltin(frame, '+', add)
-  defineBuiltin(frame, '-', subtract)
-  defineBuiltin(frame, '*', multiply)
-  defineBuiltin(frame, '/', divide)
-  defineBuiltin(frame, 'cons', cons)
-  defineBuiltin(frame, 'car', car)
-  defineBuiltin(frame, 'cdr', cdr)
-
-  const comparisonOperatorSpecs: [string, (lhs: number, rhs: number) => boolean][] = [
-    ['=', (lhs, rhs) => lhs === rhs],
-    ['<', (lhs, rhs) => lhs < rhs],
-    ['<=', (lhs, rhs) => lhs <= rhs],
-    ['>', (lhs, rhs) => lhs > rhs],
-    ['>=', (lhs, rhs) => lhs >= rhs]
-  ]
-
-  comparisonOperatorSpecs.forEach(([opName, op]) =>
-    defineBuiltin(frame, opName, {
-      type: 'EVProcedure',
-      variant: 'BuiltInProcedure',
-      argumentPassingStyle: {
-        style: 'fixed-args',
-        numParams: 2
-      },
-      body: (args: ExpressibleValue[]) => {
-        const mappedArgs = mustMapToNumbers(opName, args)
-        return {
-          type: 'EVBool',
-          value: op(mappedArgs[0], mappedArgs[1])
-        }
-      }
-    })
-  )
+export const greaterThanOrEqual: EVProcedure = {
+  type: 'EVProcedure',
+  variant: 'BuiltInProcedure',
+  argumentPassingStyle: {
+    style: 'fixed-args',
+    numParams: 2
+  },
+  body: (args: ExpressibleValue[]) => {
+    const mappedArgs = mustMapToNumbers('>=', args)
+    return {
+      type: 'EVBool',
+      value: mappedArgs[0] >= mappedArgs[1]
+    }
+  }
 }
