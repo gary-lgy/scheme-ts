@@ -12,8 +12,9 @@ import {
   quotient,
   remainder,
   subtract
-} from './arithmetic'
-import { car, cdr, cons } from './pair'
+} from './Arithmetic'
+import { car, cdr, cons } from './Pair'
+import { isNull, isNumber, isPair, isProcedure, isString, isSymbol } from './TypePredicates'
 
 export const defineBuiltin = (frame: Frame, name: string, value: ExpressibleValue) => {
   frame[name] = value
@@ -28,12 +29,21 @@ export const importNativeBuiltins = (context: Context) => {
   defineBuiltin(frame, '/', divide)
   defineBuiltin(frame, 'quotient', quotient)
   defineBuiltin(frame, 'remainder', remainder)
+
   defineBuiltin(frame, '=', numberEqual)
   defineBuiltin(frame, '<', lessThan)
   defineBuiltin(frame, '<=', lessThanOrEqual)
   defineBuiltin(frame, '>', greaterThan)
   defineBuiltin(frame, '>=', greaterThanOrEqual)
+
   defineBuiltin(frame, 'cons', cons)
   defineBuiltin(frame, 'car', car)
   defineBuiltin(frame, 'cdr', cdr)
+
+  defineBuiltin(frame, 'number?', isNumber)
+  defineBuiltin(frame, 'string?', isString)
+  defineBuiltin(frame, 'symbol?', isSymbol)
+  defineBuiltin(frame, 'procedure?', isProcedure)
+  defineBuiltin(frame, 'pair?', isPair)
+  defineBuiltin(frame, 'null?', isNull)
 }
