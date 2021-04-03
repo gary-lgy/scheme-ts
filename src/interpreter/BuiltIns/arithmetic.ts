@@ -85,6 +85,38 @@ export const divide: EVProcedure = {
   }
 }
 
+export const quotient: EVProcedure = {
+  type: 'EVProcedure',
+  variant: 'BuiltInProcedure',
+  argumentPassingStyle: {
+    style: 'fixed-args',
+    numParams: 2
+  },
+  body: (args: ExpressibleValue[]) => {
+    const mappedArgs = mustMapToNumbers('quotient', args)
+    if (mappedArgs[1] === 0) {
+      throw new Error('division by zero')
+    }
+    return makeNumber(Math.floor(mappedArgs[0] / mappedArgs[1]))
+  }
+}
+
+export const remainder: EVProcedure = {
+  type: 'EVProcedure',
+  variant: 'BuiltInProcedure',
+  argumentPassingStyle: {
+    style: 'fixed-args',
+    numParams: 2
+  },
+  body: (args: ExpressibleValue[]) => {
+    const mappedArgs = mustMapToNumbers('remainder', args)
+    if (mappedArgs[1] === 0) {
+      throw new Error('division by zero')
+    }
+    return makeNumber(mappedArgs[0] % mappedArgs[1])
+  }
+}
+
 export const numberEqual: EVProcedure = {
   type: 'EVProcedure',
   variant: 'BuiltInProcedure',

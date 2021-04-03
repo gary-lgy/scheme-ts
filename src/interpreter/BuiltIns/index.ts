@@ -9,6 +9,8 @@ import {
   lessThanOrEqual,
   multiply,
   numberEqual,
+  quotient,
+  remainder,
   subtract
 } from './arithmetic'
 import { car, cdr, cons } from './pair'
@@ -24,6 +26,8 @@ export const importNativeBuiltins = (context: Context) => {
   defineBuiltin(frame, '-', subtract)
   defineBuiltin(frame, '*', multiply)
   defineBuiltin(frame, '/', divide)
+  defineBuiltin(frame, 'quotient', quotient)
+  defineBuiltin(frame, 'remainder', remainder)
   defineBuiltin(frame, '=', numberEqual)
   defineBuiltin(frame, '<', lessThan)
   defineBuiltin(frame, '<=', lessThanOrEqual)
