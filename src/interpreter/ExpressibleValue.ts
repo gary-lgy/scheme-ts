@@ -1,6 +1,6 @@
 import { SchemeExpression } from '../lang/scheme'
 import { Environment } from '../types'
-import { LambdaArgumentPassingStyle } from './SpecialForm'
+import { LambdaArgumentPassingStyle } from './SpecialForm/definitions'
 
 // An expressible value is a value that can be the result of an evaluation
 export type ExpressibleValue =

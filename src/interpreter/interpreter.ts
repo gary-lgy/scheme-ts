@@ -13,7 +13,8 @@ import {
 import { Context } from '../types'
 import { ExpressibleValue, makeEmptyList } from './ExpressibleValue'
 import { apply, listOfArguments } from './procedure'
-import { evaluateSpecialForm, listToSpecialForm } from './SpecialForm'
+import { listToSpecialForm } from './SpecialForm/converters'
+import { evaluateSpecialForm } from './SpecialForm/evaluators'
 import { extendCurrentEnvironment, getVariable, handleRuntimeError, pushEnvironment } from './util'
 
 function* visit(context: Context, node: SchemeExpression) {

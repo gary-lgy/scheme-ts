@@ -10,7 +10,7 @@ import {
 import { Context } from '../types'
 import { List, tryConvertToList } from '../utils/listHelpers'
 import { ExpressibleValue, makeList } from './ExpressibleValue'
-import { evaluate } from './interpreter'
+import { evaluate, ValueGenerator } from './interpreter'
 import { getVariable, handleRuntimeError } from './util'
 
 const quoteLiteral = (
@@ -100,7 +100,7 @@ function* handleSpecialQuotationForm(
       return [
         makeList(
           { type: 'EVSymbol', value: 'quasiquote' },
-          ...(yield* quasiquoteExpression(
+          ...(yield* quasiquoteExpressionInner(
             subExpression,
             context,
             quoteLevel + 1,
@@ -117,7 +117,7 @@ function* handleSpecialQuotationForm(
         return [
           makeList(
             { type: 'EVSymbol', value: 'unquote' },
-            ...(yield* quasiquoteExpression(
+            ...(yield* quasiquoteExpressionInner(
               subExpression,
               context,
               quoteLevel,
@@ -157,7 +157,7 @@ function* handleSpecialQuotationForm(
         return [
           makeList(
             { type: 'EVSymbol', value: 'unquote-splicing' },
-            ...(yield* quasiquoteExpression(
+            ...(yield* quasiquoteExpressionInner(
               subExpression,
               context,
               quoteLevel,
@@ -177,6 +177,20 @@ function* handleSpecialQuotationForm(
 }
 
 export function* quasiquoteExpression(
+  expression: SchemeExpression,
+  context: Context
+): ValueGenerator {
+  const quoted = yield* quasiquoteExpressionInner(expression, context, 1, 1, false)
+  if (quoted.length !== 1) {
+    return handleRuntimeError(
+      context,
+      new errors.UnreachableCodeReached('top-level quasiquote should return a single value')
+    )
+  }
+  return quoted[0]
+}
+
+function* quasiquoteExpressionInner(
   expression: SchemeExpression,
   context: Context,
   quoteLevel: number,
@@ -209,7 +223,7 @@ export function* quasiquoteExpression(
       for (const element of expression.elements) {
         // Allow unquote-splicing and spread each result
         quoted.push(
-          ...(yield* quasiquoteExpression(element, context, quoteLevel, unquoteLevel, true))
+          ...(yield* quasiquoteExpressionInner(element, context, quoteLevel, unquoteLevel, true))
         )
       }
       return [makeList(...quoted)]
