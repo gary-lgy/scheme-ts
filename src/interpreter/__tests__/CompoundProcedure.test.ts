@@ -1,4 +1,4 @@
-import { InvalidNumberOfArguments } from '../../errors/errors'
+import { InvalidNumberOfArguments, NotEnoughArguments } from '../../errors/errors'
 import { evaluateUntilDone } from '../../testHelpers'
 import { makeList, makeNumber } from '../ExpressibleValue'
 
@@ -30,6 +30,34 @@ describe('number of arguments', () => {
       expect(() => {
         evaluateUntilDone(program)
       }).not.toThrow(InvalidNumberOfArguments)
+    })
+  })
+
+  describe('var args', () => {
+    test('with no compulsory arguments', () => {
+      expect(evaluateUntilDone('((lambda x x) 1 2 3)')).toEqual(
+        makeList(makeNumber(1), makeNumber(2), makeNumber(3))
+      )
+    })
+
+    test('with one compulsory argument', () => {
+      expect(evaluateUntilDone('((lambda (x . rest) (cons x rest)) 1 2 3)')).toEqual(
+        makeList(makeNumber(1), makeNumber(2), makeNumber(3))
+      )
+    })
+
+    describe('with two compulsory arguments', () => {
+      test('with enough arguments', () => {
+        expect(evaluateUntilDone('((lambda (x y . rest) (cons y (cons x rest))) 1 2 3 4)')).toEqual(
+          makeList(makeNumber(2), makeNumber(1), makeNumber(3), makeNumber(4))
+        )
+      })
+
+      test('without enough arguments', () => {
+        expect(() => evaluateUntilDone('((lambda (x y . rest) (cons y x rest)) 1)')).toThrow(
+          NotEnoughArguments
+        )
+      })
     })
   })
 })

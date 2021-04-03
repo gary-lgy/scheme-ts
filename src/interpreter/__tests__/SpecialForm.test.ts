@@ -6,7 +6,7 @@ import {
   LetSyntaxError
 } from '../../errors/errors'
 import { evaluateUntilDone } from '../../testHelpers'
-import { makeBool, makeNumber, makeSymbol } from '../ExpressibleValue'
+import { makeBool, makeList, makeNumber, makeSymbol } from '../ExpressibleValue'
 
 describe('binding constructs', () => {
   describe('define', () => {
@@ -34,13 +34,33 @@ describe('binding constructs', () => {
       expect(actual).toEqual(makeNumber(20))
     })
 
-    test('procedure variant', () => {
-      const actual = evaluateUntilDone(`
+    describe('procedure variant', () => {
+      test('fixed number of arguments', () => {
+        const actual = evaluateUntilDone(`
         (define (fn x y)
           (+ x y))
         (fn 1 2)
       `)
-      expect(actual).toEqual(makeNumber(3))
+        expect(actual).toEqual(makeNumber(3))
+      })
+
+      test('var args with one compulsory argument', () => {
+        const actual = evaluateUntilDone(`
+        (define (fn x . y)
+          (cons x y))
+        (fn 1 2 3)
+      `)
+        expect(actual).toEqual(makeList(makeNumber(1), makeNumber(2), makeNumber(3)))
+      })
+
+      test('var args with no compulsory arguments', () => {
+        const actual = evaluateUntilDone(`
+        (define (fn . y)
+          y)
+        (fn 1 2 3)
+      `)
+        expect(actual).toEqual(makeList(makeNumber(1), makeNumber(2), makeNumber(3)))
+      })
     })
   })
 

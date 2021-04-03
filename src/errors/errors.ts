@@ -10,7 +10,11 @@ export class DefineSyntaxError extends RuntimeSourceError {
   }
 
   public explain() {
-    return "Syntax for `define' is incorrect. Please use `(define variable value) or `(define (procedureName arg1 ...) body1 body2...)'"
+    return (
+      "Syntax for `define' is incorrect. Please use `(define variable value)', " +
+      "`(define (procedureName arg ...) body1 body2...)', or " +
+      "`(define (procedureName arg ... . rest-args) body1 body2...)'"
+    )
   }
 }
 
@@ -20,7 +24,11 @@ export class LambdaSyntaxError extends RuntimeSourceError {
   }
 
   public explain() {
-    return "Syntax for `lambda' is incorrect. Please use `(lambda (arg1 ...) body1 body2 ...)'"
+    return (
+      "Syntax for `lambda' is incorrect. Please use `(lambda (arg ...) body1 body2 ...)', " +
+      "`(lambda (arg1 arg2 ... . rest-args) body1 body2 ...)', or " +
+      "`(lambda args body1 body2 ...)'."
+    )
   }
 }
 

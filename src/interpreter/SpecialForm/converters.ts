@@ -28,7 +28,7 @@ export const listToSpecialForm = (
   tag: string,
   list: SchemeList,
   context: Context
-): SpecialForm | undefined => {
+): SpecialForm | null => {
   switch (tag) {
     case 'define':
       return listToDefine(list, context)
@@ -52,11 +52,11 @@ export const listToSpecialForm = (
     case 'unquote-splicing':
       return listToQuote(tag, list, context)
     default:
-      return undefined
+      return null
   }
 }
 
-const listToDefine = (list: SchemeList, context: Context): DefineForm | undefined => {
+const listToDefine = (list: SchemeList, context: Context): DefineForm => {
   if (list.elements.length < 3) {
     return handleRuntimeError(context, new errors.DefineSyntaxError(list))
   }
@@ -95,36 +95,101 @@ const listToDefine = (list: SchemeList, context: Context): DefineForm | undefine
       name: identifier,
       value: list.elements[2]
     }
+  } else if (list.elements[1].type === 'DottedList') {
+    const beforeDot: SchemeIdentifier[] = list.elements[1].pre.map(expr => {
+      if (expr.type !== 'Identifier') {
+        return handleRuntimeError(context, new errors.DefineSyntaxError(list))
+      }
+      return expr
+    })
+    if (list.elements[1].post.type !== 'Identifier') {
+      return handleRuntimeError(context, new errors.DefineSyntaxError(list))
+    }
+    const afterDot: SchemeIdentifier = list.elements[1].post
+
+    return {
+      tag: 'define',
+      variant: 'procedure',
+      name: beforeDot[0],
+      argumentPassingStyle: {
+        style: 'var-args',
+        numCompulsoryParameters: beforeDot.length - 1,
+        compulsoryParameters: beforeDot.slice(1),
+        restParameters: afterDot
+      },
+      body: list.elements.slice(2)
+    }
   } else {
     return handleRuntimeError(context, new errors.DefineSyntaxError(list))
   }
 }
 
-const listToLambda = (list: SchemeList, context: Context): LambdaForm | undefined => {
-  // TODO: varargs?
-  if (list.elements.length <= 2 || list.elements[1].type !== 'List') {
+const listToLambda = (list: SchemeList, context: Context): LambdaForm => {
+  if (list.elements.length <= 2) {
     return handleRuntimeError(context, new errors.LambdaSyntaxError(list))
   }
-  const parameters: SchemeIdentifier[] = []
-  list.elements[1].elements.forEach(element => {
-    if (element.type === 'Identifier') {
-      return parameters.push(element)
-    } else {
+
+  if (list.elements[1].type === 'List') {
+    // Fixed number of arguments
+    const parameters: SchemeIdentifier[] = []
+    list.elements[1].elements.forEach(element => {
+      if (element.type === 'Identifier') {
+        return parameters.push(element)
+      } else {
+        return handleRuntimeError(context, new errors.LambdaSyntaxError(list))
+      }
+    })
+    return {
+      tag: 'lambda',
+      body: list.elements.slice(2),
+      argumentPassingStyle: {
+        style: 'fixed-args',
+        numParams: parameters.length,
+        parameters
+      }
+    }
+  } else if (list.elements[1].type === 'DottedList') {
+    // variable number of arguments with compulsory arguments
+    const compulsoryParameters: SchemeIdentifier[] = list.elements[1].pre.map(element => {
+      if (element.type === 'Identifier') {
+        return element
+      } else {
+        return handleRuntimeError(context, new errors.LambdaSyntaxError(list))
+      }
+    })
+    if (list.elements[1].post.type !== 'Identifier') {
       return handleRuntimeError(context, new errors.LambdaSyntaxError(list))
     }
-  })
-  return {
-    tag: 'lambda',
-    body: list.elements.slice(2),
-    argumentPassingStyle: {
-      style: 'fixed-args',
-      numParams: parameters.length,
-      parameters
+    const restParameters: SchemeIdentifier = list.elements[1].post
+
+    return {
+      tag: 'lambda',
+      body: list.elements.slice(2),
+      argumentPassingStyle: {
+        style: 'var-args',
+        numCompulsoryParameters: compulsoryParameters.length,
+        compulsoryParameters,
+        restParameters
+      }
     }
+  } else if (list.elements[1].type === 'Identifier') {
+    // variable number of arguments without compulsory arguments
+    return {
+      tag: 'lambda',
+      body: list.elements.slice(2),
+      argumentPassingStyle: {
+        style: 'var-args',
+        numCompulsoryParameters: 0,
+        compulsoryParameters: [],
+        restParameters: list.elements[1]
+      }
+    }
+  } else {
+    return handleRuntimeError(context, new errors.LambdaSyntaxError(list))
   }
 }
 
-const listToSetBang = (list: SchemeList, context: Context): SetBangForm | undefined => {
+const listToSetBang = (list: SchemeList, context: Context): SetBangForm => {
   if (list.elements.length !== 3 || list.elements[1].type !== 'Identifier') {
     return handleRuntimeError(context, new errors.SetSyntaxError(list))
   }
@@ -135,7 +200,7 @@ const listToSetBang = (list: SchemeList, context: Context): SetBangForm | undefi
   }
 }
 
-const listToIf = (list: SchemeList, context: Context): IfForm | undefined => {
+const listToIf = (list: SchemeList, context: Context): IfForm => {
   if (list.elements.length < 3 || list.elements.length > 4) {
     return handleRuntimeError(context, new errors.IfSyntaxError(list))
   }
@@ -151,7 +216,7 @@ const listToLet = (
   tag: 'let' | 'let*' | 'letrec',
   list: SchemeList,
   context: Context
-): LetForm | LetStarForm | LetRecForm | undefined => {
+): LetForm | LetStarForm | LetRecForm => {
   if (list.elements.length < 3 || list.elements[1].type !== 'List') {
     return handleRuntimeError(context, new errors.LetSyntaxError(list))
   }
@@ -181,7 +246,7 @@ const listToLet = (
   }
 }
 
-const listToCond = (list: SchemeList, context: Context): CondForm | undefined => {
+const listToCond = (list: SchemeList, context: Context): CondForm => {
   if (list.elements.length <= 1) {
     return handleRuntimeError(context, new errors.CondSyntaxError(list))
   }
@@ -259,7 +324,7 @@ const parseCondClause = (
   }
 }
 
-const listToBegin = (list: SchemeList, context: Context): BeginForm | undefined => {
+const listToBegin = (list: SchemeList, context: Context): BeginForm => {
   if (list.elements.length <= 1) {
     return handleRuntimeError(context, new errors.BeginSyntaxError(list))
   }
@@ -278,7 +343,7 @@ const listToQuote = (
   tag: 'quote' | 'quasiquote' | 'unquote' | 'unquote-splicing',
   list: SchemeList,
   context: Context
-): QuoteForm | QuasiquoteForm | UnquoteForm | UnquoteSplicingForm | undefined => {
+): QuoteForm | QuasiquoteForm | UnquoteForm | UnquoteSplicingForm => {
   if (list.elements.length !== 2) {
     return handleRuntimeError(context, new errors.QuoteSyntaxError(tag, list))
   }
