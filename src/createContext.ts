@@ -4,6 +4,7 @@ import { GLOBAL } from './constants'
 import { importNativeBuiltins } from './interpreter/BuiltIns'
 import { EVProcedure, ExpressibleValue } from './interpreter/ExpressibleValue'
 import * as misc from './stdlib/misc'
+import { stdlibPrelude } from './stdlib/prelude'
 import { createTypeEnvironment } from './typeChecker/typeChecker'
 import { Context, CustomBuiltIns, Value, Variant } from './types'
 import { stringify } from './utils/stringify'
@@ -68,13 +69,6 @@ export const importExternalSymbols = (context: Context, externalSymbols: string[
   })
 }
 
-export const importBuiltins = (context: Context, externalBuiltIns: CustomBuiltIns) => {
-  ensureGlobalEnvironmentExist(context)
-
-  importExternalBuiltins(context, externalBuiltIns)
-  importNativeBuiltins(context)
-}
-
 const importExternalBuiltins = (context: Context, externalBuiltIns: CustomBuiltIns) => {
   const rawDisplay = (v: Value) =>
     externalBuiltIns.rawDisplay(
@@ -136,6 +130,17 @@ const defaultBuiltIns: CustomBuiltIns = {
   }
 }
 
+const importPrelude = (context: Context) => {
+  context.prelude = stdlibPrelude
+}
+
+export const importBuiltins = (context: Context, externalBuiltIns: CustomBuiltIns) => {
+  ensureGlobalEnvironmentExist(context)
+
+  importExternalBuiltins(context, externalBuiltIns)
+  importNativeBuiltins(context)
+}
+
 const createContext = <T>(
   variant: Variant = 's1',
   externalSymbols: string[] = [],
@@ -145,6 +150,7 @@ const createContext = <T>(
 ) => {
   const context = createEmptyContext(variant, externalSymbols, externalContext, moduleParams)
 
+  importPrelude(context)
   importBuiltins(context, externalBuiltIns)
   importExternalSymbols(context, externalSymbols)
 
