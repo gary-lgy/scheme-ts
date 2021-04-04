@@ -16,7 +16,7 @@ import {
 import { apply } from './Control'
 import { eq, equal } from './Equal'
 import { car, cdr, cons, list, setCar, setCdr } from './Pair'
-import { isNull, isNumber, isPair, isProcedure, isString, isSymbol } from './TypePredicates'
+import { isBool, isNull, isNumber, isPair, isProcedure, isString, isSymbol } from './TypePredicates'
 
 export const defineBuiltin = (frame: Frame, name: string, value: ExpressibleValue) => {
   frame[name] = value
@@ -46,6 +46,7 @@ export const importNativeBuiltins = (context: Context) => {
   defineBuiltin(frame, 'list', list)
 
   defineBuiltin(frame, 'number?', isNumber)
+  defineBuiltin(frame, 'boolean?', isBool)
   defineBuiltin(frame, 'string?', isString)
   defineBuiltin(frame, 'symbol?', isSymbol)
   defineBuiltin(frame, 'procedure?', isProcedure)
