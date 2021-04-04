@@ -1,5 +1,5 @@
 /* tslint:disable: max-classes-per-file */
-import { ExpressibleValue } from '../interpreter/runtime'
+import { ExpressibleValue } from '../interpreter/ExpressibleValue'
 import { SchemeExpression } from '../lang/scheme'
 import { stringify } from '../utils/stringify'
 import { RuntimeSourceError } from './runtimeSourceError'
@@ -10,7 +10,11 @@ export class DefineSyntaxError extends RuntimeSourceError {
   }
 
   public explain() {
-    return "Syntax for `define' is incorrect. Please use `(define variable value)'"
+    return (
+      "Syntax for `define' is incorrect. Please use `(define variable value)', " +
+      "`(define (procedureName arg ...) body1 body2...)', or " +
+      "`(define (procedureName arg ... . rest-args) body1 body2...)'"
+    )
   }
 }
 
@@ -20,7 +24,11 @@ export class LambdaSyntaxError extends RuntimeSourceError {
   }
 
   public explain() {
-    return "Syntax for `lambda' is incorrect. Please use `(lambda (arg1 arg2 ...) body)'"
+    return (
+      "Syntax for `lambda' is incorrect. Please use `(lambda (arg ...) body1 body2 ...)', " +
+      "`(lambda (arg1 arg2 ... . rest-args) body1 body2 ...)', or " +
+      "`(lambda args body1 body2 ...)'."
+    )
   }
 }
 
@@ -41,6 +49,52 @@ export class IfSyntaxError extends RuntimeSourceError {
 
   public explain() {
     return "Syntax for `if' is incorrect. Please use `(if (test) (consequent))' or `(if (test) (consequent) (alternative))'"
+  }
+}
+
+export class LetSyntaxError extends RuntimeSourceError {
+  constructor(node: SchemeExpression) {
+    super(node)
+  }
+
+  public explain() {
+    return "Syntax for `let' is incorrect. Please use `(if ((name value) ...) body1 body2 ...)'"
+  }
+}
+
+export class CondSyntaxError extends RuntimeSourceError {
+  constructor(node: SchemeExpression) {
+    super(node)
+  }
+
+  public explain() {
+    return (
+      "Syntax for `cond' is incorrect. " +
+      "Please use `(cond clause1 clause2 ...)', " +
+      'where a clause is either ' +
+      "`(test expression ...), (test => expression), or (else expression1 expression2 ...)' " +
+      'An else clause must be the last clause of the expression.'
+    )
+  }
+}
+
+export class CondProcedureClauseError extends RuntimeSourceError {
+  constructor(node: SchemeExpression) {
+    super(node)
+  }
+
+  public explain() {
+    return 'expression in (test => expression) in a cond expression must evaluate to a procedure'
+  }
+}
+
+export class BeginSyntaxError extends RuntimeSourceError {
+  constructor(node: SchemeExpression) {
+    super(node)
+  }
+
+  public explain() {
+    return "Syntax for `begin' is incorrect. Please use `(begin expression1 expression2 ...)'."
   }
 }
 
@@ -115,6 +169,16 @@ export class UnquoteSplicingInNonListContext extends RuntimeSourceError {
 
   public explain() {
     return `\`unquote-splicing' can only appear within a list`
+  }
+}
+
+export class UnexpectedDottedList extends RuntimeSourceError {
+  constructor(node: SchemeExpression) {
+    super(node)
+  }
+
+  public explain() {
+    return 'Unexpected dotted list'
   }
 }
 

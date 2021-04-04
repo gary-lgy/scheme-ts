@@ -1,5 +1,4 @@
-import { Options } from 'acorn'
-import * as es from 'estree'
+import { SourceLocation } from './lang/scheme'
 import { SourceLanguage } from './types'
 
 export const CUT = 'cut' // cut operator for Source 4.3
@@ -8,7 +7,7 @@ export const GLOBAL = typeof window === 'undefined' ? global : window
 export const NATIVE_STORAGE_ID = 'nativeStorage'
 export const MODULE_PARAMS_ID = 'moduleParams'
 export const MAX_LIST_DISPLAY_LENGTH = 100
-export const UNKNOWN_LOCATION: es.SourceLocation = {
+export const UNKNOWN_LOCATION: SourceLocation = {
   start: {
     line: -1,
     column: -1
@@ -24,5 +23,3 @@ export const JSSLANG_PROPERTIES = {
 }
 
 export const sourceLanguages: SourceLanguage[] = [{ variant: 's1' }]
-
-export const ACORN_PARSE_OPTIONS: Options = { ecmaVersion: 2015 }

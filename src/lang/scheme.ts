@@ -18,6 +18,7 @@ export type SchemeExpressionType =
   | 'Program'
   | 'Sequence'
   | 'List'
+  | 'DottedList'
   | 'StringLiteral'
   | 'NumberLiteral'
   | 'BoolLiteral'
@@ -30,6 +31,7 @@ export type SchemeExpression =
   | SchemeProgram
   | SchemeSequence
   | SchemeList
+  | SchemeDottedList
   | SchemeStringLiteral
   | SchemeNumberLiteral
   | SchemeBoolLiteral
@@ -50,6 +52,13 @@ export interface SchemeSequence {
 export interface SchemeList {
   type: 'List'
   elements: SchemeExpression[]
+  loc: SourceLocation
+}
+
+export interface SchemeDottedList {
+  type: 'DottedList'
+  pre: SchemeExpression[]
+  post: SchemeExpression
   loc: SourceLocation
 }
 

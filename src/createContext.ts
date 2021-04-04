@@ -1,10 +1,10 @@
 // Variable determining chapter of Source is contained in this file.
 
 import { GLOBAL } from './constants'
-import { importNativeBuiltins } from './interpreter/builtins'
-import { EVProcedure, ExpressibleValue } from './interpreter/runtime'
+import { importNativeBuiltins } from './interpreter/BuiltIns'
+import { EVProcedure, ExpressibleValue } from './interpreter/ExpressibleValue'
 import * as misc from './stdlib/misc'
-import { createTypeEnvironment } from './typeChecker/typeChecker'
+import { stdlibPrelude } from './stdlib/prelude'
 import { Context, CustomBuiltIns, Value, Variant } from './types'
 import { stringify } from './utils/stringify'
 
@@ -38,8 +38,7 @@ export const createEmptyContext = <T>(
     numberOfOuterEnvironments: 1,
     prelude: null,
     executionMethod: 'auto',
-    variant,
-    typeEnvironment: createTypeEnvironment()
+    variant
   }
 }
 
@@ -68,13 +67,6 @@ export const importExternalSymbols = (context: Context, externalSymbols: string[
   })
 }
 
-export const importBuiltins = (context: Context, externalBuiltIns: CustomBuiltIns) => {
-  ensureGlobalEnvironmentExist(context)
-
-  importExternalBuiltins(context, externalBuiltIns)
-  importNativeBuiltins(context)
-}
-
 const importExternalBuiltins = (context: Context, externalBuiltIns: CustomBuiltIns) => {
   const rawDisplay = (v: Value) =>
     externalBuiltIns.rawDisplay(
@@ -91,10 +83,6 @@ const importExternalBuiltins = (context: Context, externalBuiltIns: CustomBuiltI
     },
     variant: 'BuiltInProcedure',
     body: (args: ExpressibleValue[]): ExpressibleValue => {
-      if (args.length !== 1) {
-        throw new Error('display expected 1 argument, but encountered ' + args.length)
-      }
-
       rawDisplay(stringify(args[0]))
       return args[0]
     }
@@ -103,17 +91,15 @@ const importExternalBuiltins = (context: Context, externalBuiltIns: CustomBuiltI
   const errorProcedure: EVProcedure = {
     type: 'EVProcedure',
     argumentPassingStyle: {
-      style: 'fixed-args',
-      numParams: 1
+      style: 'var-args',
+      numCompulsoryParameters: 1
     },
     variant: 'BuiltInProcedure',
-    body: (args: ExpressibleValue[]): ExpressibleValue => {
-      if (args.length !== 1) {
-        throw new Error('error expected 1 argument, but encountered ' + args.length)
+    body: (args: ExpressibleValue[]): never => {
+      if (args[0].type !== 'EVString') {
+        throw new Error(`error expected the first argument to be a string, got ${args[0].type}`)
       }
-
-      misc.error_message(args[0])
-      return args[0]
+      misc.error_message(args[0].value, args.slice(1))
     }
   }
 
@@ -136,6 +122,17 @@ const defaultBuiltIns: CustomBuiltIns = {
   }
 }
 
+const importPrelude = (context: Context) => {
+  context.prelude = stdlibPrelude
+}
+
+export const importBuiltins = (context: Context, externalBuiltIns: CustomBuiltIns) => {
+  ensureGlobalEnvironmentExist(context)
+
+  importExternalBuiltins(context, externalBuiltIns)
+  importNativeBuiltins(context)
+}
+
 const createContext = <T>(
   variant: Variant = 's1',
   externalSymbols: string[] = [],
@@ -145,6 +142,7 @@ const createContext = <T>(
 ) => {
   const context = createEmptyContext(variant, externalSymbols, externalContext, moduleParams)
 
+  importPrelude(context)
   importBuiltins(context, externalBuiltIns)
   importExternalSymbols(context, externalSymbols)
 

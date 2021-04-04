@@ -8,10 +8,10 @@ import {
   SchemeStringLiteral
 } from '../lang/scheme'
 import { Context } from '../types'
-import { List, tryConvertToList } from '../utils/listHelpers'
-import { evaluate } from './interpreter'
-import { ExpressibleValue } from './runtime'
-import { getVariable, handleRuntimeError, listOfValues } from './util'
+import { flattenPairToList } from '../utils/listHelpers'
+import { ExpressibleValue, makeImproperList, makeList } from './ExpressibleValue'
+import { evaluate, ValueGenerator } from './interpreter'
+import { handleRuntimeError, isDefined } from './util'
 
 const quoteLiteral = (
   literal: SchemeBoolLiteral | SchemeNumberLiteral | SchemeStringLiteral | SchemeIdentifier
@@ -51,7 +51,12 @@ export const quoteExpression = (
     case 'Identifier':
       return quoteLiteral(expression)
     case 'List':
-      return listOfValues(...expression.elements.map(elem => quoteExpression(elem, context)))
+      return makeList(...expression.elements.map(elem => quoteExpression(elem, context)))
+    case 'DottedList':
+      return makeImproperList(
+        expression.pre.map(elem => quoteExpression(elem, context)),
+        quoteExpression(expression.post, context)
+      )
     case 'Program':
     case 'Sequence':
       return handleRuntimeError(
@@ -59,10 +64,6 @@ export const quoteExpression = (
         new errors.UnexpectedQuotationError(context.runtime.nodes[0])
       )
   }
-}
-
-const isRedefined = (context: Context, name: string): boolean => {
-  return !!getVariable(context, name)
 }
 
 // Handle (quasiquote expr), (unquote expr), and (unquote-splicing expr) specially, if they have not been redefined
@@ -80,7 +81,7 @@ function* handleSpecialQuotationForm(
       (expression.elements[0].name === 'quasiquote' ||
         expression.elements[0].name === 'unquote' ||
         expression.elements[0].name === 'unquote-splicing') &&
-      !isRedefined(context, expression.elements[0].name)
+      !isDefined(context, expression.elements[0].name)
     )
   ) {
     return null
@@ -98,9 +99,9 @@ function* handleSpecialQuotationForm(
   switch (quoteType) {
     case 'quasiquote': {
       return [
-        listOfValues(
+        makeList(
           { type: 'EVSymbol', value: 'quasiquote' },
-          ...(yield* quasiquoteExpression(
+          ...(yield* quasiquoteExpressionInner(
             subExpression,
             context,
             quoteLevel + 1,
@@ -115,9 +116,9 @@ function* handleSpecialQuotationForm(
         return [yield* evaluate(subExpression, context)]
       } else if (quoteLevel > unquoteLevel) {
         return [
-          listOfValues(
+          makeList(
             { type: 'EVSymbol', value: 'unquote' },
-            ...(yield* quasiquoteExpression(
+            ...(yield* quasiquoteExpressionInner(
               subExpression,
               context,
               quoteLevel,
@@ -144,20 +145,26 @@ function* handleSpecialQuotationForm(
           return []
         }
 
-        let list: List | null
-        if (unquoted.type !== 'EVPair' || !(list = tryConvertToList(unquoted))) {
+        if (unquoted.type !== 'EVPair') {
+          return handleRuntimeError(
+            context,
+            new errors.UnquoteSplicingEvaluatedToNonList(unquoted, expression)
+          )
+        }
+        const list = flattenPairToList(unquoted)
+        if (list.type !== 'List') {
           return handleRuntimeError(
             context,
             new errors.UnquoteSplicingEvaluatedToNonList(unquoted, expression)
           )
         }
 
-        return list.map(element => element.value)
+        return list.value.map(element => element.value)
       } else if (quoteLevel > unquoteLevel) {
         return [
-          listOfValues(
+          makeList(
             { type: 'EVSymbol', value: 'unquote-splicing' },
-            ...(yield* quasiquoteExpression(
+            ...(yield* quasiquoteExpressionInner(
               subExpression,
               context,
               quoteLevel,
@@ -177,6 +184,20 @@ function* handleSpecialQuotationForm(
 }
 
 export function* quasiquoteExpression(
+  expression: SchemeExpression,
+  context: Context
+): ValueGenerator {
+  const quoted = yield* quasiquoteExpressionInner(expression, context, 1, 1, false)
+  if (quoted.length !== 1) {
+    return handleRuntimeError(
+      context,
+      new errors.UnreachableCodeReached('top-level quasiquote should return a single value')
+    )
+  }
+  return quoted[0]
+}
+
+function* quasiquoteExpressionInner(
   expression: SchemeExpression,
   context: Context,
   quoteLevel: number,
@@ -209,10 +230,28 @@ export function* quasiquoteExpression(
       for (const element of expression.elements) {
         // Allow unquote-splicing and spread each result
         quoted.push(
-          ...(yield* quasiquoteExpression(element, context, quoteLevel, unquoteLevel, true))
+          ...(yield* quasiquoteExpressionInner(element, context, quoteLevel, unquoteLevel, true))
         )
       }
-      return [listOfValues(...quoted)]
+      return [makeList(...quoted)]
+    }
+    case 'DottedList': {
+      const beforeDot: ExpressibleValue[] = []
+      for (const element of expression.pre) {
+        // Allow unquote-splicing and spread each result
+        beforeDot.push(
+          ...(yield* quasiquoteExpressionInner(element, context, quoteLevel, unquoteLevel, true))
+        )
+      }
+      // Do not allow splicing unquote at the tail
+      const afterDot = (yield* quasiquoteExpressionInner(
+        expression.post,
+        context,
+        quoteLevel,
+        unquoteLevel,
+        false
+      ))[0]
+      return [makeImproperList(beforeDot, afterDot)]
     }
     case 'Program':
     case 'Sequence':

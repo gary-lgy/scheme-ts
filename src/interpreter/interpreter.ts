@@ -1,6 +1,7 @@
 import * as errors from '../errors/errors'
 import {
   SchemeBoolLiteral,
+  SchemeDottedList,
   SchemeExpression,
   SchemeExpressionType,
   SchemeIdentifier,
@@ -11,9 +12,10 @@ import {
   SchemeStringLiteral
 } from '../lang/scheme'
 import { Context } from '../types'
+import { ExpressibleValue, makeEmptyList } from './ExpressibleValue'
 import { apply, listOfArguments } from './procedure'
-import { ExpressibleValue } from './runtime'
-import { evaluateSpecialForm, listToSpecialForm } from './SpecialForm'
+import { listToSpecialForm } from './SpecialForm/converters'
+import { evaluateSpecialForm } from './SpecialForm/evaluators'
 import { extendCurrentEnvironment, getVariable, handleRuntimeError, pushEnvironment } from './util'
 
 function* visit(context: Context, node: SchemeExpression) {
@@ -49,7 +51,7 @@ export const evaluators: { [key in SchemeExpressionType]: Evaluator<SchemeExpres
   List: function* (node: SchemeList, context: Context): ValueGenerator {
     if (node.elements.length === 0) {
       // Empty list - return empty list
-      return { type: 'EVEmptyList' }
+      return makeEmptyList()
     }
 
     const firstElement = node.elements[0]
@@ -72,6 +74,10 @@ export const evaluators: { [key in SchemeExpressionType]: Evaluator<SchemeExpres
     const procedureName =
       firstElement.type === 'Identifier' ? firstElement.name : '[Anonymous procedure]'
     return yield* apply(context, procedure, procedureName, args, node)
+  },
+
+  DottedList: function* (node: SchemeDottedList, context: Context): ValueGenerator {
+    return handleRuntimeError(context, new errors.UnexpectedDottedList(node))
   },
 
   StringLiteral: function* (node: SchemeStringLiteral, context: Context): ValueGenerator {

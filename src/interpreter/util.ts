@@ -2,7 +2,7 @@ import { Context } from 'vm'
 import * as errors from '../errors/errors'
 import { RuntimeSourceError } from '../errors/runtimeSourceError'
 import { Environment, Frame } from '../types'
-import { EVPair, ExpressibleValue } from './runtime'
+import { ExpressibleValue } from './ExpressibleValue'
 
 // ======================= Environment ===========================
 
@@ -50,28 +50,13 @@ export const setVariable = (context: Context, name: string, value: any) => {
   return handleRuntimeError(context, new errors.UndefinedVariable(name, context.runtime.nodes[0]))
 }
 
+export const isDefined = (context: Context, name: string): boolean => {
+  return !!getVariable(context, name)
+}
+
 // ======================= Evaluation ===========================
 
 export const isTruthy = (value: ExpressibleValue) => value.type !== 'EVBool' || value.value
-
-export const listOfValues = (...values: ExpressibleValue[]): ExpressibleValue => {
-  const precursor: EVPair = {
-    type: 'EVPair',
-    head: { type: 'EVEmptyList' },
-    tail: { type: 'EVEmptyList' }
-  }
-  let prev = precursor
-  for (const value of values) {
-    const newTail: EVPair = {
-      type: 'EVPair',
-      head: value,
-      tail: { type: 'EVEmptyList' }
-    }
-    prev.tail = newTail
-    prev = newTail
-  }
-  return precursor.tail
-}
 
 export const handleRuntimeError = (context: Context, error: RuntimeSourceError): never => {
   context.errors.push(error)

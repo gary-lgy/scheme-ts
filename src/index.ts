@@ -39,7 +39,7 @@ const DEFAULT_OPTIONS: IOptions = {
 }
 
 // needed to work on browsers
-if (typeof window !== 'undefined') {
+if (typeof process === 'undefined') {
   // @ts-ignore
   SourceMapConsumer.initialize({
     'lib/mappings.wasm': 'https://unpkg.com/source-map@0.7.3/lib/mappings.wasm'
