@@ -1,3 +1,4 @@
+import { ExpressibleValue } from '../interpreter/ExpressibleValue'
 import { Context, Value } from '../types'
 import { stringify } from '../utils/stringify'
 
@@ -14,8 +15,8 @@ export function rawDisplay(value: Value, str: string, externalContext: any) {
   return value
 }
 
-export function error_message(value: Value, str?: string) {
-  const output = (str === undefined ? '' : str + ' ') + stringify(value)
+export function error_message(str: string, values: ExpressibleValue[]): never {
+  const output = str + ' ' + values.map(value => stringify(value)).join(' ')
   throw new Error(output)
 }
 

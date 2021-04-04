@@ -85,10 +85,6 @@ const importExternalBuiltins = (context: Context, externalBuiltIns: CustomBuiltI
     },
     variant: 'BuiltInProcedure',
     body: (args: ExpressibleValue[]): ExpressibleValue => {
-      if (args.length !== 1) {
-        throw new Error('display expected 1 argument, but encountered ' + args.length)
-      }
-
       rawDisplay(stringify(args[0]))
       return args[0]
     }
@@ -97,17 +93,15 @@ const importExternalBuiltins = (context: Context, externalBuiltIns: CustomBuiltI
   const errorProcedure: EVProcedure = {
     type: 'EVProcedure',
     argumentPassingStyle: {
-      style: 'fixed-args',
-      numParams: 1
+      style: 'var-args',
+      numCompulsoryParameters: 1
     },
     variant: 'BuiltInProcedure',
-    body: (args: ExpressibleValue[]): ExpressibleValue => {
-      if (args.length !== 1) {
-        throw new Error('error expected 1 argument, but encountered ' + args.length)
+    body: (args: ExpressibleValue[]): never => {
+      if (args[0].type !== 'EVString') {
+        throw new Error(`error expected the first argument to be a string, got ${args[0].type}`)
       }
-
-      misc.error_message(args[0])
-      return args[0]
+      misc.error_message(args[0].value, args.slice(1))
     }
   }
 
