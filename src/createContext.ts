@@ -5,7 +5,6 @@ import { importNativeBuiltins } from './interpreter/BuiltIns'
 import { EVProcedure, ExpressibleValue } from './interpreter/ExpressibleValue'
 import * as misc from './stdlib/misc'
 import { stdlibPrelude } from './stdlib/prelude'
-import { createTypeEnvironment } from './typeChecker/typeChecker'
 import { Context, CustomBuiltIns, Value, Variant } from './types'
 import { stringify } from './utils/stringify'
 
@@ -39,8 +38,7 @@ export const createEmptyContext = <T>(
     numberOfOuterEnvironments: 1,
     prelude: null,
     executionMethod: 'auto',
-    variant,
-    typeEnvironment: createTypeEnvironment()
+    variant
   }
 }
 

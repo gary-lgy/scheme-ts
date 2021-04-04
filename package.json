@@ -14,17 +14,9 @@
     "url": "https://github.com/source-academy/"
   },
   "dependencies": {
-    "@types/estree": "0.0.45",
-    "acorn": "^8.0.3",
-    "acorn-loose": "^8.0.0",
-    "acorn-walk": "^8.0.0",
     "antlr4ts": "^0.5.0-alpha.4",
-    "astring": "^1.4.3",
-    "gpu.js": "^2.10.4",
-    "lodash": "^4.17.20",
     "node-getopt": "^0.3.2",
-    "source-map": "^0.7.3",
-    "xmlhttprequest-ts": "^1.0.1"
+    "source-map": "^0.7.3"
   },
   "main": "dist/index",
   "types": "dist/index",
@@ -39,7 +31,7 @@
     "format": "prettier --write \"src/**/*.{ts,tsx}\"",
     "format:ci": "prettier --list-different \"src/**/*.{ts,tsx}\"",
     "prepublishOnly": "tsc",
-    "test": "jest --passWithNoTests",
+    "test": "jest",
     "benchmark": "jest --testPathPattern='.*benchmark.*'",
     "test-coverage": "jest --coverage",
     "eslint": "eslint --ext \".ts,.tsx\" src",
@@ -59,14 +51,11 @@
   "homepage": "https://github.com/source-academy/x-slang",
   "devDependencies": {
     "@types/jest": "^26.0.14",
-    "@types/lodash.assignin": "^4.2.6",
-    "@types/lodash.clonedeep": "^4.5.6",
     "@types/node": "^14.11.2",
     "@typescript-eslint/eslint-plugin": "^4.4.1",
     "@typescript-eslint/parser": "^4.4.1",
     "ace-builds": "^1.4.12",
     "coveralls": "^3.1.0",
-    "escodegen": "^2.0.0",
     "eslint": "^7.11.0",
     "eslint-config-prettier": "^6.13.0",
     "husky": "^4.3.0",

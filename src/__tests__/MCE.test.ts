@@ -6,8 +6,8 @@ import {
   makePair,
   makeString,
   makeSymbol
-} from '../../interpreter/ExpressibleValue'
-import { evaluateInMce } from '../../testHelpers'
+} from '../interpreter/ExpressibleValue'
+import { evaluateInMce } from '../testHelpers'
 
 describe('self-evaluating', () => {
   test('number', () => {
