@@ -3,9 +3,7 @@ import {
   UnquoteInWrongContext,
   UnquoteSplicingEvaluatedToNonList,
   UnquoteSplicingInNonListContext
-} from '../../errors/errors'
-import { evaluateUntilDone } from '../../testHelpers'
-import { stringify } from '../../utils/stringify'
+} from '../errors/errors'
 import {
   EVBool,
   EVNumber,
@@ -17,7 +15,9 @@ import {
   makePair,
   makeString,
   makeSymbol
-} from '../ExpressibleValue'
+} from '../interpreter/ExpressibleValue'
+import { evaluateUntilDone } from '../testHelpers'
+import { stringify } from '../utils/stringify'
 
 describe('synatx', () => {
   test('must take exactly one argument', () => {

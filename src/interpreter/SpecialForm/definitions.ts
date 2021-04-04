@@ -15,6 +15,8 @@ export type SpecialForm =
   | QuasiquoteForm
   | UnquoteForm
   | UnquoteSplicingForm
+  | AndForm
+  | OrForm
 
 export type DefineForm = {
   tag: 'define'
@@ -109,4 +111,14 @@ export type UnquoteForm = {
 export type UnquoteSplicingForm = {
   tag: 'unquote-splicing'
   expression: SchemeExpression
+}
+
+export type AndForm = {
+  tag: 'and'
+  arguments: SchemeExpression[]
+}
+
+export type OrForm = {
+  tag: 'or'
+  arguments: SchemeExpression[]
 }

@@ -2,9 +2,7 @@ import {
   BuiltinProcedureError,
   InvalidNumberOfArguments,
   NotEnoughArguments
-} from '../../errors/errors'
-import { evaluateUntilDone } from '../../testHelpers'
-import { stringify } from '../../utils/stringify'
+} from '../errors/errors'
 import {
   makeBool,
   makeEmptyList,
@@ -12,7 +10,9 @@ import {
   makeNumber,
   makePair,
   makeString
-} from '../ExpressibleValue'
+} from '../interpreter/ExpressibleValue'
+import { evaluateUntilDone } from '../testHelpers'
+import { stringify } from '../utils/stringify'
 
 describe('arithmetic procedures', () => {
   describe('+', () => {

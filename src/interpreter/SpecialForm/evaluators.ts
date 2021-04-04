@@ -2,7 +2,7 @@
 
 import * as errors from '../../errors/errors'
 import { Context, Frame } from '../../types'
-import { ExpressibleValue, makeEmptyList } from '../ExpressibleValue'
+import { ExpressibleValue, makeBool, makeEmptyList } from '../ExpressibleValue'
 import { evaluate, ValueGenerator } from '../interpreter'
 import { apply } from '../procedure'
 import { quasiquoteExpression, quoteExpression } from '../quote'
@@ -15,6 +15,7 @@ import {
   setVariable
 } from '../util'
 import {
+  AndForm,
   BeginForm,
   CondForm,
   DefineForm,
@@ -23,6 +24,7 @@ import {
   LetForm,
   LetRecForm,
   LetStarForm,
+  OrForm,
   SetBangForm,
   SpecialForm
 } from './definitions'
@@ -54,6 +56,10 @@ export function* evaluateSpecialForm(form: SpecialForm, context: Context): Value
     case 'unquote':
     case 'unquote-splicing':
       return handleRuntimeError(context, new errors.UnquoteInWrongContext(form.expression))
+    case 'and':
+      return yield* evaluateAndForm(form, context)
+    case 'or':
+      return yield* evaluateOrForm(form, context)
   }
 }
 
@@ -200,4 +206,36 @@ function* evaluateLetRecForm(letRecForm: LetRecForm, context: Context): ValueGen
 
 function* evaluateBeginForm(beginForm: BeginForm, context: Context): ValueGenerator {
   return yield* evaluate(beginForm.body, context)
+}
+
+function* evaluateAndForm(andForm: AndForm, context: Context): ValueGenerator {
+  if (andForm.arguments.length === 0) {
+    return makeBool(true)
+  } else {
+    let result: ExpressibleValue = yield* evaluate(andForm.arguments[0], context)
+    for (let i = 1; i < andForm.arguments.length; i++) {
+      if (!isTruthy(result)) {
+        return makeBool(false)
+      }
+      const arg = andForm.arguments[i]
+      result = yield* evaluate(arg, context)
+    }
+    return result
+  }
+}
+
+function* evaluateOrForm(orForm: OrForm, context: Context): ValueGenerator {
+  if (orForm.arguments.length === 0) {
+    return makeBool(false)
+  } else {
+    let result: ExpressibleValue = yield* evaluate(orForm.arguments[0], context)
+    for (let i = 1; i < orForm.arguments.length; i++) {
+      if (isTruthy(result)) {
+        return result
+      }
+      const arg = orForm.arguments[i]
+      result = yield* evaluate(arg, context)
+    }
+    return result
+  }
 }

@@ -4,9 +4,15 @@ import {
   CondSyntaxError,
   DefineSyntaxError,
   LetSyntaxError
-} from '../../errors/errors'
-import { evaluateUntilDone } from '../../testHelpers'
-import { makeBool, makeList, makeNumber, makeSymbol } from '../ExpressibleValue'
+} from '../errors/errors'
+import {
+  makeBool,
+  makeList,
+  makeNumber,
+  makeString,
+  makeSymbol
+} from '../interpreter/ExpressibleValue'
+import { evaluateUntilDone } from '../testHelpers'
 
 describe('binding constructs', () => {
   describe('define', () => {
@@ -255,5 +261,65 @@ describe('begin', () => {
             (+ x 1))
     `)
     ).toEqual(makeNumber(6))
+  })
+})
+
+describe('logical', () => {
+  describe('and', () => {
+    describe('no argument', () => {
+      test('return true', () => {
+        expect(evaluateUntilDone('(and)')).toEqual(makeBool(true))
+      })
+    })
+
+    describe('one argument', () => {
+      test('returns argument', () => {
+        expect(evaluateUntilDone('(and 1)')).toEqual(makeNumber(1))
+        expect(evaluateUntilDone('(and "str")')).toEqual(makeString('str'))
+      })
+    })
+
+    describe('more than one arguments', () => {
+      describe('all arguments are truthy', () => {
+        test('returns last argument', () => {
+          expect(evaluateUntilDone(`(and "1" 'two '(3) 4)`)).toEqual(makeNumber(4))
+        })
+      })
+
+      describe('at least one argument is false', () => {
+        test('returns false', () => {
+          expect(evaluateUntilDone(`(and "1" #f '(3) 4)`)).toEqual(makeBool(false))
+        })
+      })
+    })
+  })
+
+  describe('or', () => {
+    describe('no argument', () => {
+      test('returns false', () => {
+        expect(evaluateUntilDone('(or)')).toEqual(makeBool(false))
+      })
+    })
+
+    describe('one argument', () => {
+      test('returns argument', () => {
+        expect(evaluateUntilDone('(or 1)')).toEqual(makeNumber(1))
+        expect(evaluateUntilDone('(or "str")')).toEqual(makeString('str'))
+      })
+    })
+
+    describe('more than one arguments', () => {
+      describe('all arguments are false', () => {
+        test('returns false', () => {
+          expect(evaluateUntilDone(`(or #f #f #f #f)`)).toEqual(makeBool(false))
+        })
+      })
+
+      describe('at least one argument is truthy', () => {
+        test('returns first truthy argument', () => {
+          expect(evaluateUntilDone(`(or #f #f 1 #f 2)`)).toEqual(makeNumber(1))
+        })
+      })
+    })
   })
 })

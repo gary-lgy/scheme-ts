@@ -3,6 +3,7 @@ import { SchemeExpression, SchemeIdentifier, SchemeList } from '../../lang/schem
 import { Context } from '../../types'
 import { handleRuntimeError, isDefined } from '../util'
 import {
+  AndForm,
   BeginForm,
   CondClause,
   CondElseClause,
@@ -14,6 +15,7 @@ import {
   LetForm,
   LetRecForm,
   LetStarForm,
+  OrForm,
   QuasiquoteForm,
   QuoteForm,
   SetBangForm,
@@ -51,6 +53,10 @@ export const listToSpecialForm = (
     case 'unquote':
     case 'unquote-splicing':
       return listToQuote(tag, list, context)
+    case 'and':
+      return listToAnd(list, context)
+    case 'or':
+      return listToOr(list, context)
     default:
       return null
   }
@@ -351,4 +357,12 @@ const listToQuote = (
     tag,
     expression: list.elements[1]
   }
+}
+
+const listToAnd = (list: SchemeList, context: Context): AndForm => {
+  return { tag: 'and', arguments: list.elements.slice(1) }
+}
+
+const listToOr = (list: SchemeList, context: Context): OrForm => {
+  return { tag: 'or', arguments: list.elements.slice(1) }
 }
