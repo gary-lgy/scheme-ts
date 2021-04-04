@@ -129,7 +129,11 @@ export const stringify = (
       case 'EVPair':
         return stringifyPair(v, indentLevel)
       case 'EVProcedure':
-        return '[Procedure]'
+        if (v.variant === 'BuiltInProcedure') {
+          return '[built-in procedure]'
+        } else {
+          return '[compound procedure]'
+        }
     }
   }
 
