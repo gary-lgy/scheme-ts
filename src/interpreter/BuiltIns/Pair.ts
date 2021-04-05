@@ -11,6 +11,7 @@ import {
 export const cons: EVProcedure = {
   type: 'EVProcedure',
   variant: 'BuiltInProcedure',
+  name: 'cons',
   argumentPassingStyle: {
     style: 'fixed-args',
     numParams: 2
@@ -32,6 +33,7 @@ export const mustDoOnPair = <T>(
 export const car: EVProcedure = {
   type: 'EVProcedure',
   variant: 'BuiltInProcedure',
+  name: 'car',
   argumentPassingStyle: {
     style: 'fixed-args',
     numParams: 1
@@ -43,6 +45,7 @@ export const car: EVProcedure = {
 export const cdr: EVProcedure = {
   type: 'EVProcedure',
   variant: 'BuiltInProcedure',
+  name: 'cdr',
   argumentPassingStyle: {
     style: 'fixed-args',
     numParams: 1
@@ -54,6 +57,7 @@ export const cdr: EVProcedure = {
 export const setCar: EVProcedure = {
   type: 'EVProcedure',
   variant: 'BuiltInProcedure',
+  name: 'set-car!',
   argumentPassingStyle: {
     style: 'fixed-args',
     numParams: 2
@@ -72,6 +76,7 @@ export const setCar: EVProcedure = {
 export const setCdr: EVProcedure = {
   type: 'EVProcedure',
   variant: 'BuiltInProcedure',
+  name: 'set-cdr!',
   argumentPassingStyle: {
     style: 'fixed-args',
     numParams: 2
@@ -90,6 +95,7 @@ export const setCdr: EVProcedure = {
 export const list: EVProcedure = {
   type: 'EVProcedure',
   variant: 'BuiltInProcedure',
+  name: 'list',
   argumentPassingStyle: {
     style: 'var-args',
     numCompulsoryParameters: 0

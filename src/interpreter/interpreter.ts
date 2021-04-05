@@ -90,19 +90,16 @@ export const evaluators: { [key in SchemeExpressionType]: Evaluator<SchemeExpres
     }
 
     const args = yield* listOfArguments(node.elements.slice(1), context)
-    const procedureName =
-      firstElement.type === 'Identifier' ? firstElement.name : '[Anonymous procedure]'
     if (isParentInTailContext(context)) {
       const tailCall: TailCall = {
         type: 'TailCall',
         procedure,
-        procedureName,
         args,
         node
       }
       return tailCall
     } else {
-      return yield* apply(context, procedure, procedureName, args, node)
+      return yield* apply(context, procedure, args, node)
     }
   },
 

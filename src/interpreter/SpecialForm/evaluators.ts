@@ -72,6 +72,7 @@ function* evaluateDefineForm(defineForm: DefineForm, context: Context): ValueGen
     value = {
       type: 'EVProcedure',
       argumentPassingStyle: defineForm.argumentPassingStyle,
+      name: defineForm.name.name,
       variant: 'CompoundProcedure',
       body: defineForm.body,
       environment: context.runtime.environments[0]
@@ -87,6 +88,7 @@ function* evaluateLambdaForm(lambdaForm: LambdaForm, context: Context): ValueGen
   return {
     type: 'EVProcedure',
     argumentPassingStyle: lambdaForm.argumentPassingStyle,
+    name: '[anonymous procedure]',
     variant: 'CompoundProcedure',
     body: lambdaForm.body,
     environment: context.runtime.environments[0]
@@ -130,19 +132,15 @@ function* evaluateCondForm(condForm: CondForm, context: Context): ValueGenerator
         )
       }
 
-      const procedureName =
-        clause.body.type === 'Identifier' ? clause.body.name : '[Anonymous procedure]'
-
       if (isParentInTailContext(context)) {
         return {
           type: 'TailCall',
           procedure,
-          procedureName,
           args: [testResult],
           node: clause.node
         }
       } else {
-        return yield* apply(context, procedure, procedureName, [testResult], clause.node)
+        return yield* apply(context, procedure, [testResult], clause.node)
       }
     }
   }

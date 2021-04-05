@@ -3,6 +3,7 @@ import { EVBool, EVProcedure, ExpressibleValue, makeBool } from '../ExpressibleV
 export const eq: EVProcedure = {
   type: 'EVProcedure',
   variant: 'BuiltInProcedure',
+  name: 'eq?',
   argumentPassingStyle: {
     style: 'fixed-args',
     numParams: 2
@@ -30,6 +31,11 @@ export const eq: EVProcedure = {
   }
 }
 
+export const eqv: EVProcedure = {
+  ...eq,
+  name: 'eqv?'
+}
+
 const equalImpl = (lhs: ExpressibleValue, rhs: ExpressibleValue): boolean => {
   if (
     (lhs.type === 'EVNumber' && rhs.type === 'EVNumber') ||
@@ -52,6 +58,7 @@ const equalImpl = (lhs: ExpressibleValue, rhs: ExpressibleValue): boolean => {
 export const equal: EVProcedure = {
   type: 'EVProcedure',
   variant: 'BuiltInProcedure',
+  name: 'equal?',
   argumentPassingStyle: {
     style: 'fixed-args',
     numParams: 2

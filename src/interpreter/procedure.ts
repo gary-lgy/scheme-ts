@@ -2,6 +2,7 @@ import { Context } from '..'
 import * as errors from '../errors/errors'
 import { SchemeExpression, SchemeIdentifier } from '../lang/scheme'
 import { Environment } from '../types'
+import { stringify } from '../utils/stringify'
 import {
   EVBuiltInProcedure,
   EVCompoundProcedure,
@@ -35,7 +36,6 @@ type VarArgsWithParameterNames = VarArgs & {
 const checkNumberOfArguments = (
   context: Context,
   procedure: EVProcedure,
-  procedureName: string,
   numArgs: number,
   callExpression: SchemeExpression
 ) => {
@@ -47,7 +47,7 @@ const checkNumberOfArguments = (
       context,
       new errors.InvalidNumberOfArguments(
         callExpression,
-        procedureName,
+        procedure.name,
         procedure.argumentPassingStyle.numParams,
         numArgs
       )
@@ -60,7 +60,7 @@ const checkNumberOfArguments = (
       context,
       new errors.NotEnoughArguments(
         callExpression,
-        procedureName,
+        procedure.name,
         procedure.argumentPassingStyle.numCompulsoryParameters,
         numArgs
       )
@@ -90,7 +90,7 @@ const extendProcedureEnvironment = (
     name: procedureName,
     tail: environment,
     head: frame,
-    procedureName: procedureName
+    procedureName: '(' + [procedureName, ...args.map(arg => stringify(arg))].join(' ') + ')'
   }
   parameters.forEach((param, index) => {
     frame[param] = args[index]
@@ -98,20 +98,18 @@ const extendProcedureEnvironment = (
   return newEnvironment
 }
 
-// TODO: let each proc remember its name
 export function* apply(
   context: Context,
   procedure: EVProcedure,
-  procedureName: string,
   suppliedArgs: ExpressibleValue[],
   node: SchemeExpression
 ): Generator<Context, NonTailCallExpressibleValue> {
   while (true) {
-    checkNumberOfArguments(context, procedure, procedureName, suppliedArgs.length, node)
+    checkNumberOfArguments(context, procedure, suppliedArgs.length, node)
 
     let result: ExpressibleValue
     if (procedure.variant === 'CompoundProcedure') {
-      result = yield* applyCompoundProcedure(context, procedure, procedureName, suppliedArgs)
+      result = yield* applyCompoundProcedure(context, procedure, suppliedArgs)
     } else {
       result = yield* applyBuiltInProcedure(context, procedure, suppliedArgs, node)
     }
@@ -121,7 +119,6 @@ export function* apply(
     }
 
     procedure = result.procedure
-    procedureName = result.procedureName
     suppliedArgs = result.args
     node = result.node
   }
@@ -130,13 +127,12 @@ export function* apply(
 function* applyCompoundProcedure(
   context: Context,
   procedure: EVCompoundProcedure,
-  procedureName: string,
   suppliedArgs: ExpressibleValue[]
 ): ValueGenerator {
   const { parameters, args: argsToPass } = makeArguments(procedure, suppliedArgs)
   const environment = extendProcedureEnvironment(
     procedure.environment,
-    procedureName,
+    procedure.name,
     parameters,
     argsToPass
   )

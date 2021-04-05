@@ -1,4 +1,3 @@
-import { SchemeList } from '../../lang/scheme'
 import { Context } from '../../types'
 import { flattenPairToList } from '../../utils/listHelpers'
 import { EVProcedure, ExpressibleValue } from '../ExpressibleValue'
@@ -8,6 +7,7 @@ import { apply as applyProcedure, isParentInTailContext } from '../procedure'
 export const apply: EVProcedure = {
   type: 'EVProcedure',
   variant: 'BuiltInProcedure',
+  name: 'apply',
   argumentPassingStyle: {
     style: 'var-args',
     numCompulsoryParameters: 2
@@ -34,18 +34,11 @@ export const apply: EVProcedure = {
       return {
         type: 'TailCall',
         procedure: proc,
-        procedureName: 'applied procedure',
         args: actualArguments,
         node: context.runtime.nodes[0]
       }
     } else {
-      return yield* applyProcedure(
-        context,
-        proc,
-        'apply',
-        actualArguments,
-        context.runtime.nodes[0] as SchemeList
-      )
+      return yield* applyProcedure(context, proc, actualArguments, context.runtime.nodes[0])
     }
   }
 }

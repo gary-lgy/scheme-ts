@@ -75,11 +75,13 @@ export type EVCompoundProcedure = {
   argumentPassingStyle: CompoundProcedureArgumentPassingStyle
   body: SchemeExpression[]
   environment: Environment
+  name: string
 }
 
 export type EVBuiltInProcedure = {
   variant: 'BuiltInProcedure'
   argumentPassingStyle: BuiltInProcedureArgumentPassingStyle
+  name: string
   body:
     | ((args: ExpressibleValue[], context: Context) => ExpressibleValue)
     | ((args: ExpressibleValue[], context: Context) => ValueGenerator)
@@ -131,7 +133,6 @@ export const makeImproperList = (
 export type TailCall = {
   type: 'TailCall'
   procedure: EVProcedure
-  procedureName: string
   args: ExpressibleValue[]
   node: SchemeExpression
 }
