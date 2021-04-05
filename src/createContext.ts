@@ -14,7 +14,8 @@ const createEmptyRuntime = () => ({
   isRunning: false,
   environments: [],
   value: undefined,
-  nodes: []
+  nodes: [],
+  inTailContext: []
 })
 
 const createGlobalEnvironment = () => ({
@@ -77,6 +78,7 @@ const importExternalBuiltins = (context: Context, externalBuiltIns: CustomBuiltI
 
   const displayProcedure: EVProcedure = {
     type: 'EVProcedure',
+    name: 'display',
     argumentPassingStyle: {
       style: 'fixed-args',
       numParams: 1
@@ -90,6 +92,7 @@ const importExternalBuiltins = (context: Context, externalBuiltIns: CustomBuiltI
 
   const errorProcedure: EVProcedure = {
     type: 'EVProcedure',
+    name: 'error',
     argumentPassingStyle: {
       style: 'var-args',
       numCompulsoryParameters: 1
@@ -134,7 +137,7 @@ export const importBuiltins = (context: Context, externalBuiltIns: CustomBuiltIn
 }
 
 const createContext = <T>(
-  variant: Variant = 's1',
+  variant: Variant = 'base',
   externalSymbols: string[] = [],
   externalContext?: T,
   externalBuiltIns: CustomBuiltIns = defaultBuiltIns,

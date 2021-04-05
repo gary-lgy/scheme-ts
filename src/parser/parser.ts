@@ -233,10 +233,6 @@ function convertSource(expression: ProgramContext): SchemeExpression {
 }
 
 export function parse(source: string, context: Context) {
-  if (context.variant !== 's1') {
-    return undefined
-  }
-
   const inputStream = new ANTLRInputStream(source)
   const lexer = new SchemeLexer(inputStream)
   const tokenStream = new CommonTokenStream(lexer)

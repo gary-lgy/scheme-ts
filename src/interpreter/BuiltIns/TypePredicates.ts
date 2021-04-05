@@ -3,6 +3,7 @@ import { EVProcedure, ExpressibleValue, makeBool } from '../ExpressibleValue'
 export const isNumber: EVProcedure = {
   type: 'EVProcedure',
   variant: 'BuiltInProcedure',
+  name: 'number?',
   argumentPassingStyle: {
     style: 'fixed-args',
     numParams: 1
@@ -13,6 +14,7 @@ export const isNumber: EVProcedure = {
 export const isBool: EVProcedure = {
   type: 'EVProcedure',
   variant: 'BuiltInProcedure',
+  name: 'boolean?',
   argumentPassingStyle: {
     style: 'fixed-args',
     numParams: 1
@@ -23,6 +25,7 @@ export const isBool: EVProcedure = {
 export const isString: EVProcedure = {
   type: 'EVProcedure',
   variant: 'BuiltInProcedure',
+  name: 'string?',
   argumentPassingStyle: {
     style: 'fixed-args',
     numParams: 1
@@ -33,6 +36,7 @@ export const isString: EVProcedure = {
 export const isSymbol: EVProcedure = {
   type: 'EVProcedure',
   variant: 'BuiltInProcedure',
+  name: 'symbol?',
   argumentPassingStyle: {
     style: 'fixed-args',
     numParams: 1
@@ -43,6 +47,7 @@ export const isSymbol: EVProcedure = {
 export const isProcedure: EVProcedure = {
   type: 'EVProcedure',
   variant: 'BuiltInProcedure',
+  name: 'procedure?',
   argumentPassingStyle: {
     style: 'fixed-args',
     numParams: 1
@@ -53,6 +58,7 @@ export const isProcedure: EVProcedure = {
 export const isPair: EVProcedure = {
   type: 'EVProcedure',
   variant: 'BuiltInProcedure',
+  name: 'pair?',
   argumentPassingStyle: {
     style: 'fixed-args',
     numParams: 1
@@ -63,6 +69,7 @@ export const isPair: EVProcedure = {
 export const isNull: EVProcedure = {
   type: 'EVProcedure',
   variant: 'BuiltInProcedure',
+  name: 'null?',
   argumentPassingStyle: {
     style: 'fixed-args',
     numParams: 1

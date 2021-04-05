@@ -41,7 +41,7 @@ export interface SourceError {
 }
 
 export type ExecutionMethod = 'native' | 'interpreter' | 'auto'
-export type Variant = 's1'
+export type Variant = 'base' | 'no-tco'
 
 export interface SourceLanguage {
   variant: Variant
@@ -59,6 +59,7 @@ export interface Context<T = any> {
     isRunning: boolean
     environments: Environment[]
     nodes: SchemeExpression[]
+    inTailContext: boolean[]
   }
 
   moduleParams?: any

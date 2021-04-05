@@ -7,7 +7,7 @@ import { stringify } from '../utils/stringify'
 
 function startRepl(
   executionMethod: ExecutionMethod = 'interpreter',
-  variant: Variant = 's1',
+  variant: Variant = 'base',
   useRepl: boolean,
   prelude = ''
 ) {
@@ -65,7 +65,7 @@ function validChapterVariant(variant: any): boolean {
 function main() {
   const opt = require('node-getopt')
     .create([
-      ['v', 'variant=VARIANT', 'set the Source variant (i.e., s1)', 's1'],
+      ['v', 'variant=VARIANT', 'set the Source variant (i.e., no-tco)', 'base'],
       ['h', 'help', 'display this help'],
       ['e', 'eval', "don't show REPL, only display output of evaluation"]
     ])

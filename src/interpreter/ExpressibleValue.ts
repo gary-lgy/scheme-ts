@@ -7,7 +7,9 @@ import {
 } from './procedure'
 
 // An expressible value is a value that can be the result of an evaluation
-export type ExpressibleValue =
+export type ExpressibleValue = NonTailCallExpressibleValue | TailCall
+
+export type NonTailCallExpressibleValue =
   | EVNumber
   | EVString
   | EVSymbol
@@ -73,11 +75,13 @@ export type EVCompoundProcedure = {
   argumentPassingStyle: CompoundProcedureArgumentPassingStyle
   body: SchemeExpression[]
   environment: Environment
+  name: string
 }
 
 export type EVBuiltInProcedure = {
   variant: 'BuiltInProcedure'
   argumentPassingStyle: BuiltInProcedureArgumentPassingStyle
+  name: string
   body:
     | ((args: ExpressibleValue[], context: Context) => ExpressibleValue)
     | ((args: ExpressibleValue[], context: Context) => ValueGenerator)
@@ -124,4 +128,11 @@ export const makeImproperList = (
   }
   curr.tail = afterDot
   return preList
+}
+
+export type TailCall = {
+  type: 'TailCall'
+  procedure: EVProcedure
+  args: ExpressibleValue[]
+  node: SchemeExpression
 }

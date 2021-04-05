@@ -7,8 +7,8 @@ import { ExpressibleValue } from './ExpressibleValue'
 // ======================= Environment ===========================
 
 export const currentEnvironment = (context: Context) => context.runtime.environments[0]
-// const replaceEnvironment = (context: Context, environment: Environment) =>
-//   (context.runtime.environments[0] = environment)
+export const replaceEnvironment = (context: Context, environment: Environment) =>
+  (context.runtime.environments[0] = environment)
 export const popEnvironment = (context: Context) => context.runtime.environments.shift()
 export const pushEnvironment = (context: Context, environment: Environment) =>
   context.runtime.environments.unshift(environment)
