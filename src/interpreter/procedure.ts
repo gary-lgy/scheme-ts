@@ -1,6 +1,6 @@
 import { Context } from '..'
 import * as errors from '../errors/errors'
-import { SchemeExpression, SchemeIdentifier } from '../lang/scheme'
+import { SyntaxIdentifier, SyntaxNode } from '../lang/SchemeSyntax'
 import { Environment } from '../types'
 import { stringify } from '../utils/stringify'
 import {
@@ -27,17 +27,17 @@ export type CompoundProcedureArgumentPassingStyle =
   | FixedArgsWithParameterNames
   | VarArgsWithParameterNames
 
-type FixedArgsWithParameterNames = FixedArgs & { parameters: SchemeIdentifier[] }
+type FixedArgsWithParameterNames = FixedArgs & { parameters: SyntaxIdentifier[] }
 type VarArgsWithParameterNames = VarArgs & {
-  compulsoryParameters: SchemeIdentifier[]
-  restParameters: SchemeIdentifier
+  compulsoryParameters: SyntaxIdentifier[]
+  restParameters: SyntaxIdentifier
 }
 
 const checkNumberOfArguments = (
   context: Context,
   procedure: EVProcedure,
   numArgs: number,
-  callExpression: SchemeExpression
+  callExpression: SyntaxNode
 ) => {
   if (
     procedure.argumentPassingStyle.style === 'fixed-args' &&
@@ -69,7 +69,7 @@ const checkNumberOfArguments = (
 }
 
 export function* listOfArguments(
-  expressions: SchemeExpression[],
+  expressions: SyntaxNode[],
   context: Context
 ): Generator<Context, ExpressibleValue[]> {
   const values: ExpressibleValue[] = []
@@ -102,7 +102,7 @@ export function* apply(
   context: Context,
   procedure: EVProcedure,
   suppliedArgs: ExpressibleValue[],
-  node: SchemeExpression
+  node: SyntaxNode
 ): Generator<Context, NonTailCallExpressibleValue> {
   while (true) {
     checkNumberOfArguments(context, procedure, suppliedArgs.length, node)
@@ -166,7 +166,7 @@ function* applyBuiltInProcedure(
   context: Context,
   procedure: EVBuiltInProcedure,
   suppliedArgs: ExpressibleValue[],
-  node: SchemeExpression
+  node: SyntaxNode
 ): ValueGenerator {
   try {
     const result = procedure.body(suppliedArgs, context)

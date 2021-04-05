@@ -1,4 +1,4 @@
-import { SchemeExpression, SchemeIdentifier, SchemeList } from '../../lang/scheme'
+import { SyntaxIdentifier, SyntaxList, SyntaxNode } from '../../lang/SchemeSyntax'
 import { CompoundProcedureArgumentPassingStyle } from '../procedure'
 
 export type SpecialForm =
@@ -23,64 +23,64 @@ export type DefineForm = {
 } & (
   | {
       variant: 'basic'
-      name: SchemeIdentifier
-      value: SchemeExpression
+      name: SyntaxIdentifier
+      value: SyntaxNode
     }
   | {
       variant: 'procedure'
-      name: SchemeIdentifier
+      name: SyntaxIdentifier
       argumentPassingStyle: CompoundProcedureArgumentPassingStyle
-      body: SchemeExpression[]
+      body: SyntaxNode[]
     }
 )
 
 export type SetBangForm = {
   tag: 'set!'
-  name: SchemeIdentifier
-  value: SchemeExpression
+  name: SyntaxIdentifier
+  value: SyntaxNode
 }
 
 export type LambdaForm = {
   tag: 'lambda'
-  body: SchemeExpression[]
+  body: SyntaxNode[]
   argumentPassingStyle: CompoundProcedureArgumentPassingStyle
 }
 
 export type IfForm = {
   tag: 'if'
-  test: SchemeExpression
-  consequent: SchemeExpression
-  alternative?: SchemeExpression
+  test: SyntaxNode
+  consequent: SyntaxNode
+  alternative?: SyntaxNode
 }
 
 export type LetBinding = {
-  name: SchemeIdentifier
-  value: SchemeExpression
+  name: SyntaxIdentifier
+  value: SyntaxNode
 }
 
 export type LetForm = {
   tag: 'let'
   bindings: LetBinding[]
-  body: SchemeExpression[]
+  body: SyntaxNode[]
 }
 
 export type LetStarForm = {
   tag: 'let*'
   bindings: LetBinding[]
-  body: SchemeExpression[]
+  body: SyntaxNode[]
 }
 
 export type LetRecForm = {
   tag: 'letrec'
   bindings: LetBinding[]
-  body: SchemeExpression[]
+  body: SyntaxNode[]
 }
 
-export type CondClause = { node: SchemeList } & (
-  | { type: 'basic'; test: SchemeExpression; body: SchemeExpression[] }
-  | { type: 'procedure'; test: SchemeExpression; body: SchemeExpression }
+export type CondClause = { node: SyntaxList } & (
+  | { type: 'basic'; test: SyntaxNode; body: SyntaxNode[] }
+  | { type: 'procedure'; test: SyntaxNode; body: SyntaxNode }
 )
-export type CondElseClause = { type: 'else'; node: SchemeList; body: SchemeExpression[] }
+export type CondElseClause = { type: 'else'; node: SyntaxList; body: SyntaxNode[] }
 
 export type CondForm = {
   tag: 'cond'
@@ -90,35 +90,35 @@ export type CondForm = {
 
 export type BeginForm = {
   tag: 'begin'
-  body: SchemeExpression[]
+  body: SyntaxNode[]
 }
 
 export type QuoteForm = {
   tag: 'quote'
-  expression: SchemeExpression
+  expression: SyntaxNode
 }
 
 export type QuasiquoteForm = {
   tag: 'quasiquote'
-  expression: SchemeExpression
+  expression: SyntaxNode
 }
 
 export type UnquoteForm = {
   tag: 'unquote'
-  expression: SchemeExpression
+  expression: SyntaxNode
 }
 
 export type UnquoteSplicingForm = {
   tag: 'unquote-splicing'
-  expression: SchemeExpression
+  expression: SyntaxNode
 }
 
 export type AndForm = {
   tag: 'and'
-  arguments: SchemeExpression[]
+  arguments: SyntaxNode[]
 }
 
 export type OrForm = {
   tag: 'or'
-  arguments: SchemeExpression[]
+  arguments: SyntaxNode[]
 }

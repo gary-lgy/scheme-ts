@@ -6,7 +6,7 @@
 /* tslint:disable:max-classes-per-file */
 
 import { ExpressibleValue } from './interpreter/ExpressibleValue'
-import { SchemeExpression, SourceLocation } from './lang/scheme'
+import { SourceLocation, SyntaxNode } from './lang/SchemeSyntax'
 
 /**
  * Defines functions that act as built-ins, but might rely on
@@ -58,7 +58,7 @@ export interface Context<T = any> {
   runtime: {
     isRunning: boolean
     environments: Environment[]
-    nodes: SchemeExpression[]
+    nodes: SyntaxNode[]
     inTailContext: boolean[]
   }
 

@@ -103,7 +103,7 @@ export class SchemeParser extends Parser {
   }
   // @RuleVersion(0)
   public program(): ProgramContext {
-    let _localctx: ProgramContext = new ProgramContext(this._ctx, this.state)
+    const _localctx: ProgramContext = new ProgramContext(this._ctx, this.state)
     this.enterRule(_localctx, 0, SchemeParser.RULE_program)
     let _la: number
     try {

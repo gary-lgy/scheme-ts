@@ -1,5 +1,5 @@
 import * as errors from '../../errors/errors'
-import { SchemeExpression, SchemeIdentifier, SchemeList } from '../../lang/scheme'
+import { SyntaxIdentifier, SyntaxList, SyntaxNode } from '../../lang/SchemeSyntax'
 import { Context } from '../../types'
 import { handleRuntimeError, isDefined } from '../util'
 import {
@@ -28,7 +28,7 @@ import {
 // If no conversion is possible, return undefined
 export const listToSpecialForm = (
   tag: string,
-  list: SchemeList,
+  list: SyntaxList,
   context: Context
 ): SpecialForm | null => {
   switch (tag) {
@@ -62,7 +62,7 @@ export const listToSpecialForm = (
   }
 }
 
-const listToDefine = (list: SchemeList, context: Context): DefineForm => {
+const listToDefine = (list: SyntaxList, context: Context): DefineForm => {
   if (list.elements.length < 3) {
     return handleRuntimeError(context, new errors.DefineSyntaxError(list))
   }
@@ -72,7 +72,7 @@ const listToDefine = (list: SchemeList, context: Context): DefineForm => {
       return handleRuntimeError(context, new errors.DefineSyntaxError(list))
     }
 
-    const argsList: SchemeIdentifier[] = list.elements[1].elements.map(element => {
+    const argsList: SyntaxIdentifier[] = list.elements[1].elements.map(element => {
       if (element.type !== 'Identifier') {
         return handleRuntimeError(context, new errors.DefineSyntaxError(list))
       }
@@ -102,7 +102,7 @@ const listToDefine = (list: SchemeList, context: Context): DefineForm => {
       value: list.elements[2]
     }
   } else if (list.elements[1].type === 'DottedList') {
-    const beforeDot: SchemeIdentifier[] = list.elements[1].pre.map(expr => {
+    const beforeDot: SyntaxIdentifier[] = list.elements[1].pre.map(expr => {
       if (expr.type !== 'Identifier') {
         return handleRuntimeError(context, new errors.DefineSyntaxError(list))
       }
@@ -111,7 +111,7 @@ const listToDefine = (list: SchemeList, context: Context): DefineForm => {
     if (list.elements[1].post.type !== 'Identifier') {
       return handleRuntimeError(context, new errors.DefineSyntaxError(list))
     }
-    const afterDot: SchemeIdentifier = list.elements[1].post
+    const afterDot: SyntaxIdentifier = list.elements[1].post
 
     return {
       tag: 'define',
@@ -130,14 +130,14 @@ const listToDefine = (list: SchemeList, context: Context): DefineForm => {
   }
 }
 
-const listToLambda = (list: SchemeList, context: Context): LambdaForm => {
+const listToLambda = (list: SyntaxList, context: Context): LambdaForm => {
   if (list.elements.length <= 2) {
     return handleRuntimeError(context, new errors.LambdaSyntaxError(list))
   }
 
   if (list.elements[1].type === 'List') {
     // Fixed number of arguments
-    const parameters: SchemeIdentifier[] = []
+    const parameters: SyntaxIdentifier[] = []
     list.elements[1].elements.forEach(element => {
       if (element.type === 'Identifier') {
         return parameters.push(element)
@@ -156,7 +156,7 @@ const listToLambda = (list: SchemeList, context: Context): LambdaForm => {
     }
   } else if (list.elements[1].type === 'DottedList') {
     // variable number of arguments with compulsory arguments
-    const compulsoryParameters: SchemeIdentifier[] = list.elements[1].pre.map(element => {
+    const compulsoryParameters: SyntaxIdentifier[] = list.elements[1].pre.map(element => {
       if (element.type === 'Identifier') {
         return element
       } else {
@@ -166,7 +166,7 @@ const listToLambda = (list: SchemeList, context: Context): LambdaForm => {
     if (list.elements[1].post.type !== 'Identifier') {
       return handleRuntimeError(context, new errors.LambdaSyntaxError(list))
     }
-    const restParameters: SchemeIdentifier = list.elements[1].post
+    const restParameters: SyntaxIdentifier = list.elements[1].post
 
     return {
       tag: 'lambda',
@@ -195,7 +195,7 @@ const listToLambda = (list: SchemeList, context: Context): LambdaForm => {
   }
 }
 
-const listToSetBang = (list: SchemeList, context: Context): SetBangForm => {
+const listToSetBang = (list: SyntaxList, context: Context): SetBangForm => {
   if (list.elements.length !== 3 || list.elements[1].type !== 'Identifier') {
     return handleRuntimeError(context, new errors.SetSyntaxError(list))
   }
@@ -206,7 +206,7 @@ const listToSetBang = (list: SchemeList, context: Context): SetBangForm => {
   }
 }
 
-const listToIf = (list: SchemeList, context: Context): IfForm => {
+const listToIf = (list: SyntaxList, context: Context): IfForm => {
   if (list.elements.length < 3 || list.elements.length > 4) {
     return handleRuntimeError(context, new errors.IfSyntaxError(list))
   }
@@ -220,7 +220,7 @@ const listToIf = (list: SchemeList, context: Context): IfForm => {
 
 const listToLet = (
   tag: 'let' | 'let*' | 'letrec',
-  list: SchemeList,
+  list: SyntaxList,
   context: Context
 ): LetForm | LetStarForm | LetRecForm => {
   if (list.elements.length < 3 || list.elements[1].type !== 'List') {
@@ -248,7 +248,7 @@ const listToLet = (
   }
 }
 
-const listToCond = (list: SchemeList, context: Context): CondForm => {
+const listToCond = (list: SyntaxList, context: Context): CondForm => {
   if (list.elements.length <= 1) {
     return handleRuntimeError(context, new errors.CondSyntaxError(list))
   }
@@ -274,7 +274,7 @@ const listToCond = (list: SchemeList, context: Context): CondForm => {
 }
 
 const parseCondClause = (
-  clause: SchemeExpression,
+  clause: SyntaxNode,
   context: Context,
   throwSyntaxError: () => never
 ): CondClause | CondElseClause => {
@@ -326,7 +326,7 @@ const parseCondClause = (
   }
 }
 
-const listToBegin = (list: SchemeList, context: Context): BeginForm => {
+const listToBegin = (list: SyntaxList, context: Context): BeginForm => {
   if (list.elements.length <= 1) {
     return handleRuntimeError(context, new errors.BeginSyntaxError(list))
   }
@@ -339,7 +339,7 @@ const listToBegin = (list: SchemeList, context: Context): BeginForm => {
 
 const listToQuote = (
   tag: 'quote' | 'quasiquote' | 'unquote' | 'unquote-splicing',
-  list: SchemeList,
+  list: SyntaxList,
   context: Context
 ): QuoteForm | QuasiquoteForm | UnquoteForm | UnquoteSplicingForm => {
   if (list.elements.length !== 2) {
@@ -351,10 +351,10 @@ const listToQuote = (
   }
 }
 
-const listToAnd = (list: SchemeList): AndForm => {
+const listToAnd = (list: SyntaxList): AndForm => {
   return { tag: 'and', arguments: list.elements.slice(1) }
 }
 
-const listToOr = (list: SchemeList): OrForm => {
+const listToOr = (list: SyntaxList): OrForm => {
   return { tag: 'or', arguments: list.elements.slice(1) }
 }

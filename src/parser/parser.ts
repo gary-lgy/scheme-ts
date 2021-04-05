@@ -5,17 +5,6 @@ import { ParseTree } from 'antlr4ts/tree/ParseTree'
 import { RuleNode } from 'antlr4ts/tree/RuleNode'
 import { TerminalNode } from 'antlr4ts/tree/TerminalNode'
 import { UNKNOWN_LOCATION } from '../constants'
-import {
-  SchemeBoolLiteral,
-  SchemeDottedList,
-  SchemeExpression,
-  SchemeIdentifier,
-  SchemeList,
-  SchemeNumberLiteral,
-  SchemeProgram,
-  SchemeStringLiteral,
-  SourceLocation
-} from '../lang/scheme'
 import { SchemeLexer } from '../lang/SchemeLexer'
 import {
   BoolContext,
@@ -32,6 +21,17 @@ import {
   UnquoteContext,
   UnquoteSplicingContext
 } from '../lang/SchemeParser'
+import {
+  SchemeProgram,
+  SourceLocation,
+  SyntaxBool,
+  SyntaxDottedList,
+  SyntaxIdentifier,
+  SyntaxList,
+  SyntaxNode,
+  SyntaxNumber,
+  SyntaxString
+} from '../lang/SchemeSyntax'
 import { SchemeVisitor } from '../lang/SchemeVisitor'
 import { Context, ErrorSeverity, ErrorType, SourceError } from '../types'
 
@@ -62,14 +62,14 @@ function contextToLocation(ctx: ParserRuleContext): SourceLocation {
   }
 }
 
-class ExpressionGenerator implements SchemeVisitor<SchemeExpression> {
-  visitProgram?: ((ctx: ProgramContext) => SchemeExpression) | undefined
+class ExpressionGenerator implements SchemeVisitor<SyntaxNode> {
+  visitProgram?: ((ctx: ProgramContext) => SyntaxNode) | undefined
 
-  visitChildren(node: RuleNode): SchemeExpression {
+  visitChildren(node: RuleNode): SyntaxNode {
     throw new FatalSyntaxError(UNKNOWN_LOCATION, `invalid syntax ${node.text}`)
   }
 
-  visitList(ctx: ListContext): SchemeList {
+  visitList(ctx: ListContext): SyntaxList {
     return {
       type: 'List',
       elements: ctx.expression().map(ex => ex.accept(this)),
@@ -77,7 +77,7 @@ class ExpressionGenerator implements SchemeVisitor<SchemeExpression> {
     }
   }
 
-  visitDottedList(ctx: DottedListContext): SchemeDottedList {
+  visitDottedList(ctx: DottedListContext): SyntaxDottedList {
     const expressions = ctx.expression()
     const preExpressions = expressions.slice(0, -1)
     const postExpression = expressions[expressions.length - 1]
@@ -89,7 +89,7 @@ class ExpressionGenerator implements SchemeVisitor<SchemeExpression> {
     }
   }
 
-  visitQuote(ctx: QuoteContext): SchemeList {
+  visitQuote(ctx: QuoteContext): SyntaxList {
     return {
       type: 'List',
       elements: [
@@ -100,7 +100,7 @@ class ExpressionGenerator implements SchemeVisitor<SchemeExpression> {
     }
   }
 
-  visitQuasiquote(ctx: QuasiquoteContext): SchemeList {
+  visitQuasiquote(ctx: QuasiquoteContext): SyntaxList {
     return {
       type: 'List',
       elements: [
@@ -111,7 +111,7 @@ class ExpressionGenerator implements SchemeVisitor<SchemeExpression> {
     }
   }
 
-  visitUnquote(ctx: UnquoteContext): SchemeList {
+  visitUnquote(ctx: UnquoteContext): SyntaxList {
     return {
       type: 'List',
       elements: [
@@ -122,7 +122,7 @@ class ExpressionGenerator implements SchemeVisitor<SchemeExpression> {
     }
   }
 
-  visitUnquoteSplicing(ctx: UnquoteSplicingContext): SchemeList {
+  visitUnquoteSplicing(ctx: UnquoteSplicingContext): SyntaxList {
     return {
       type: 'List',
       elements: [
@@ -133,7 +133,7 @@ class ExpressionGenerator implements SchemeVisitor<SchemeExpression> {
     }
   }
 
-  visitString(ctx: StringContext): SchemeStringLiteral {
+  visitString(ctx: StringContext): SyntaxString {
     return {
       type: 'StringLiteral',
       // Remove the quotation marks
@@ -142,7 +142,7 @@ class ExpressionGenerator implements SchemeVisitor<SchemeExpression> {
     }
   }
 
-  visitNumber(ctx: NumberContext): SchemeNumberLiteral {
+  visitNumber(ctx: NumberContext): SyntaxNumber {
     return {
       type: 'NumberLiteral',
       value: Number(ctx.text),
@@ -150,7 +150,7 @@ class ExpressionGenerator implements SchemeVisitor<SchemeExpression> {
     }
   }
 
-  visitBool(ctx: BoolContext): SchemeBoolLiteral {
+  visitBool(ctx: BoolContext): SyntaxBool {
     console.assert(ctx.text === '#t' || ctx.text === '#f')
 
     return {
@@ -160,7 +160,7 @@ class ExpressionGenerator implements SchemeVisitor<SchemeExpression> {
     }
   }
 
-  visitIdentifier(ctx: IdentifierContext): SchemeIdentifier {
+  visitIdentifier(ctx: IdentifierContext): SyntaxIdentifier {
     return {
       type: 'Identifier',
       name: ctx.text,
@@ -168,17 +168,17 @@ class ExpressionGenerator implements SchemeVisitor<SchemeExpression> {
     }
   }
 
-  visitExpression?: ((ctx: ExpressionContext) => SchemeExpression) | undefined
+  visitExpression?: ((ctx: ExpressionContext) => SyntaxNode) | undefined
 
-  visitTerminal(node: TerminalNode): SchemeExpression {
+  visitTerminal(node: TerminalNode): SyntaxNode {
     return node.accept(this)
   }
 
-  visit(tree: ParseTree): SchemeExpression {
+  visit(tree: ParseTree): SyntaxNode {
     return tree.accept(this)
   }
 
-  visitErrorNode(node: ErrorNode): SchemeExpression {
+  visitErrorNode(node: ErrorNode): SyntaxNode {
     throw new FatalSyntaxError(
       {
         start: {

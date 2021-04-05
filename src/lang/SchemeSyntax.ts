@@ -14,55 +14,55 @@ export interface Position {
 
 // Syntax tree
 
-export type SchemeExpressionType = SchemeExpression['type']
+export type SyntaxNodeType = SyntaxNode['type']
 
 /**
  * Represents a syntax fragment in Scheme.
  */
-export type SchemeExpression =
-  | SchemeList
-  | SchemeDottedList
-  | SchemeStringLiteral
-  | SchemeNumberLiteral
-  | SchemeBoolLiteral
-  | SchemeIdentifier
+export type SyntaxNode =
+  | SyntaxList
+  | SyntaxDottedList
+  | SyntaxString
+  | SyntaxNumber
+  | SyntaxBool
+  | SyntaxIdentifier
 
 export interface SchemeProgram {
-  body: SchemeExpression[]
+  body: SyntaxNode[]
 }
 
-export interface SchemeList {
+export interface SyntaxList {
   type: 'List'
-  elements: SchemeExpression[]
+  elements: SyntaxNode[]
   loc: SourceLocation
 }
 
-export interface SchemeDottedList {
+export interface SyntaxDottedList {
   type: 'DottedList'
-  pre: SchemeExpression[]
-  post: SchemeExpression
+  pre: SyntaxNode[]
+  post: SyntaxNode
   loc: SourceLocation
 }
 
-export interface SchemeStringLiteral {
+export interface SyntaxString {
   type: 'StringLiteral'
   value: string
   loc: SourceLocation
 }
 
-export interface SchemeNumberLiteral {
+export interface SyntaxNumber {
   type: 'NumberLiteral'
   value: number
   loc: SourceLocation
 }
 
-export interface SchemeBoolLiteral {
+export interface SyntaxBool {
   type: 'BoolLiteral'
   value: boolean
   loc: SourceLocation
 }
 
-export interface SchemeIdentifier {
+export interface SyntaxIdentifier {
   type: 'Identifier'
   name: string
   loc: SourceLocation

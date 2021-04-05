@@ -1,4 +1,4 @@
-import { SchemeExpression } from '../lang/scheme'
+import { SyntaxNode } from '../lang/SchemeSyntax'
 import { Context, Environment } from '../types'
 import { ValueGenerator } from './interpreter'
 import {
@@ -73,7 +73,7 @@ export type EVProcedure = {
 export type EVCompoundProcedure = {
   variant: 'CompoundProcedure'
   argumentPassingStyle: CompoundProcedureArgumentPassingStyle
-  body: SchemeExpression[]
+  body: SyntaxNode[]
   environment: Environment
   name: string
 }
@@ -134,5 +134,5 @@ export type TailCall = {
   type: 'TailCall'
   procedure: EVProcedure
   args: ExpressibleValue[]
-  node: SchemeExpression
+  node: SyntaxNode
 }

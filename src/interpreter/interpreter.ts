@@ -1,15 +1,15 @@
 import * as errors from '../errors/errors'
 import {
-  SchemeBoolLiteral,
-  SchemeDottedList,
-  SchemeExpression,
-  SchemeExpressionType,
-  SchemeIdentifier,
-  SchemeList,
-  SchemeNumberLiteral,
   SchemeProgram,
-  SchemeStringLiteral
-} from '../lang/scheme'
+  SyntaxBool,
+  SyntaxDottedList,
+  SyntaxIdentifier,
+  SyntaxList,
+  SyntaxNode,
+  SyntaxNodeType,
+  SyntaxNumber,
+  SyntaxString
+} from '../lang/SchemeSyntax'
 import { Context } from '../types'
 import {
   ExpressibleValue,
@@ -24,7 +24,7 @@ import { listToSpecialForm } from './SpecialForm/converters'
 import { evaluateSpecialForm } from './SpecialForm/evaluators'
 import { extendCurrentEnvironment, getVariable, handleRuntimeError, pushEnvironment } from './util'
 
-function* visit(context: Context, node: SchemeExpression) {
+function* visit(context: Context, node: SyntaxNode) {
   context.runtime.nodes.unshift(node)
   // Start each node in non-tail context
   // The evaluator for the node can change this to true when it enters tail context
@@ -39,10 +39,10 @@ function* leave(context: Context) {
 }
 
 export type ValueGenerator = Generator<Context, ExpressibleValue | TailCall>
-export type Evaluator<T extends SchemeExpression> = (node: T, context: Context) => ValueGenerator
+export type Evaluator<T extends SyntaxNode> = (node: T, context: Context) => ValueGenerator
 
-export const evaluators: { [key in SchemeExpressionType]: Evaluator<SchemeExpression> } = {
-  List: function* (node: SchemeList, context: Context): ValueGenerator {
+export const evaluators: { [key in SyntaxNodeType]: Evaluator<SyntaxNode> } = {
+  List: function* (node: SyntaxList, context: Context): ValueGenerator {
     if (node.elements.length === 0) {
       // Empty list - return empty list
       return makeEmptyList()
@@ -78,23 +78,23 @@ export const evaluators: { [key in SchemeExpressionType]: Evaluator<SchemeExpres
     }
   },
 
-  DottedList: function* (node: SchemeDottedList, context: Context): ValueGenerator {
+  DottedList: function* (node: SyntaxDottedList, context: Context): ValueGenerator {
     return handleRuntimeError(context, new errors.UnexpectedDottedList(node))
   },
 
-  StringLiteral: function* (node: SchemeStringLiteral): ValueGenerator {
+  StringLiteral: function* (node: SyntaxString): ValueGenerator {
     return makeString(node.value)
   },
 
-  NumberLiteral: function* (node: SchemeNumberLiteral): ValueGenerator {
+  NumberLiteral: function* (node: SyntaxNumber): ValueGenerator {
     return makeNumber(node.value)
   },
 
-  BoolLiteral: function* (node: SchemeBoolLiteral): ValueGenerator {
+  BoolLiteral: function* (node: SyntaxBool): ValueGenerator {
     return makeBool(node.value)
   },
 
-  Identifier: function* (node: SchemeIdentifier, context: Context): ValueGenerator {
+  Identifier: function* (node: SyntaxIdentifier, context: Context): ValueGenerator {
     const boundValue = getVariable(context, node.name)
     if (boundValue) {
       return boundValue
@@ -124,7 +124,7 @@ export function* evaluateProgram(program: SchemeProgram, context: Context): Valu
   return result
 }
 
-export function* evaluate(node: SchemeExpression, context: Context): ValueGenerator {
+export function* evaluate(node: SyntaxNode, context: Context): ValueGenerator {
   yield* visit(context, node)
   const evaluator = evaluators[node.type]
   const result = yield* evaluator(node, context)
@@ -133,7 +133,7 @@ export function* evaluate(node: SchemeExpression, context: Context): ValueGenera
 }
 
 export function* evaluateSequence(
-  expressions: SchemeExpression[],
+  expressions: SyntaxNode[],
   context: Context,
   isTailSequence: boolean,
   defaultResult?: ExpressibleValue
