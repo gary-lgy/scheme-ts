@@ -4,7 +4,7 @@ export const isNumber: EVProcedure = {
   type: 'EVProcedure',
   variant: 'BuiltInProcedure',
   name: 'number?',
-  argumentPassingStyle: {
+  parameterPassingStyle: {
     style: 'fixed-args',
     numParams: 1
   },
@@ -15,7 +15,7 @@ export const isBool: EVProcedure = {
   type: 'EVProcedure',
   variant: 'BuiltInProcedure',
   name: 'boolean?',
-  argumentPassingStyle: {
+  parameterPassingStyle: {
     style: 'fixed-args',
     numParams: 1
   },
@@ -26,7 +26,7 @@ export const isString: EVProcedure = {
   type: 'EVProcedure',
   variant: 'BuiltInProcedure',
   name: 'string?',
-  argumentPassingStyle: {
+  parameterPassingStyle: {
     style: 'fixed-args',
     numParams: 1
   },
@@ -37,7 +37,7 @@ export const isSymbol: EVProcedure = {
   type: 'EVProcedure',
   variant: 'BuiltInProcedure',
   name: 'symbol?',
-  argumentPassingStyle: {
+  parameterPassingStyle: {
     style: 'fixed-args',
     numParams: 1
   },
@@ -48,7 +48,7 @@ export const isProcedure: EVProcedure = {
   type: 'EVProcedure',
   variant: 'BuiltInProcedure',
   name: 'procedure?',
-  argumentPassingStyle: {
+  parameterPassingStyle: {
     style: 'fixed-args',
     numParams: 1
   },
@@ -59,7 +59,7 @@ export const isPair: EVProcedure = {
   type: 'EVProcedure',
   variant: 'BuiltInProcedure',
   name: 'pair?',
-  argumentPassingStyle: {
+  parameterPassingStyle: {
     style: 'fixed-args',
     numParams: 1
   },
@@ -70,7 +70,7 @@ export const isNull: EVProcedure = {
   type: 'EVProcedure',
   variant: 'BuiltInProcedure',
   name: 'null?',
-  argumentPassingStyle: {
+  parameterPassingStyle: {
     style: 'fixed-args',
     numParams: 1
   },

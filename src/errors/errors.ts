@@ -123,6 +123,26 @@ export class QuoteSyntaxError extends RuntimeSourceError {
   }
 }
 
+export class DefMacroSyntaxError extends RuntimeSourceError {
+  constructor(node: SyntaxNode) {
+    super(node)
+  }
+
+  public explain() {
+    return "Syntax for `set!' is incorrect. Please use `(set! variable value) body)'"
+  }
+}
+
+export class MacroExpansionError extends RuntimeSourceError {
+  constructor(private expandedResult: ExpressibleValue, node: SyntaxNode) {
+    super(node)
+  }
+
+  public explain() {
+    return `A macro must expand to a value convertible to an S-expression, but got ${this.expandedResult.type}.`
+  }
+}
+
 export class BuiltinProcedureError extends RuntimeSourceError {
   constructor(public cause: Error, node?: SyntaxNode) {
     super(node)

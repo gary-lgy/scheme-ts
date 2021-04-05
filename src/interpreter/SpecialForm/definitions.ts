@@ -1,5 +1,5 @@
 import { SyntaxIdentifier, SyntaxList, SyntaxNode } from '../../lang/SchemeSyntax'
-import { CompoundProcedureArgumentPassingStyle } from '../procedure'
+import { NamedParameterPassingStyle } from '../procedure'
 
 export type SpecialForm =
   | DefineForm
@@ -17,6 +17,7 @@ export type SpecialForm =
   | UnquoteSplicingForm
   | AndForm
   | OrForm
+  | DefMacroForm
 
 export type DefineForm = {
   tag: 'define'
@@ -29,7 +30,7 @@ export type DefineForm = {
   | {
       variant: 'procedure'
       name: SyntaxIdentifier
-      argumentPassingStyle: CompoundProcedureArgumentPassingStyle
+      argumentPassingStyle: NamedParameterPassingStyle
       body: SyntaxNode[]
     }
 )
@@ -43,7 +44,7 @@ export type SetBangForm = {
 export type LambdaForm = {
   tag: 'lambda'
   body: SyntaxNode[]
-  argumentPassingStyle: CompoundProcedureArgumentPassingStyle
+  argumentPassingStyle: NamedParameterPassingStyle
 }
 
 export type IfForm = {
@@ -121,4 +122,11 @@ export type AndForm = {
 export type OrForm = {
   tag: 'or'
   arguments: SyntaxNode[]
+}
+
+export type DefMacroForm = {
+  tag: 'defmacro'
+  name: SyntaxIdentifier
+  parameterPassingStyle: NamedParameterPassingStyle
+  body: SyntaxNode[]
 }

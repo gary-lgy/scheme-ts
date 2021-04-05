@@ -2,7 +2,7 @@
 
 import * as errors from '../../errors/errors'
 import { Context, Frame } from '../../types'
-import { ExpressibleValue, makeBool, makeEmptyList } from '../ExpressibleValue'
+import { EVMacro, ExpressibleValue, makeBool, makeEmptyList } from '../ExpressibleValue'
 import { evaluate, evaluateSequence, ValueGenerator } from '../interpreter'
 import { apply, isParentInTailContext, tryEnterTailContext } from '../procedure'
 import { quasiquoteExpression, quoteExpression } from '../quote'
@@ -19,6 +19,7 @@ import {
   BeginForm,
   CondForm,
   DefineForm,
+  DefMacroForm,
   IfForm,
   LambdaForm,
   LetForm,
@@ -60,6 +61,8 @@ export function* evaluateSpecialForm(form: SpecialForm, context: Context): Value
       return yield* evaluateAndForm(form, context)
     case 'or':
       return yield* evaluateOrForm(form, context)
+    case 'defmacro':
+      return yield* evaluateDefMacroForm(form, context)
   }
 }
 
@@ -71,7 +74,7 @@ function* evaluateDefineForm(defineForm: DefineForm, context: Context): ValueGen
   } else {
     value = {
       type: 'EVProcedure',
-      argumentPassingStyle: defineForm.argumentPassingStyle,
+      parameterPassingStyle: defineForm.argumentPassingStyle,
       name: defineForm.name.name,
       variant: 'CompoundProcedure',
       body: defineForm.body,
@@ -87,7 +90,7 @@ function* evaluateDefineForm(defineForm: DefineForm, context: Context): ValueGen
 function* evaluateLambdaForm(lambdaForm: LambdaForm, context: Context): ValueGenerator {
   return {
     type: 'EVProcedure',
-    argumentPassingStyle: lambdaForm.argumentPassingStyle,
+    parameterPassingStyle: lambdaForm.argumentPassingStyle,
     name: '[anonymous procedure]',
     variant: 'CompoundProcedure',
     body: lambdaForm.body,
@@ -244,4 +247,17 @@ function* evaluateOrForm(orForm: OrForm, context: Context): ValueGenerator {
     tryEnterTailContext(context)
     return yield* evaluate(lastArg, context)
   }
+}
+
+function* evaluateDefMacroForm(defMacroForm: DefMacroForm, context: Context): ValueGenerator {
+  const macro: EVMacro = {
+    type: 'EVMacro',
+    name: defMacroForm.name.name,
+    environment: context.runtime.environments[0],
+    body: defMacroForm.body,
+    argumentPassingStyle: defMacroForm.parameterPassingStyle
+  }
+  const frame = context.runtime.environments[0].head
+  frame[defMacroForm.name.name] = macro
+  return makeEmptyList()
 }

@@ -23,7 +23,7 @@ export const add: EVProcedure = {
   type: 'EVProcedure',
   variant: 'BuiltInProcedure',
   name: '+',
-  argumentPassingStyle: {
+  parameterPassingStyle: {
     style: 'var-args',
     numCompulsoryParameters: 0
   },
@@ -35,7 +35,7 @@ export const subtract: EVProcedure = {
   type: 'EVProcedure',
   variant: 'BuiltInProcedure',
   name: '-',
-  argumentPassingStyle: {
+  parameterPassingStyle: {
     style: 'var-args',
     numCompulsoryParameters: 1
   },
@@ -52,7 +52,7 @@ export const multiply: EVProcedure = {
   type: 'EVProcedure',
   variant: 'BuiltInProcedure',
   name: '*',
-  argumentPassingStyle: {
+  parameterPassingStyle: {
     style: 'var-args',
     numCompulsoryParameters: 0
   },
@@ -64,7 +64,7 @@ export const divide: EVProcedure = {
   type: 'EVProcedure',
   variant: 'BuiltInProcedure',
   name: '/',
-  argumentPassingStyle: {
+  parameterPassingStyle: {
     style: 'var-args',
     numCompulsoryParameters: 1
   },
@@ -93,7 +93,7 @@ export const quotient: EVProcedure = {
   type: 'EVProcedure',
   variant: 'BuiltInProcedure',
   name: 'quotient',
-  argumentPassingStyle: {
+  parameterPassingStyle: {
     style: 'fixed-args',
     numParams: 2
   },
@@ -110,7 +110,7 @@ export const remainder: EVProcedure = {
   type: 'EVProcedure',
   variant: 'BuiltInProcedure',
   name: 'remainder',
-  argumentPassingStyle: {
+  parameterPassingStyle: {
     style: 'fixed-args',
     numParams: 2
   },
@@ -127,7 +127,7 @@ export const numberEqual: EVProcedure = {
   type: 'EVProcedure',
   variant: 'BuiltInProcedure',
   name: '=',
-  argumentPassingStyle: {
+  parameterPassingStyle: {
     style: 'fixed-args',
     numParams: 2
   },
@@ -144,7 +144,7 @@ export const lessThan: EVProcedure = {
   type: 'EVProcedure',
   variant: 'BuiltInProcedure',
   name: '<',
-  argumentPassingStyle: {
+  parameterPassingStyle: {
     style: 'fixed-args',
     numParams: 2
   },
@@ -161,7 +161,7 @@ export const lessThanOrEqual: EVProcedure = {
   type: 'EVProcedure',
   variant: 'BuiltInProcedure',
   name: '<=',
-  argumentPassingStyle: {
+  parameterPassingStyle: {
     style: 'fixed-args',
     numParams: 2
   },
@@ -178,7 +178,7 @@ export const greaterThan: EVProcedure = {
   type: 'EVProcedure',
   variant: 'BuiltInProcedure',
   name: '>',
-  argumentPassingStyle: {
+  parameterPassingStyle: {
     style: 'fixed-args',
     numParams: 2
   },
@@ -195,7 +195,7 @@ export const greaterThanOrEqual: EVProcedure = {
   type: 'EVProcedure',
   variant: 'BuiltInProcedure',
   name: '>=',
-  argumentPassingStyle: {
+  parameterPassingStyle: {
     style: 'fixed-args',
     numParams: 2
   },

@@ -16,16 +16,14 @@ import { handleRuntimeError, popEnvironment, pushEnvironment } from './util'
 
 // For BuiltIn procedures, we only need to check the number of arguments
 // The parameter names are meaningless and unnecessary
-export type BuiltInProcedureArgumentPassingStyle = FixedArgs | VarArgs
+export type ParameterPassingStyle = FixedArgs | VarArgs
 
 type FixedArgs = { style: 'fixed-args'; numParams: number }
 type VarArgs = { style: 'var-args'; numCompulsoryParameters: number }
 
 // For compound procedures, we need both the number of arguments and the parameter names
 // in order to extend the function environment with the arguments
-export type CompoundProcedureArgumentPassingStyle =
-  | FixedArgsWithParameterNames
-  | VarArgsWithParameterNames
+export type NamedParameterPassingStyle = FixedArgsWithParameterNames | VarArgsWithParameterNames
 
 type FixedArgsWithParameterNames = FixedArgs & { parameters: SyntaxIdentifier[] }
 type VarArgsWithParameterNames = VarArgs & {
@@ -33,35 +31,33 @@ type VarArgsWithParameterNames = VarArgs & {
   restParameters: SyntaxIdentifier
 }
 
-const checkNumberOfArguments = (
+export const checkNumberOfArguments = (
   context: Context,
-  procedure: EVProcedure,
+  name: string,
+  argumentPassingStyle: ParameterPassingStyle,
   numArgs: number,
   callExpression: SyntaxNode
 ) => {
-  if (
-    procedure.argumentPassingStyle.style === 'fixed-args' &&
-    procedure.argumentPassingStyle.numParams !== numArgs
-  ) {
+  if (argumentPassingStyle.style === 'fixed-args' && argumentPassingStyle.numParams !== numArgs) {
     handleRuntimeError(
       context,
       new errors.InvalidNumberOfArguments(
         callExpression,
-        procedure.name,
-        procedure.argumentPassingStyle.numParams,
+        name,
+        argumentPassingStyle.numParams,
         numArgs
       )
     )
   } else if (
-    procedure.argumentPassingStyle.style === 'var-args' &&
-    numArgs < procedure.argumentPassingStyle.numCompulsoryParameters
+    argumentPassingStyle.style === 'var-args' &&
+    numArgs < argumentPassingStyle.numCompulsoryParameters
   ) {
     handleRuntimeError(
       context,
       new errors.NotEnoughArguments(
         callExpression,
-        procedure.name,
-        procedure.argumentPassingStyle.numCompulsoryParameters,
+        name,
+        argumentPassingStyle.numCompulsoryParameters,
         numArgs
       )
     )
@@ -79,7 +75,7 @@ export function* listOfArguments(
   return values
 }
 
-const extendProcedureEnvironment = (
+export const extendEnvironmentWithNewBindings = (
   environment: Environment,
   procedureName: string,
   parameters: string[],
@@ -105,7 +101,13 @@ export function* apply(
   node: SyntaxNode
 ): Generator<Context, NonTailCallExpressibleValue> {
   while (true) {
-    checkNumberOfArguments(context, procedure, suppliedArgs.length, node)
+    checkNumberOfArguments(
+      context,
+      procedure.name,
+      procedure.parameterPassingStyle,
+      suppliedArgs.length,
+      node
+    )
 
     let result: ExpressibleValue
     if (procedure.variant === 'CompoundProcedure') {
@@ -129,8 +131,11 @@ function* applyCompoundProcedure(
   procedure: EVCompoundProcedure,
   suppliedArgs: ExpressibleValue[]
 ): ValueGenerator {
-  const { parameters, args: argsToPass } = makeArguments(procedure, suppliedArgs)
-  const environment = extendProcedureEnvironment(
+  const { parameters, args: argsToPass } = matchArgumentsToParameters(
+    procedure.parameterPassingStyle,
+    suppliedArgs
+  )
+  const environment = extendEnvironmentWithNewBindings(
     procedure.environment,
     procedure.name,
     parameters,
@@ -181,12 +186,10 @@ function* applyBuiltInProcedure(
 }
 
 /** Match the arguments with parameters according to the argument passing style. */
-const makeArguments = (
-  procedure: EVCompoundProcedure,
+export const matchArgumentsToParameters = (
+  argumentPassingStyle: NamedParameterPassingStyle,
   args: ExpressibleValue[]
 ): { parameters: string[]; args: ExpressibleValue[] } => {
-  const argumentPassingStyle = procedure.argumentPassingStyle
-
   if (argumentPassingStyle.style === 'fixed-args') {
     return {
       parameters: argumentPassingStyle.parameters.map(param => param.name),

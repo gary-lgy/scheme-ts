@@ -19,6 +19,7 @@ import {
   makeString,
   TailCall
 } from './ExpressibleValue'
+import { useMacro } from './macro'
 import { apply, isParentInTailContext, listOfArguments, tryEnterTailContext } from './procedure'
 import { listToSpecialForm } from './SpecialForm/converters'
 import { evaluateSpecialForm } from './SpecialForm/evaluators'
@@ -58,23 +59,31 @@ export const evaluators: { [key in SyntaxNodeType]: Evaluator<SyntaxNode> } = {
       return yield* evaluateSpecialForm(specialForm, context)
     }
 
-    // Procedure invocation - procedure is the value bound to the identifier
-    const procedure = yield* evaluate(firstElement, context)
-    if (procedure.type !== 'EVProcedure') {
-      return handleRuntimeError(context, new errors.CallingNonFunctionValue(procedure, node))
-    }
-
-    const args = yield* listOfArguments(node.elements.slice(1), context)
-    if (isParentInTailContext(context)) {
-      const tailCall: TailCall = {
-        type: 'TailCall',
-        procedure,
-        args,
-        node
+    const firstElementValue = yield* evaluate(firstElement, context)
+    if (firstElementValue.type === 'EVProcedure') {
+      // Procedure invocation
+      const procedure = firstElementValue
+      const args = yield* listOfArguments(node.elements.slice(1), context)
+      if (isParentInTailContext(context)) {
+        const tailCall: TailCall = {
+          type: 'TailCall',
+          procedure,
+          args,
+          node
+        }
+        return tailCall
+      } else {
+        return yield* apply(context, procedure, args, node)
       }
-      return tailCall
+    } else if (firstElementValue.type === 'EVMacro') {
+      // Macro use
+      const macro = firstElementValue
+      return yield* useMacro(context, macro, node.elements.slice(1), node)
     } else {
-      return yield* apply(context, procedure, args, node)
+      return handleRuntimeError(
+        context,
+        new errors.CallingNonFunctionValue(firstElementValue, node)
+      )
     }
   },
 

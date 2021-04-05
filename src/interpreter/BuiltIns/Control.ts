@@ -8,7 +8,7 @@ export const apply: EVProcedure = {
   type: 'EVProcedure',
   variant: 'BuiltInProcedure',
   name: 'apply',
-  argumentPassingStyle: {
+  parameterPassingStyle: {
     style: 'var-args',
     numCompulsoryParameters: 2
   },

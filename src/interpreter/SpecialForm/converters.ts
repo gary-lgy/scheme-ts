@@ -1,6 +1,7 @@
 import * as errors from '../../errors/errors'
 import { SyntaxIdentifier, SyntaxList, SyntaxNode } from '../../lang/SchemeSyntax'
 import { Context } from '../../types'
+import { NamedParameterPassingStyle } from '../procedure'
 import { handleRuntimeError, isDefined } from '../util'
 import {
   AndForm,
@@ -9,6 +10,7 @@ import {
   CondElseClause,
   CondForm,
   DefineForm,
+  DefMacroForm,
   IfForm,
   LambdaForm,
   LetBinding,
@@ -36,6 +38,8 @@ export const listToSpecialForm = (
       return listToDefine(list, context)
     case 'lambda':
       return listToLambda(list, context)
+    case 'defmacro':
+      return listToDefMacro(list, context)
     case 'set!':
       return listToSetBang(list, context)
     case 'if':
@@ -135,63 +139,65 @@ const listToLambda = (list: SyntaxList, context: Context): LambdaForm => {
     return handleRuntimeError(context, new errors.LambdaSyntaxError(list))
   }
 
-  if (list.elements[1].type === 'List') {
+  const parameterPassingStyle = parseParameters(list.elements[1])
+  if (!parameterPassingStyle) {
+    return handleRuntimeError(context, new errors.LambdaSyntaxError(list))
+  }
+
+  return {
+    tag: 'lambda',
+    body: list.elements.slice(2),
+    argumentPassingStyle: parameterPassingStyle
+  }
+}
+
+const parseParameters = (list: SyntaxNode): NamedParameterPassingStyle | null => {
+  if (list.type === 'List') {
     // Fixed number of arguments
     const parameters: SyntaxIdentifier[] = []
-    list.elements[1].elements.forEach(element => {
+    for (const element of list.elements) {
       if (element.type === 'Identifier') {
-        return parameters.push(element)
+        parameters.push(element)
       } else {
-        return handleRuntimeError(context, new errors.LambdaSyntaxError(list))
+        return null
       }
-    })
+    }
     return {
-      tag: 'lambda',
-      body: list.elements.slice(2),
-      argumentPassingStyle: {
-        style: 'fixed-args',
-        numParams: parameters.length,
-        parameters
-      }
+      style: 'fixed-args',
+      numParams: parameters.length,
+      parameters
     }
-  } else if (list.elements[1].type === 'DottedList') {
+  } else if (list.type === 'DottedList') {
     // variable number of arguments with compulsory arguments
-    const compulsoryParameters: SyntaxIdentifier[] = list.elements[1].pre.map(element => {
+    const compulsoryParameters: SyntaxIdentifier[] = []
+    for (const element of list.pre) {
       if (element.type === 'Identifier') {
-        return element
+        compulsoryParameters.push(element)
       } else {
-        return handleRuntimeError(context, new errors.LambdaSyntaxError(list))
+        return null
       }
-    })
-    if (list.elements[1].post.type !== 'Identifier') {
-      return handleRuntimeError(context, new errors.LambdaSyntaxError(list))
     }
-    const restParameters: SyntaxIdentifier = list.elements[1].post
+    if (list.post.type !== 'Identifier') {
+      return null
+    }
+    const restParameters: SyntaxIdentifier = list.post
 
     return {
-      tag: 'lambda',
-      body: list.elements.slice(2),
-      argumentPassingStyle: {
-        style: 'var-args',
-        numCompulsoryParameters: compulsoryParameters.length,
-        compulsoryParameters,
-        restParameters
-      }
+      style: 'var-args',
+      numCompulsoryParameters: compulsoryParameters.length,
+      compulsoryParameters,
+      restParameters
     }
-  } else if (list.elements[1].type === 'Identifier') {
+  } else if (list.type === 'Identifier') {
     // variable number of arguments without compulsory arguments
     return {
-      tag: 'lambda',
-      body: list.elements.slice(2),
-      argumentPassingStyle: {
-        style: 'var-args',
-        numCompulsoryParameters: 0,
-        compulsoryParameters: [],
-        restParameters: list.elements[1]
-      }
+      style: 'var-args',
+      numCompulsoryParameters: 0,
+      compulsoryParameters: [],
+      restParameters: list
     }
   } else {
-    return handleRuntimeError(context, new errors.LambdaSyntaxError(list))
+    return null
   }
 }
 
@@ -357,4 +363,27 @@ const listToAnd = (list: SyntaxList): AndForm => {
 
 const listToOr = (list: SyntaxList): OrForm => {
   return { tag: 'or', arguments: list.elements.slice(1) }
+}
+
+const listToDefMacro = (list: SyntaxList, context: Context): DefMacroForm => {
+  if (list.elements.length < 4) {
+    return handleRuntimeError(context, new errors.DefMacroSyntaxError(list))
+  }
+
+  const name = list.elements[1]
+  if (name.type !== 'Identifier') {
+    return handleRuntimeError(context, new errors.DefMacroSyntaxError(list))
+  }
+
+  const argumentPassingStyle = parseParameters(list.elements[2])
+  if (!argumentPassingStyle) {
+    return handleRuntimeError(context, new errors.DefMacroSyntaxError(list))
+  }
+
+  return {
+    tag: 'defmacro',
+    name,
+    parameterPassingStyle: argumentPassingStyle,
+    body: list.elements.slice(3)
+  }
 }
