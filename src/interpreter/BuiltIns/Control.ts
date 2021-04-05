@@ -3,7 +3,7 @@ import { Context } from '../../types'
 import { flattenPairToList } from '../../utils/listHelpers'
 import { EVProcedure, ExpressibleValue } from '../ExpressibleValue'
 import { ValueGenerator } from '../interpreter'
-import { apply as applyProcedure } from '../procedure'
+import { apply as applyProcedure, isParentInTailContext } from '../procedure'
 
 export const apply: EVProcedure = {
   type: 'EVProcedure',
@@ -30,12 +30,22 @@ export const apply: EVProcedure = {
     const tailArgList = list.value.map(listElement => listElement.value)
     const actualArguments = spreadArgList.concat(tailArgList)
 
-    return yield* applyProcedure(
-      context,
-      proc,
-      'apply',
-      actualArguments,
-      context.runtime.nodes[0] as SchemeList
-    )
+    if (isParentInTailContext(context)) {
+      return {
+        type: 'TailCall',
+        procedure: proc,
+        procedureName: 'applied procedure',
+        args: actualArguments,
+        node: context.runtime.nodes[0]
+      }
+    } else {
+      return yield* applyProcedure(
+        context,
+        proc,
+        'apply',
+        actualArguments,
+        context.runtime.nodes[0] as SchemeList
+      )
+    }
   }
 }

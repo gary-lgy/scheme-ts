@@ -6,7 +6,7 @@ export class PreemptiveScheduler implements Scheduler {
   constructor(public steps: number) {}
 
   public run(it: IterableIterator<Value>, context: Context): Promise<Result> {
-    return new Promise((resolve, reject) => {
+    return new Promise(resolve => {
       context.runtime.isRunning = true
       // This is used in the evaluation of the REPL during a paused state.
       // The debugger is turned off while the code evaluates just above the debugger statement.

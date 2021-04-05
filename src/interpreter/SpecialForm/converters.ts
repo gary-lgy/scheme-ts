@@ -54,9 +54,9 @@ export const listToSpecialForm = (
     case 'unquote-splicing':
       return listToQuote(tag, list, context)
     case 'and':
-      return listToAnd(list, context)
+      return listToAnd(list)
     case 'or':
-      return listToOr(list, context)
+      return listToOr(list)
     default:
       return null
   }
@@ -359,10 +359,10 @@ const listToQuote = (
   }
 }
 
-const listToAnd = (list: SchemeList, context: Context): AndForm => {
+const listToAnd = (list: SchemeList): AndForm => {
   return { tag: 'and', arguments: list.elements.slice(1) }
 }
 
-const listToOr = (list: SchemeList, context: Context): OrForm => {
+const listToOr = (list: SchemeList): OrForm => {
   return { tag: 'or', arguments: list.elements.slice(1) }
 }

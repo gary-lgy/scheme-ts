@@ -59,6 +59,7 @@ export interface Context<T = any> {
     isRunning: boolean
     environments: Environment[]
     nodes: SchemeExpression[]
+    inTailContext: boolean[]
   }
 
   moduleParams?: any

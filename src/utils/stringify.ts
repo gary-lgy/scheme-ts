@@ -133,6 +133,8 @@ export const stringify = (
         } else {
           return '[compound procedure]'
         }
+      case 'TailCall':
+        throw new Error('stringify should not see a TailCall value')
     }
   }
 

@@ -3,8 +3,8 @@
 import * as errors from '../../errors/errors'
 import { Context, Frame } from '../../types'
 import { ExpressibleValue, makeBool, makeEmptyList } from '../ExpressibleValue'
-import { evaluate, ValueGenerator } from '../interpreter'
-import { apply } from '../procedure'
+import { evaluate, evaluateSequence, ValueGenerator } from '../interpreter'
+import { apply, isParentInTailContext, tryEnterTailContext } from '../procedure'
 import { quasiquoteExpression, quoteExpression } from '../quote'
 import {
   extendCurrentEnvironment,
@@ -101,12 +101,13 @@ function* evaluateSetBangForm(setBangForm: SetBangForm, context: Context): Value
 
 function* evaluateIfForm(ifForm: IfForm, context: Context): ValueGenerator {
   const testValue = yield* evaluate(ifForm.test, context)
+  tryEnterTailContext(context)
   if (isTruthy(testValue)) {
     return yield* evaluate(ifForm.consequent, context)
   } else if (ifForm.alternative) {
     return yield* evaluate(ifForm.alternative, context)
   } else {
-    return { type: 'EVEmptyList' }
+    return makeEmptyList()
   }
 }
 
@@ -118,12 +119,7 @@ function* evaluateCondForm(condForm: CondForm, context: Context): ValueGenerator
     }
 
     if (clause.type === 'basic') {
-      let result = testResult
-      for (const bodyExpression of clause.body) {
-        result = yield* evaluate(bodyExpression, context)
-      }
-
-      return result
+      return yield* evaluateSequence(clause.body, context, true, testResult)
     } else {
       const procedure = yield* evaluate(clause.body, context)
 
@@ -137,7 +133,17 @@ function* evaluateCondForm(condForm: CondForm, context: Context): ValueGenerator
       const procedureName =
         clause.body.type === 'Identifier' ? clause.body.name : '[Anonymous procedure]'
 
-      return yield* apply(context, procedure, procedureName, [testResult], clause.node)
+      if (isParentInTailContext(context)) {
+        return {
+          type: 'TailCall',
+          procedure,
+          procedureName,
+          args: [testResult],
+          node: clause.node
+        }
+      } else {
+        return yield* apply(context, procedure, procedureName, [testResult], clause.node)
+      }
     }
   }
 
@@ -146,11 +152,7 @@ function* evaluateCondForm(condForm: CondForm, context: Context): ValueGenerator
     return makeEmptyList()
   }
 
-  let result: ExpressibleValue = makeEmptyList()
-  for (const bodyExpression of condForm.elseClause.body) {
-    result = yield* evaluate(bodyExpression, context)
-  }
-  return result
+  return yield* evaluateSequence(condForm.elseClause.body, context, true)
 }
 
 function* evaluateLetForm(letForm: LetForm, context: Context): ValueGenerator {
@@ -161,7 +163,7 @@ function* evaluateLetForm(letForm: LetForm, context: Context): ValueGenerator {
   const newEnvironment = extendCurrentEnvironment(context, 'letEnvironment', frame)
 
   pushEnvironment(context, newEnvironment)
-  const result = yield* evaluate(letForm.body, context)
+  const result = yield* evaluateSequence(letForm.body.expressions, context, true)
   popEnvironment(context)
 
   return result
@@ -177,7 +179,7 @@ function* evaluateLetStarForm(letStarForm: LetStarForm, context: Context): Value
     numNewFrames++
   }
 
-  const result = yield* evaluate(letStarForm.body, context)
+  const result = yield* evaluateSequence(letStarForm.body.expressions, context, true)
 
   while (numNewFrames--) {
     popEnvironment(context)
@@ -198,29 +200,32 @@ function* evaluateLetRecForm(letRecForm: LetRecForm, context: Context): ValueGen
     frame[binding.name.name] = yield* evaluate(binding.value, context)
   }
 
-  const result = yield* evaluate(letRecForm.body, context)
+  const result = yield* evaluateSequence(letRecForm.body.expressions, context, true)
   popEnvironment(context)
 
   return result
 }
 
 function* evaluateBeginForm(beginForm: BeginForm, context: Context): ValueGenerator {
-  return yield* evaluate(beginForm.body, context)
+  return yield* evaluateSequence(beginForm.body.expressions, context, true)
 }
 
 function* evaluateAndForm(andForm: AndForm, context: Context): ValueGenerator {
   if (andForm.arguments.length === 0) {
     return makeBool(true)
   } else {
-    let result: ExpressibleValue = yield* evaluate(andForm.arguments[0], context)
-    for (let i = 1; i < andForm.arguments.length; i++) {
+    for (let i = 0; i < andForm.arguments.length - 1; i++) {
+      const arg = andForm.arguments[i]
+      const result = yield* evaluate(arg, context)
       if (!isTruthy(result)) {
         return makeBool(false)
       }
-      const arg = andForm.arguments[i]
-      result = yield* evaluate(arg, context)
     }
-    return result
+
+    // Evaluate the last form in tail context
+    const lastArg = andForm.arguments[andForm.arguments.length - 1]
+    tryEnterTailContext(context)
+    return yield* evaluate(lastArg, context)
   }
 }
 
@@ -228,14 +233,17 @@ function* evaluateOrForm(orForm: OrForm, context: Context): ValueGenerator {
   if (orForm.arguments.length === 0) {
     return makeBool(false)
   } else {
-    let result: ExpressibleValue = yield* evaluate(orForm.arguments[0], context)
-    for (let i = 1; i < orForm.arguments.length; i++) {
+    for (let i = 0; i < orForm.arguments.length - 1; i++) {
+      const arg = orForm.arguments[i]
+      const result = yield* evaluate(arg, context)
       if (isTruthy(result)) {
         return result
       }
-      const arg = orForm.arguments[i]
-      result = yield* evaluate(arg, context)
     }
-    return result
+
+    // Evaluate the last form in tail context
+    const lastArg = orForm.arguments[orForm.arguments.length - 1]
+    tryEnterTailContext(context)
+    return yield* evaluate(lastArg, context)
   }
 }
