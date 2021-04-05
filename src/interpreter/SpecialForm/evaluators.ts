@@ -161,7 +161,7 @@ function* evaluateLetForm(letForm: LetForm, context: Context): ValueGenerator {
   const newEnvironment = extendCurrentEnvironment(context, 'letEnvironment', frame)
 
   pushEnvironment(context, newEnvironment)
-  const result = yield* evaluateSequence(letForm.body.expressions, context, true)
+  const result = yield* evaluateSequence(letForm.body, context, true)
   popEnvironment(context)
 
   return result
@@ -177,7 +177,7 @@ function* evaluateLetStarForm(letStarForm: LetStarForm, context: Context): Value
     numNewFrames++
   }
 
-  const result = yield* evaluateSequence(letStarForm.body.expressions, context, true)
+  const result = yield* evaluateSequence(letStarForm.body, context, true)
 
   while (numNewFrames--) {
     popEnvironment(context)
@@ -198,14 +198,14 @@ function* evaluateLetRecForm(letRecForm: LetRecForm, context: Context): ValueGen
     frame[binding.name.name] = yield* evaluate(binding.value, context)
   }
 
-  const result = yield* evaluateSequence(letRecForm.body.expressions, context, true)
+  const result = yield* evaluateSequence(letRecForm.body, context, true)
   popEnvironment(context)
 
   return result
 }
 
 function* evaluateBeginForm(beginForm: BeginForm, context: Context): ValueGenerator {
-  return yield* evaluateSequence(beginForm.body.expressions, context, true)
+  return yield* evaluateSequence(beginForm.body, context, true)
 }
 
 function* evaluateAndForm(andForm: AndForm, context: Context): ValueGenerator {

@@ -14,22 +14,12 @@ export interface Position {
 
 // Syntax tree
 
-export type SchemeExpressionType =
-  | 'Program'
-  | 'Sequence'
-  | 'List'
-  | 'DottedList'
-  | 'StringLiteral'
-  | 'NumberLiteral'
-  | 'BoolLiteral'
-  | 'Identifier'
+export type SchemeExpressionType = SchemeExpression['type']
 
 /**
  * Represents a syntax fragment in Scheme.
  */
 export type SchemeExpression =
-  | SchemeProgram
-  | SchemeSequence
   | SchemeList
   | SchemeDottedList
   | SchemeStringLiteral
@@ -38,15 +28,7 @@ export type SchemeExpression =
   | SchemeIdentifier
 
 export interface SchemeProgram {
-  type: 'Program'
-  body: SchemeSequence
-  loc: SourceLocation
-}
-
-export interface SchemeSequence {
-  type: 'Sequence'
-  expressions: SchemeExpression[]
-  loc: SourceLocation
+  body: SchemeExpression[]
 }
 
 export interface SchemeList {

@@ -1,9 +1,10 @@
 /* tslint:disable:max-classes-per-file */
 import { ANTLRInputStream, CommonTokenStream, ParserRuleContext } from 'antlr4ts'
-import { AbstractParseTreeVisitor } from 'antlr4ts/tree/AbstractParseTreeVisitor'
 import { ErrorNode } from 'antlr4ts/tree/ErrorNode'
 import { ParseTree } from 'antlr4ts/tree/ParseTree'
+import { RuleNode } from 'antlr4ts/tree/RuleNode'
 import { TerminalNode } from 'antlr4ts/tree/TerminalNode'
+import { UNKNOWN_LOCATION } from '../constants'
 import {
   SchemeBoolLiteral,
   SchemeDottedList,
@@ -12,7 +13,6 @@ import {
   SchemeList,
   SchemeNumberLiteral,
   SchemeProgram,
-  SchemeSequence,
   SchemeStringLiteral,
   SourceLocation
 } from '../lang/scheme'
@@ -28,7 +28,6 @@ import {
   QuasiquoteContext,
   QuoteContext,
   SchemeParser,
-  SequenceContext,
   StringContext,
   UnquoteContext,
   UnquoteSplicingContext
@@ -63,26 +62,11 @@ function contextToLocation(ctx: ParserRuleContext): SourceLocation {
   }
 }
 
-class ExpressionGenerator
-  extends AbstractParseTreeVisitor<SchemeExpression>
-  implements SchemeVisitor<SchemeExpression> {
-  protected defaultResult(): SchemeExpression {
-    // This method is called when there is no mathing parser rule
-    // Need to investigate what's the effect of returning an empty program here
-    return {
-      type: 'Sequence',
-      expressions: [],
-      loc: {
-        start: {
-          line: 0,
-          column: 0
-        },
-        end: {
-          line: 0,
-          column: 0
-        }
-      }
-    }
+class ExpressionGenerator implements SchemeVisitor<SchemeExpression> {
+  visitProgram?: ((ctx: ProgramContext) => SchemeExpression) | undefined
+
+  visitChildren(node: RuleNode): SchemeExpression {
+    throw new FatalSyntaxError(UNKNOWN_LOCATION, `invalid syntax ${node.text}`)
   }
 
   visitList(ctx: ListContext): SchemeList {
@@ -184,22 +168,6 @@ class ExpressionGenerator
     }
   }
 
-  visitProgram(ctx: ProgramContext): SchemeProgram {
-    return {
-      type: 'Program',
-      body: this.visitSequence(ctx.sequence()),
-      loc: contextToLocation(ctx)
-    }
-  }
-
-  visitSequence(ctx: SequenceContext): SchemeSequence {
-    return {
-      type: 'Sequence',
-      expressions: ctx.expression().map(ex => ex.accept(this)),
-      loc: contextToLocation(ctx)
-    }
-  }
-
   visitExpression?: ((ctx: ExpressionContext) => SchemeExpression) | undefined
 
   visitTerminal(node: TerminalNode): SchemeExpression {
@@ -227,9 +195,11 @@ class ExpressionGenerator
   }
 }
 
-function convertSource(expression: ProgramContext): SchemeExpression {
+function convertSource(program: ProgramContext): SchemeProgram {
   const generator = new ExpressionGenerator()
-  return expression.accept(generator)
+  return {
+    body: program.expression().map(ex => ex.accept(generator))
+  }
 }
 
 export function parse(source: string, context: Context) {
@@ -239,7 +209,7 @@ export function parse(source: string, context: Context) {
   const parser = new SchemeParser(tokenStream)
   parser.buildParseTree = true
 
-  let program: SchemeExpression | undefined
+  let program: SchemeProgram | undefined
   try {
     const tree = parser.program()
     program = convertSource(tree)

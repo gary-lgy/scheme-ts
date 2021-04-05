@@ -8,7 +8,6 @@ import {
   SchemeList,
   SchemeNumberLiteral,
   SchemeProgram,
-  SchemeSequence,
   SchemeStringLiteral
 } from '../lang/scheme'
 import { Context } from '../types'
@@ -43,30 +42,6 @@ export type ValueGenerator = Generator<Context, ExpressibleValue | TailCall>
 export type Evaluator<T extends SchemeExpression> = (node: T, context: Context) => ValueGenerator
 
 export const evaluators: { [key in SchemeExpressionType]: Evaluator<SchemeExpression> } = {
-  Program: function* (node: SchemeProgram, context: Context): ValueGenerator {
-    context.numberOfOuterEnvironments += 1
-    const environment = extendCurrentEnvironment(context, 'programEnvironment')
-    pushEnvironment(context, environment)
-    const result = yield* evaluate(node.body, context)
-
-    if (result.type === 'TailCall') {
-      return handleRuntimeError(
-        context,
-        new errors.UnreachableCodeReached('top-level eval should not return a TailCall object')
-      )
-    }
-
-    return result
-  },
-
-  Sequence: function* (node: SchemeSequence, context: Context): ValueGenerator {
-    let result: ExpressibleValue
-    for (const expression of node.expressions) {
-      result = yield* evaluate(expression, context)
-    }
-    return result!
-  },
-
   List: function* (node: SchemeList, context: Context): ValueGenerator {
     if (node.elements.length === 0) {
       // Empty list - return empty list
@@ -127,6 +102,26 @@ export const evaluators: { [key in SchemeExpressionType]: Evaluator<SchemeExpres
       return handleRuntimeError(context, new errors.UndefinedVariable(node.name, node))
     }
   }
+}
+
+export function* evaluateProgram(program: SchemeProgram, context: Context): ValueGenerator {
+  context.numberOfOuterEnvironments += 1
+  const environment = extendCurrentEnvironment(context, 'programEnvironment')
+  pushEnvironment(context, environment)
+
+  let result!: ExpressibleValue
+  for (const expression of program.body) {
+    result = yield* evaluate(expression, context)
+  }
+
+  if (result.type === 'TailCall') {
+    return handleRuntimeError(
+      context,
+      new errors.UnreachableCodeReached('top-level eval should not return a TailCall object')
+    )
+  }
+
+  return result
 }
 
 export function* evaluate(node: SchemeExpression, context: Context): ValueGenerator {

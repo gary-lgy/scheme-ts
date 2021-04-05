@@ -32,10 +32,9 @@ export class SchemeParser extends Parser {
   public static readonly WHITESPACE = 12
   public static readonly COMMENT = 13
   public static readonly RULE_program = 0
-  public static readonly RULE_sequence = 1
-  public static readonly RULE_expression = 2
+  public static readonly RULE_expression = 1
   // tslint:disable:no-trailing-whitespace
-  public static readonly ruleNames: string[] = ['program', 'sequence', 'expression']
+  public static readonly ruleNames: string[] = ['program', 'expression']
 
   private static readonly _LITERAL_NAMES: Array<string | undefined> = [
     undefined,
@@ -104,41 +103,26 @@ export class SchemeParser extends Parser {
   }
   // @RuleVersion(0)
   public program(): ProgramContext {
-    const _localctx: ProgramContext = new ProgramContext(this._ctx, this.state)
+    let _localctx: ProgramContext = new ProgramContext(this._ctx, this.state)
     this.enterRule(_localctx, 0, SchemeParser.RULE_program)
-    try {
-      this.enterOuterAlt(_localctx, 1)
-      {
-        this.state = 6
-        this.sequence()
-        this.state = 7
-        this.match(SchemeParser.EOF)
-      }
-    } catch (re) {
-      if (re instanceof RecognitionException) {
-        _localctx.exception = re
-        this._errHandler.reportError(this, re)
-        this._errHandler.recover(this, re)
-      } else {
-        throw re
-      }
-    } finally {
-      this.exitRule()
-    }
-    return _localctx
-  }
-  // @RuleVersion(0)
-  public sequence(): SequenceContext {
-    const _localctx: SequenceContext = new SequenceContext(this._ctx, this.state)
-    this.enterRule(_localctx, 2, SchemeParser.RULE_sequence)
     let _la: number
     try {
       this.enterOuterAlt(_localctx, 1)
       {
-        this.state = 12
+        this.state = 5
         this._errHandler.sync(this)
         _la = this._input.LA(1)
-        while (
+        do {
+          {
+            {
+              this.state = 4
+              this.expression()
+            }
+          }
+          this.state = 7
+          this._errHandler.sync(this)
+          _la = this._input.LA(1)
+        } while (
           (_la & ~0x1f) === 0 &&
           ((1 << _la) &
             ((1 << SchemeParser.T__0) |
@@ -151,17 +135,9 @@ export class SchemeParser extends Parser {
               (1 << SchemeParser.BOOL) |
               (1 << SchemeParser.IDENTIFIER))) !==
             0
-        ) {
-          {
-            {
-              this.state = 9
-              this.expression()
-            }
-          }
-          this.state = 14
-          this._errHandler.sync(this)
-          _la = this._input.LA(1)
-        }
+        )
+        this.state = 9
+        this.match(SchemeParser.EOF)
       }
     } catch (re) {
       if (re instanceof RecognitionException) {
@@ -179,17 +155,17 @@ export class SchemeParser extends Parser {
   // @RuleVersion(0)
   public expression(): ExpressionContext {
     let _localctx: ExpressionContext = new ExpressionContext(this._ctx, this.state)
-    this.enterRule(_localctx, 4, SchemeParser.RULE_expression)
+    this.enterRule(_localctx, 2, SchemeParser.RULE_expression)
     let _la: number
     try {
-      this.state = 45
+      this.state = 41
       this._errHandler.sync(this)
       switch (this.interpreter.adaptivePredict(this._input, 3, this._ctx)) {
         case 1:
           _localctx = new StringContext(_localctx)
           this.enterOuterAlt(_localctx, 1)
           {
-            this.state = 15
+            this.state = 11
             this.match(SchemeParser.STRING)
           }
           break
@@ -198,7 +174,7 @@ export class SchemeParser extends Parser {
           _localctx = new NumberContext(_localctx)
           this.enterOuterAlt(_localctx, 2)
           {
-            this.state = 16
+            this.state = 12
             this.match(SchemeParser.NUMBER)
           }
           break
@@ -207,7 +183,7 @@ export class SchemeParser extends Parser {
           _localctx = new BoolContext(_localctx)
           this.enterOuterAlt(_localctx, 3)
           {
-            this.state = 17
+            this.state = 13
             this.match(SchemeParser.BOOL)
           }
           break
@@ -216,7 +192,7 @@ export class SchemeParser extends Parser {
           _localctx = new IdentifierContext(_localctx)
           this.enterOuterAlt(_localctx, 4)
           {
-            this.state = 18
+            this.state = 14
             this.match(SchemeParser.IDENTIFIER)
           }
           break
@@ -225,9 +201,9 @@ export class SchemeParser extends Parser {
           _localctx = new QuoteContext(_localctx)
           this.enterOuterAlt(_localctx, 5)
           {
-            this.state = 19
+            this.state = 15
             this.match(SchemeParser.T__0)
-            this.state = 20
+            this.state = 16
             this.expression()
           }
           break
@@ -236,9 +212,9 @@ export class SchemeParser extends Parser {
           _localctx = new QuasiquoteContext(_localctx)
           this.enterOuterAlt(_localctx, 6)
           {
-            this.state = 21
+            this.state = 17
             this.match(SchemeParser.T__1)
-            this.state = 22
+            this.state = 18
             this.expression()
           }
           break
@@ -247,9 +223,9 @@ export class SchemeParser extends Parser {
           _localctx = new UnquoteContext(_localctx)
           this.enterOuterAlt(_localctx, 7)
           {
-            this.state = 23
+            this.state = 19
             this.match(SchemeParser.T__2)
-            this.state = 24
+            this.state = 20
             this.expression()
           }
           break
@@ -258,9 +234,9 @@ export class SchemeParser extends Parser {
           _localctx = new UnquoteSplicingContext(_localctx)
           this.enterOuterAlt(_localctx, 8)
           {
-            this.state = 25
+            this.state = 21
             this.match(SchemeParser.T__3)
-            this.state = 26
+            this.state = 22
             this.expression()
           }
           break
@@ -269,9 +245,9 @@ export class SchemeParser extends Parser {
           _localctx = new ListContext(_localctx)
           this.enterOuterAlt(_localctx, 9)
           {
-            this.state = 27
+            this.state = 23
             this.match(SchemeParser.T__4)
-            this.state = 31
+            this.state = 27
             this._errHandler.sync(this)
             _la = this._input.LA(1)
             while (
@@ -290,15 +266,15 @@ export class SchemeParser extends Parser {
             ) {
               {
                 {
-                  this.state = 28
+                  this.state = 24
                   ;(_localctx as ListContext)._elements = this.expression()
                 }
               }
-              this.state = 33
+              this.state = 29
               this._errHandler.sync(this)
               _la = this._input.LA(1)
             }
-            this.state = 34
+            this.state = 30
             this.match(SchemeParser.T__5)
           }
           break
@@ -307,19 +283,19 @@ export class SchemeParser extends Parser {
           _localctx = new DottedListContext(_localctx)
           this.enterOuterAlt(_localctx, 10)
           {
-            this.state = 35
+            this.state = 31
             this.match(SchemeParser.T__4)
-            this.state = 37
+            this.state = 33
             this._errHandler.sync(this)
             _la = this._input.LA(1)
             do {
               {
                 {
-                  this.state = 36
+                  this.state = 32
                   ;(_localctx as DottedListContext)._pre = this.expression()
                 }
               }
-              this.state = 39
+              this.state = 35
               this._errHandler.sync(this)
               _la = this._input.LA(1)
             } while (
@@ -336,11 +312,11 @@ export class SchemeParser extends Parser {
                   (1 << SchemeParser.IDENTIFIER))) !==
                 0
             )
-            this.state = 41
+            this.state = 37
             this.match(SchemeParser.T__6)
-            this.state = 42
+            this.state = 38
             ;(_localctx as DottedListContext)._post = this.expression()
-            this.state = 43
+            this.state = 39
             this.match(SchemeParser.T__5)
           }
           break
@@ -360,30 +336,29 @@ export class SchemeParser extends Parser {
   }
 
   public static readonly _serializedATN: string =
-    '\x03\uC91D\uCABA\u058D\uAFBA\u4F53\u0607\uEA8B\uC241\x03\x0F2\x04\x02' +
-    '\t\x02\x04\x03\t\x03\x04\x04\t\x04\x03\x02\x03\x02\x03\x02\x03\x03\x07' +
-    '\x03\r\n\x03\f\x03\x0E\x03\x10\v\x03\x03\x04\x03\x04\x03\x04\x03\x04\x03' +
-    '\x04\x03\x04\x03\x04\x03\x04\x03\x04\x03\x04\x03\x04\x03\x04\x03\x04\x03' +
-    '\x04\x07\x04 \n\x04\f\x04\x0E\x04#\v\x04\x03\x04\x03\x04\x03\x04\x06\x04' +
-    '(\n\x04\r\x04\x0E\x04)\x03\x04\x03\x04\x03\x04\x03\x04\x05\x040\n\x04' +
-    '\x03\x04\x02\x02\x02\x05\x02\x02\x04\x02\x06\x02\x02\x02\x02:\x02\b\x03' +
-    '\x02\x02\x02\x04\x0E\x03\x02\x02\x02\x06/\x03\x02\x02\x02\b\t\x05\x04' +
-    '\x03\x02\t\n\x07\x02\x02\x03\n\x03\x03\x02\x02\x02\v\r\x05\x06\x04\x02' +
-    '\f\v\x03\x02\x02\x02\r\x10\x03\x02\x02\x02\x0E\f\x03\x02\x02\x02\x0E\x0F' +
-    '\x03\x02\x02\x02\x0F\x05\x03\x02\x02\x02\x10\x0E\x03\x02\x02\x02\x110' +
-    '\x07\n\x02\x02\x120\x07\v\x02\x02\x130\x07\f\x02\x02\x140\x07\r\x02\x02' +
-    '\x15\x16\x07\x03\x02\x02\x160\x05\x06\x04\x02\x17\x18\x07\x04\x02\x02' +
-    '\x180\x05\x06\x04\x02\x19\x1A\x07\x05\x02\x02\x1A0\x05\x06\x04\x02\x1B' +
-    '\x1C\x07\x06\x02\x02\x1C0\x05\x06\x04\x02\x1D!\x07\x07\x02\x02\x1E \x05' +
-    '\x06\x04\x02\x1F\x1E\x03\x02\x02\x02 #\x03\x02\x02\x02!\x1F\x03\x02\x02' +
-    '\x02!"\x03\x02\x02\x02"$\x03\x02\x02\x02#!\x03\x02\x02\x02$0\x07\b\x02' +
-    "\x02%'\x07\x07\x02\x02&(\x05\x06\x04\x02'&\x03\x02\x02\x02()\x03\x02" +
-    "\x02\x02)'\x03\x02\x02\x02)*\x03\x02\x02\x02*+\x03\x02\x02\x02+,\x07" +
-    '\t\x02\x02,-\x05\x06\x04\x02-.\x07\b\x02\x02.0\x03\x02\x02\x02/\x11\x03' +
-    '\x02\x02\x02/\x12\x03\x02\x02\x02/\x13\x03\x02\x02\x02/\x14\x03\x02\x02' +
-    '\x02/\x15\x03\x02\x02\x02/\x17\x03\x02\x02\x02/\x19\x03\x02\x02\x02/\x1B' +
-    '\x03\x02\x02\x02/\x1D\x03\x02\x02\x02/%\x03\x02\x02\x020\x07\x03\x02\x02' +
-    '\x02\x06\x0E!)/'
+    '\x03\uC91D\uCABA\u058D\uAFBA\u4F53\u0607\uEA8B\uC241\x03\x0F.\x04\x02' +
+    '\t\x02\x04\x03\t\x03\x03\x02\x06\x02\b\n\x02\r\x02\x0E\x02\t\x03\x02\x03' +
+    '\x02\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03' +
+    '\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x07\x03\x1C\n\x03\f\x03\x0E' +
+    '\x03\x1F\v\x03\x03\x03\x03\x03\x03\x03\x06\x03$\n\x03\r\x03\x0E\x03%\x03' +
+    '\x03\x03\x03\x03\x03\x03\x03\x05\x03,\n\x03\x03\x03\x02\x02\x02\x04\x02' +
+    '\x02\x04\x02\x02\x02\x027\x02\x07\x03\x02\x02\x02\x04+\x03\x02\x02\x02' +
+    '\x06\b\x05\x04\x03\x02\x07\x06\x03\x02\x02\x02\b\t\x03\x02\x02\x02\t\x07' +
+    '\x03\x02\x02\x02\t\n\x03\x02\x02\x02\n\v\x03\x02\x02\x02\v\f\x07\x02\x02' +
+    '\x03\f\x03\x03\x02\x02\x02\r,\x07\n\x02\x02\x0E,\x07\v\x02\x02\x0F,\x07' +
+    '\f\x02\x02\x10,\x07\r\x02\x02\x11\x12\x07\x03\x02\x02\x12,\x05\x04\x03' +
+    '\x02\x13\x14\x07\x04\x02\x02\x14,\x05\x04\x03\x02\x15\x16\x07\x05\x02' +
+    '\x02\x16,\x05\x04\x03\x02\x17\x18\x07\x06\x02\x02\x18,\x05\x04\x03\x02' +
+    '\x19\x1D\x07\x07\x02\x02\x1A\x1C\x05\x04\x03\x02\x1B\x1A\x03\x02\x02\x02' +
+    '\x1C\x1F\x03\x02\x02\x02\x1D\x1B\x03\x02\x02\x02\x1D\x1E\x03\x02\x02\x02' +
+    '\x1E \x03\x02\x02\x02\x1F\x1D\x03\x02\x02\x02 ,\x07\b\x02\x02!#\x07\x07' +
+    '\x02\x02"$\x05\x04\x03\x02#"\x03\x02\x02\x02$%\x03\x02\x02\x02%#\x03' +
+    "\x02\x02\x02%&\x03\x02\x02\x02&'\x03\x02\x02\x02'(\x07\t\x02\x02()\x05" +
+    '\x04\x03\x02)*\x07\b\x02\x02*,\x03\x02\x02\x02+\r\x03\x02\x02\x02+\x0E' +
+    '\x03\x02\x02\x02+\x0F\x03\x02\x02\x02+\x10\x03\x02\x02\x02+\x11\x03\x02' +
+    '\x02\x02+\x13\x03\x02\x02\x02+\x15\x03\x02\x02\x02+\x17\x03\x02\x02\x02' +
+    '+\x19\x03\x02\x02\x02+!\x03\x02\x02\x02,\x05\x03\x02\x02\x02\x06\t\x1D' +
+    '%+'
   public static __ATN: ATN
   public static get _ATN(): ATN {
     if (!SchemeParser.__ATN) {
@@ -397,11 +372,17 @@ export class SchemeParser extends Parser {
 }
 
 export class ProgramContext extends ParserRuleContext {
-  public sequence(): SequenceContext {
-    return this.getRuleContext(0, SequenceContext)
-  }
   public EOF(): TerminalNode {
     return this.getToken(SchemeParser.EOF, 0)
+  }
+  public expression(): ExpressionContext[]
+  public expression(i: number): ExpressionContext
+  public expression(i?: number): ExpressionContext | ExpressionContext[] {
+    if (i === undefined) {
+      return this.getRuleContexts(ExpressionContext)
+    } else {
+      return this.getRuleContext(i, ExpressionContext)
+    }
   }
   constructor(parent: ParserRuleContext | undefined, invokingState: number) {
     super(parent, invokingState)
@@ -426,45 +407,6 @@ export class ProgramContext extends ParserRuleContext {
   public accept<Result>(visitor: SchemeVisitor<Result>): Result {
     if (visitor.visitProgram) {
       return visitor.visitProgram(this)
-    } else {
-      return visitor.visitChildren(this)
-    }
-  }
-}
-
-export class SequenceContext extends ParserRuleContext {
-  public expression(): ExpressionContext[]
-  public expression(i: number): ExpressionContext
-  public expression(i?: number): ExpressionContext | ExpressionContext[] {
-    if (i === undefined) {
-      return this.getRuleContexts(ExpressionContext)
-    } else {
-      return this.getRuleContext(i, ExpressionContext)
-    }
-  }
-  constructor(parent: ParserRuleContext | undefined, invokingState: number) {
-    super(parent, invokingState)
-  }
-  // @Override
-  public get ruleIndex(): number {
-    return SchemeParser.RULE_sequence
-  }
-  // @Override
-  public enterRule(listener: SchemeListener): void {
-    if (listener.enterSequence) {
-      listener.enterSequence(this)
-    }
-  }
-  // @Override
-  public exitRule(listener: SchemeListener): void {
-    if (listener.exitSequence) {
-      listener.exitSequence(this)
-    }
-  }
-  // @Override
-  public accept<Result>(visitor: SchemeVisitor<Result>): Result {
-    if (visitor.visitSequence) {
-      return visitor.visitSequence(this)
     } else {
       return visitor.visitChildren(this)
     }

@@ -1,6 +1,6 @@
 import { Context, createContext } from '.'
 import { ExpressibleValue } from './interpreter/ExpressibleValue'
-import { evaluate } from './interpreter/interpreter'
+import { evaluateProgram } from './interpreter/interpreter'
 import { parse } from './parser/parser'
 import { sicpMce } from './stdlib/sicp-mce'
 
@@ -13,7 +13,7 @@ const runUntilDone = (
     throw new Error('parse unsuccessful')
   }
 
-  const it = evaluate(program, context)
+  const it = evaluateProgram(program, context)
   let maxNumEnvironment = 0
   context.runtime.isRunning = true
   let itValue: IteratorResult<Context, ExpressibleValue>

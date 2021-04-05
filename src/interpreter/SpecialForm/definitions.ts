@@ -1,4 +1,4 @@
-import { SchemeExpression, SchemeIdentifier, SchemeList, SchemeSequence } from '../../lang/scheme'
+import { SchemeExpression, SchemeIdentifier, SchemeList } from '../../lang/scheme'
 import { CompoundProcedureArgumentPassingStyle } from '../procedure'
 
 export type SpecialForm =
@@ -61,19 +61,19 @@ export type LetBinding = {
 export type LetForm = {
   tag: 'let'
   bindings: LetBinding[]
-  body: SchemeSequence
+  body: SchemeExpression[]
 }
 
 export type LetStarForm = {
   tag: 'let*'
   bindings: LetBinding[]
-  body: SchemeSequence
+  body: SchemeExpression[]
 }
 
 export type LetRecForm = {
   tag: 'letrec'
   bindings: LetBinding[]
-  body: SchemeSequence
+  body: SchemeExpression[]
 }
 
 export type CondClause = { node: SchemeList } & (
@@ -90,7 +90,7 @@ export type CondForm = {
 
 export type BeginForm = {
   tag: 'begin'
-  body: SchemeSequence
+  body: SchemeExpression[]
 }
 
 export type QuoteForm = {

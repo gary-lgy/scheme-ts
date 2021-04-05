@@ -57,12 +57,6 @@ export const quoteExpression = (
         expression.pre.map(elem => quoteExpression(elem, context)),
         quoteExpression(expression.post, context)
       )
-    case 'Program':
-    case 'Sequence':
-      return handleRuntimeError(
-        context,
-        new errors.UnexpectedQuotationError(context.runtime.nodes[0])
-      )
   }
 }
 
@@ -253,11 +247,5 @@ function* quasiquoteExpressionInner(
       ))[0]
       return [makeImproperList(beforeDot, afterDot)]
     }
-    case 'Program':
-    case 'Sequence':
-      return handleRuntimeError(
-        context,
-        new errors.UnexpectedQuotationError(context.runtime.nodes[0])
-      )
   }
 }

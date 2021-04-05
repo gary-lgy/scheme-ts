@@ -1,6 +1,6 @@
 import { SourceMapConsumer } from 'source-map'
 import createContext from './createContext'
-import { evaluate } from './interpreter/interpreter'
+import { evaluateProgram } from './interpreter/interpreter'
 import { parse } from './parser/parser'
 import { PreemptiveScheduler } from './schedulers'
 import {
@@ -93,7 +93,7 @@ export async function runInContext(
     return runInContext(code, context, options)
   }
 
-  const it = evaluate(program, context)
+  const it = evaluateProgram(program, context)
   const scheduler: Scheduler = new PreemptiveScheduler(theOptions.steps)
   return scheduler.run(it, context)
 }

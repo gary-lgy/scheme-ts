@@ -244,11 +244,7 @@ const listToLet = (
   return {
     tag,
     bindings,
-    body: {
-      type: 'Sequence',
-      expressions: list.elements.slice(2),
-      loc: list.loc
-    }
+    body: list.elements.slice(2)
   }
 }
 
@@ -337,11 +333,7 @@ const listToBegin = (list: SchemeList, context: Context): BeginForm => {
 
   return {
     tag: 'begin',
-    body: {
-      type: 'Sequence',
-      expressions: list.elements.slice(1),
-      loc: list.elements[1].loc
-    }
+    body: list.elements.slice(1)
   }
 }
 
