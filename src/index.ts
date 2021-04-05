@@ -33,7 +33,7 @@ const DEFAULT_OPTIONS: IOptions = {
   steps: 1000,
   stepLimit: 1000,
   executionMethod: 'auto',
-  variant: 's1',
+  variant: 'base',
   originalMaxExecTime: 1000,
   isPrelude: false
 }

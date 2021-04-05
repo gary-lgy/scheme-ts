@@ -22,4 +22,4 @@ export const JSSLANG_PROPERTIES = {
   factorToIncreaseBy: 10
 }
 
-export const sourceLanguages: SourceLanguage[] = [{ variant: 's1' }]
+export const sourceLanguages: SourceLanguage[] = [{ variant: 'base' }, { variant: 'no-tco' }]

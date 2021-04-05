@@ -137,7 +137,7 @@ export const importBuiltins = (context: Context, externalBuiltIns: CustomBuiltIn
 }
 
 const createContext = <T>(
-  variant: Variant = 's1',
+  variant: Variant = 'base',
   externalSymbols: string[] = [],
   externalContext?: T,
   externalBuiltIns: CustomBuiltIns = defaultBuiltIns,

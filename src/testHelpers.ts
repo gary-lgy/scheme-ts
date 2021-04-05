@@ -34,7 +34,7 @@ const runUntilDone = (
 }
 
 const prepareContext = (prelude?: string): Context => {
-  const context = createContext('s1', undefined, undefined)
+  const context = createContext()
   context.errors = []
 
   if (context.prelude) {

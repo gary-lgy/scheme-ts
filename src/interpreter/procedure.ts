@@ -149,9 +149,12 @@ function* applyCompoundProcedure(
     const expression = procedure.body[i]
     yield* evaluate(expression, context)
   }
-  // Enter tail context before evaluating the last expression
+  // If tail call optimization is enabled,
+  // enter tail context before evaluating the last expression
   const lastExpression = procedure.body[procedure.body.length - 1]
-  enterTailContext(context)
+  if (context.variant !== 'no-tco') {
+    enterTailContext(context)
+  }
   const result = yield* evaluate(lastExpression, context)
   exitTailContext(context)
 

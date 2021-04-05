@@ -41,7 +41,7 @@ export interface SourceError {
 }
 
 export type ExecutionMethod = 'native' | 'interpreter' | 'auto'
-export type Variant = 's1'
+export type Variant = 'base' | 'no-tco'
 
 export interface SourceLanguage {
   variant: Variant
