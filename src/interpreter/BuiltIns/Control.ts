@@ -11,25 +11,40 @@ export const apply: EVProcedure = {
   name: 'apply',
   parameterPassingStyle: {
     style: 'var-args',
-    numCompulsoryParameters: 2
+    numCompulsoryParameters: 1
   },
   body: function* (args: ExpressibleValue[], context: Context): ValueGenerator {
     const proc = args[0]
     if (proc.type !== 'EVProcedure') {
       throw new Error(`\`apply' expected a procedure as the first argument, got ${proc.type}`)
     }
-    const lastSuppliedArgument = args[args.length - 1]
-    if (lastSuppliedArgument.type !== 'EVPair') {
-      throw new Error(`\`apply' expected a list as the last argument, but got ${proc.type}`)
-    }
-    const list = flattenPairToList(lastSuppliedArgument)
-    if (list.type === 'ImproperList') {
-      throw new Error(`\`apply' expected a list as the last argument, but got an improper list`)
-    }
 
-    const spreadArgList = args.slice(1, -1)
-    const tailArgList = list.value.map(listElement => listElement.value)
-    const actualArguments = spreadArgList.concat(tailArgList)
+    let actualArguments: ExpressibleValue[]
+    if (args.length === 1) {
+      // no arguments provided
+      actualArguments = []
+    } else {
+      const lastSuppliedArgument = args[args.length - 1]
+      if (lastSuppliedArgument.type !== 'EVPair' && lastSuppliedArgument.type !== 'EVEmptyList') {
+        throw new Error(
+          `\`apply' expected a list as the last argument, but got ${lastSuppliedArgument.type}`
+        )
+      }
+
+      let tailArgList: ExpressibleValue[]
+      if (lastSuppliedArgument.type === 'EVEmptyList') {
+        tailArgList = []
+      } else {
+        const list = flattenPairToList(lastSuppliedArgument)
+        if (list.type === 'ImproperList') {
+          throw new Error(`\`apply' expected a list as the last argument, but got an improper list`)
+        }
+        tailArgList = list.value.map(listElement => listElement.value)
+      }
+
+      const spreadArgList = args.slice(1, -1)
+      actualArguments = spreadArgList.concat(tailArgList)
+    }
 
     if (isParentInTailContext(context)) {
       return {
