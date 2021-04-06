@@ -12,7 +12,7 @@ export const cons: EVProcedure = {
   type: 'EVProcedure',
   variant: 'BuiltInProcedure',
   name: 'cons',
-  parameterPassingStyle: {
+  callSignature: {
     style: 'fixed-args',
     numParams: 2
   },
@@ -34,7 +34,7 @@ export const car: EVProcedure = {
   type: 'EVProcedure',
   variant: 'BuiltInProcedure',
   name: 'car',
-  parameterPassingStyle: {
+  callSignature: {
     style: 'fixed-args',
     numParams: 1
   },
@@ -46,7 +46,7 @@ export const cdr: EVProcedure = {
   type: 'EVProcedure',
   variant: 'BuiltInProcedure',
   name: 'cdr',
-  parameterPassingStyle: {
+  callSignature: {
     style: 'fixed-args',
     numParams: 1
   },
@@ -58,7 +58,7 @@ export const setCar: EVProcedure = {
   type: 'EVProcedure',
   variant: 'BuiltInProcedure',
   name: 'set-car!',
-  parameterPassingStyle: {
+  callSignature: {
     style: 'fixed-args',
     numParams: 2
   },
@@ -77,7 +77,7 @@ export const setCdr: EVProcedure = {
   type: 'EVProcedure',
   variant: 'BuiltInProcedure',
   name: 'set-cdr!',
-  parameterPassingStyle: {
+  callSignature: {
     style: 'fixed-args',
     numParams: 2
   },
@@ -96,7 +96,7 @@ export const list: EVProcedure = {
   type: 'EVProcedure',
   variant: 'BuiltInProcedure',
   name: 'list',
-  parameterPassingStyle: {
+  callSignature: {
     style: 'var-args',
     numCompulsoryParameters: 0
   },

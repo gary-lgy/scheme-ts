@@ -9,7 +9,7 @@ export const macroexpand: EVProcedure = {
   type: 'EVProcedure',
   variant: 'BuiltInProcedure',
   name: 'macroexpand',
-  parameterPassingStyle: {
+  callSignature: {
     style: 'fixed-args',
     numParams: 1
   },
@@ -53,7 +53,7 @@ export const genSym: EVProcedure = {
   type: 'EVProcedure',
   variant: 'BuiltInProcedure',
   name: 'gensym',
-  parameterPassingStyle: {
+  callSignature: {
     style: 'fixed-args',
     numParams: 0
   },

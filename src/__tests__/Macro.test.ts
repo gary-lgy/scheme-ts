@@ -27,8 +27,8 @@ describe('defitition', () => {
   `) as EVMacro
     expect(macro.type).toEqual('EVMacro')
     expect(macro.name).toEqual('swap!')
-    expect(macro.parameterPasssingStyle.style).toEqual('fixed-args')
-    const style = macro.parameterPasssingStyle as FixedArgsWithParameterNames
+    expect(macro.callSignature.style).toEqual('fixed-args')
+    const style = macro.callSignature as FixedArgsWithParameterNames
     expect(style.numParams).toEqual(2)
     expect(style.parameters.map(param => param.name)).toEqual(['a', 'b'])
   })
@@ -42,8 +42,8 @@ describe('defitition', () => {
   `) as EVMacro
       expect(macro.type).toEqual('EVMacro')
       expect(macro.name).toEqual('when')
-      expect(macro.parameterPasssingStyle.style).toEqual('var-args')
-      const style = macro.parameterPasssingStyle as VarArgsWithParameterNames
+      expect(macro.callSignature.style).toEqual('var-args')
+      const style = macro.callSignature as VarArgsWithParameterNames
       expect(style.numCompulsoryParameters).toEqual(2)
       expect(style.compulsoryParameters.map(param => param.name)).toEqual(['test', 'first-body'])
       expect(style.restParameters.name).toEqual('rest-body')
@@ -61,8 +61,8 @@ describe('defitition', () => {
   `) as EVMacro
       expect(macro.type).toEqual('EVMacro')
       expect(macro.name).toEqual('and')
-      expect(macro.parameterPasssingStyle.style).toEqual('var-args')
-      const style = macro.parameterPasssingStyle as VarArgsWithParameterNames
+      expect(macro.callSignature.style).toEqual('var-args')
+      const style = macro.callSignature as VarArgsWithParameterNames
       expect(style.numCompulsoryParameters).toEqual(0)
       expect(style.compulsoryParameters.map(param => param.name)).toEqual([])
       expect(style.restParameters.name).toEqual('args')

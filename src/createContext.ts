@@ -71,7 +71,7 @@ const importExternalBuiltins = (context: Context, externalBuiltIns: CustomBuiltI
   const displayProcedure: EVProcedure = {
     type: 'EVProcedure',
     name: 'display',
-    parameterPassingStyle: {
+    callSignature: {
       style: 'fixed-args',
       numParams: 1
     },

@@ -1,5 +1,5 @@
 import { SyntaxIdentifier, SyntaxList, SyntaxNode } from '../../lang/SchemeSyntax'
-import { NamedParameterPassingStyle } from '../procedure'
+import { NamedCallSignature } from '../procedure'
 
 export type SpecialForm =
   | DefineForm
@@ -30,7 +30,7 @@ export type DefineForm = {
   | {
       variant: 'procedure'
       name: SyntaxIdentifier
-      argumentPassingStyle: NamedParameterPassingStyle
+      callSignature: NamedCallSignature
       body: SyntaxNode[]
     }
 )
@@ -44,7 +44,7 @@ export type SetBangForm = {
 export type LambdaForm = {
   tag: 'lambda'
   body: SyntaxNode[]
-  argumentPassingStyle: NamedParameterPassingStyle
+  callSignature: NamedCallSignature
 }
 
 export type IfForm = {
@@ -127,6 +127,6 @@ export type OrForm = {
 export type DefMacroForm = {
   tag: 'defmacro'
   name: SyntaxIdentifier
-  parameterPassingStyle: NamedParameterPassingStyle
+  callSignature: NamedCallSignature
   body: SyntaxNode[]
 }

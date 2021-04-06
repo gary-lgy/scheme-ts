@@ -9,7 +9,7 @@ export const apply: EVProcedure = {
   type: 'EVProcedure',
   variant: 'BuiltInProcedure',
   name: 'apply',
-  parameterPassingStyle: {
+  callSignature: {
     style: 'var-args',
     numCompulsoryParameters: 1
   },
@@ -62,7 +62,7 @@ export const apply: EVProcedure = {
 export const error: EVProcedure = {
   type: 'EVProcedure',
   name: 'error',
-  parameterPassingStyle: {
+  callSignature: {
     style: 'var-args',
     numCompulsoryParameters: 1
   },

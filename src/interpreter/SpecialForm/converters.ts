@@ -1,7 +1,7 @@
 import * as errors from '../../errors/errors'
 import { SyntaxIdentifier, SyntaxList, SyntaxNode } from '../../lang/SchemeSyntax'
 import { Context } from '../../types'
-import { NamedParameterPassingStyle } from '../procedure'
+import { NamedCallSignature } from '../procedure'
 import { handleRuntimeError, isDefined } from '../util'
 import {
   AndForm,
@@ -100,7 +100,7 @@ const listToDefine = (list: SyntaxList, context: Context): DefineForm => {
       tag: 'define',
       variant: 'procedure',
       name: argsList[0],
-      argumentPassingStyle: {
+      callSignature: {
         style: 'fixed-args',
         numParams: argsList.length - 1,
         parameters: argsList.slice(1)
@@ -134,7 +134,7 @@ const listToDefine = (list: SyntaxList, context: Context): DefineForm => {
       tag: 'define',
       variant: 'procedure',
       name: beforeDot[0],
-      argumentPassingStyle: {
+      callSignature: {
         style: 'var-args',
         numCompulsoryParameters: beforeDot.length - 1,
         compulsoryParameters: beforeDot.slice(1),
@@ -152,19 +152,19 @@ const listToLambda = (list: SyntaxList, context: Context): LambdaForm => {
     return handleRuntimeError(context, new errors.LambdaSyntaxError(list))
   }
 
-  const parameterPassingStyle = parseParameters(list.elements[1])
-  if (!parameterPassingStyle) {
+  const callSignature = parseParameters(list.elements[1])
+  if (!callSignature) {
     return handleRuntimeError(context, new errors.LambdaSyntaxError(list))
   }
 
   return {
     tag: 'lambda',
     body: list.elements.slice(2),
-    argumentPassingStyle: parameterPassingStyle
+    callSignature: callSignature
   }
 }
 
-const parseParameters = (list: SyntaxNode): NamedParameterPassingStyle | null => {
+const parseParameters = (list: SyntaxNode): NamedCallSignature | null => {
   if (list.type === 'List') {
     // Fixed number of arguments
     const parameters: SyntaxIdentifier[] = []
@@ -388,15 +388,15 @@ const listToDefMacro = (list: SyntaxList, context: Context): DefMacroForm => {
     return handleRuntimeError(context, new errors.DefMacroSyntaxError(list))
   }
 
-  const argumentPassingStyle = parseParameters(list.elements[2])
-  if (!argumentPassingStyle) {
+  const callSignature = parseParameters(list.elements[2])
+  if (!callSignature) {
     return handleRuntimeError(context, new errors.DefMacroSyntaxError(list))
   }
 
   return {
     tag: 'defmacro',
     name,
-    parameterPassingStyle: argumentPassingStyle,
+    callSignature: callSignature,
     body: list.elements.slice(3)
   }
 }

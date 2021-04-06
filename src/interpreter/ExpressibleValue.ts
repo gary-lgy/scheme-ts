@@ -1,7 +1,7 @@
 import { SyntaxNode } from '../lang/SchemeSyntax'
 import { Context, Environment } from '../types'
 import { ValueGenerator } from './interpreter'
-import { NamedParameterPassingStyle, ParameterPassingStyle } from './procedure'
+import { CallSignature, NamedCallSignature } from './procedure'
 
 // An expressible value is a value that can be the result of an evaluation
 export type ExpressibleValue = NonTailCallExpressibleValue | TailCall
@@ -72,7 +72,7 @@ export type EVProcedure = {
 
 export type EVCompoundProcedure = {
   variant: 'CompoundProcedure'
-  parameterPassingStyle: NamedParameterPassingStyle
+  callSignature: NamedCallSignature
   body: SyntaxNode[]
   environment: Environment
   name: string
@@ -80,7 +80,7 @@ export type EVCompoundProcedure = {
 
 export type EVBuiltInProcedure = {
   variant: 'BuiltInProcedure'
-  parameterPassingStyle: ParameterPassingStyle
+  callSignature: CallSignature
   name: string
   body:
     | ((args: ExpressibleValue[], context: Context) => ExpressibleValue)
@@ -90,7 +90,7 @@ export type EVBuiltInProcedure = {
 export type EVMacro = {
   type: 'EVMacro'
   name: string
-  parameterPasssingStyle: NamedParameterPassingStyle
+  callSignature: NamedCallSignature
   body: SyntaxNode[]
   environment: Environment
 }

@@ -16,14 +16,14 @@ import { handleRuntimeError, introduceBinding, popEnvironment, pushEnvironment }
 
 // For BuiltIn procedures, we only need to check the number of arguments
 // The parameter names are meaningless and unnecessary
-export type ParameterPassingStyle = FixedArgs | VarArgs
+export type CallSignature = FixedArgs | VarArgs
 
 type FixedArgs = { style: 'fixed-args'; numParams: number }
 type VarArgs = { style: 'var-args'; numCompulsoryParameters: number }
 
 // For compound procedures, we need both the number of arguments and the parameter names
 // in order to extend the function environment with the arguments
-export type NamedParameterPassingStyle = FixedArgsWithParameterNames | VarArgsWithParameterNames
+export type NamedCallSignature = FixedArgsWithParameterNames | VarArgsWithParameterNames
 
 export type FixedArgsWithParameterNames = FixedArgs & { parameters: SyntaxIdentifier[] }
 export type VarArgsWithParameterNames = VarArgs & {
@@ -36,30 +36,25 @@ export type ParameterArgumentPair = { parameter: SyntaxIdentifier; argument: Exp
 export const checkNumberOfArguments = (
   context: Context,
   name: string,
-  argumentPassingStyle: ParameterPassingStyle,
+  callSignature: CallSignature,
   numArgs: number,
   callExpression: SyntaxNode
 ) => {
-  if (argumentPassingStyle.style === 'fixed-args' && argumentPassingStyle.numParams !== numArgs) {
+  if (callSignature.style === 'fixed-args' && callSignature.numParams !== numArgs) {
     handleRuntimeError(
       context,
-      new errors.InvalidNumberOfArguments(
-        callExpression,
-        name,
-        argumentPassingStyle.numParams,
-        numArgs
-      )
+      new errors.InvalidNumberOfArguments(callExpression, name, callSignature.numParams, numArgs)
     )
   } else if (
-    argumentPassingStyle.style === 'var-args' &&
-    numArgs < argumentPassingStyle.numCompulsoryParameters
+    callSignature.style === 'var-args' &&
+    numArgs < callSignature.numCompulsoryParameters
   ) {
     handleRuntimeError(
       context,
       new errors.NotEnoughArguments(
         callExpression,
         name,
-        argumentPassingStyle.numCompulsoryParameters,
+        callSignature.numCompulsoryParameters,
         numArgs
       )
     )
@@ -113,7 +108,7 @@ export function* apply(
     checkNumberOfArguments(
       context,
       procedure.name,
-      procedure.parameterPassingStyle,
+      procedure.callSignature,
       suppliedArgs.length,
       node
     )
@@ -144,7 +139,7 @@ function* applyCompoundProcedure(
     context,
     procedure.environment,
     procedure.name,
-    matchArgumentsToParameters(procedure.parameterPassingStyle, suppliedArgs)
+    matchArgumentsToParameters(procedure.callSignature, suppliedArgs)
   )
   pushEnvironment(context, environment)
 
@@ -190,22 +185,22 @@ function* applyBuiltInProcedure(
   }
 }
 
-/** Match the arguments with parameters according to the argument passing style. */
+/** Match the arguments with parameters according to the call signature. */
 export const matchArgumentsToParameters = (
-  parameterPassingStyle: NamedParameterPassingStyle,
+  callSignature: NamedCallSignature,
   args: ExpressibleValue[]
 ): ParameterArgumentPair[] => {
-  if (parameterPassingStyle.style === 'fixed-args') {
-    return parameterPassingStyle.parameters.map((parameter, index) => ({
+  if (callSignature.style === 'fixed-args') {
+    return callSignature.parameters.map((parameter, index) => ({
       parameter,
       argument: args[index]
     }))
   } else {
-    return parameterPassingStyle.compulsoryParameters
+    return callSignature.compulsoryParameters
       .map((parameter, index) => ({ parameter, argument: args[index] }))
       .concat({
-        parameter: parameterPassingStyle.restParameters,
-        argument: makeList(...args.slice(parameterPassingStyle.numCompulsoryParameters))
+        parameter: callSignature.restParameters,
+        argument: makeList(...args.slice(callSignature.numCompulsoryParameters))
       })
   }
 }

@@ -4,7 +4,7 @@ export const eq: EVProcedure = {
   type: 'EVProcedure',
   variant: 'BuiltInProcedure',
   name: 'eq?',
-  parameterPassingStyle: {
+  callSignature: {
     style: 'fixed-args',
     numParams: 2
   },
@@ -59,7 +59,7 @@ export const equal: EVProcedure = {
   type: 'EVProcedure',
   variant: 'BuiltInProcedure',
   name: 'equal?',
-  parameterPassingStyle: {
+  callSignature: {
     style: 'fixed-args',
     numParams: 2
   },

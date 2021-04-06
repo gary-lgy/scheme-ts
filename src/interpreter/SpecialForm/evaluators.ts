@@ -75,7 +75,7 @@ function* evaluateDefineForm(defineForm: DefineForm, context: Context): ValueGen
   } else {
     value = {
       type: 'EVProcedure',
-      parameterPassingStyle: defineForm.argumentPassingStyle,
+      callSignature: defineForm.callSignature,
       name: defineForm.name.name,
       variant: 'CompoundProcedure',
       body: defineForm.body,
@@ -91,7 +91,7 @@ function* evaluateDefineForm(defineForm: DefineForm, context: Context): ValueGen
 function* evaluateLambdaForm(lambdaForm: LambdaForm, context: Context): ValueGenerator {
   return {
     type: 'EVProcedure',
-    parameterPassingStyle: lambdaForm.argumentPassingStyle,
+    callSignature: lambdaForm.callSignature,
     name: '[anonymous procedure]',
     variant: 'CompoundProcedure',
     body: lambdaForm.body,
@@ -259,7 +259,7 @@ function* evaluateDefMacroForm(defMacroForm: DefMacroForm, context: Context): Va
     name: defMacroForm.name.name,
     environment: context.runtime.environments[0],
     body: defMacroForm.body,
-    parameterPasssingStyle: defMacroForm.parameterPassingStyle
+    callSignature: defMacroForm.callSignature
   }
   const frame = context.runtime.environments[0].head
   introduceBinding(context, frame, defMacroForm.name.isFromSource, defMacroForm.name.name, macro)
