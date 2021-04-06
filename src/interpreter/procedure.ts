@@ -25,8 +25,8 @@ type VarArgs = { style: 'var-args'; numCompulsoryParameters: number }
 // in order to extend the function environment with the arguments
 export type NamedParameterPassingStyle = FixedArgsWithParameterNames | VarArgsWithParameterNames
 
-type FixedArgsWithParameterNames = FixedArgs & { parameters: SyntaxIdentifier[] }
-type VarArgsWithParameterNames = VarArgs & {
+export type FixedArgsWithParameterNames = FixedArgs & { parameters: SyntaxIdentifier[] }
+export type VarArgsWithParameterNames = VarArgs & {
   compulsoryParameters: SyntaxIdentifier[]
   restParameters: SyntaxIdentifier
 }

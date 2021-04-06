@@ -255,7 +255,7 @@ function* evaluateDefMacroForm(defMacroForm: DefMacroForm, context: Context): Va
     name: defMacroForm.name.name,
     environment: context.runtime.environments[0],
     body: defMacroForm.body,
-    argumentPassingStyle: defMacroForm.parameterPassingStyle
+    parameterPasssingStyle: defMacroForm.parameterPassingStyle
   }
   const frame = context.runtime.environments[0].head
   frame[defMacroForm.name.name] = macro

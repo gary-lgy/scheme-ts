@@ -26,9 +26,15 @@ export function* expandMacro(
   suppliedArgs: ExpressibleValue[],
   node: SyntaxNode
 ): ValueGenerator {
-  checkNumberOfArguments(context, macro.name, macro.argumentPassingStyle, suppliedArgs.length, node)
+  checkNumberOfArguments(
+    context,
+    macro.name,
+    macro.parameterPasssingStyle,
+    suppliedArgs.length,
+    node
+  )
   const { parameters, args: actualArgs } = matchArgumentsToParameters(
-    macro.argumentPassingStyle,
+    macro.parameterPasssingStyle,
     suppliedArgs
   )
   const environment = extendEnvironmentWithNewBindings(

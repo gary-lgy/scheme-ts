@@ -88,7 +88,7 @@ export type EVBuiltInProcedure = {
 export type EVMacro = {
   type: 'EVMacro'
   name: string
-  argumentPassingStyle: NamedParameterPassingStyle
+  parameterPasssingStyle: NamedParameterPassingStyle
   body: SyntaxNode[]
   environment: Environment
 }
