@@ -1,5 +1,5 @@
 import { SourceLocation } from './lang/SchemeSyntax'
-import { SourceLanguage } from './types'
+import { SourceLanguage, Variant } from './types'
 
 export const CUT = 'cut' // cut operator for Source 4.3
 export const TRY_AGAIN = 'try_again' // command for Source 4.3
@@ -22,4 +22,10 @@ export const JSSLANG_PROPERTIES = {
   factorToIncreaseBy: 10
 }
 
-export const sourceLanguages: SourceLanguage[] = [{ variant: 'base' }, { variant: 'no-tco' }]
+export const sourceLanguages: SourceLanguage[] = [
+  { variant: 'base' },
+  { variant: 'no-tco' },
+  { variant: 'macro' }
+]
+
+export const defaultVariant: Variant = 'base'

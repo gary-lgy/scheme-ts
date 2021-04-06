@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 import { start } from 'repl' // 'repl' here refers to the module named 'repl' in index.d.ts
-import { sourceLanguages } from '../constants'
+import { defaultVariant, sourceLanguages } from '../constants'
 import { createContext, IOptions, parseError, runInContext } from '../index'
 import { ExecutionMethod, Variant } from '../types'
 import { stringify } from '../utils/stringify'
 
 function startRepl(
   executionMethod: ExecutionMethod = 'interpreter',
-  variant: Variant = 'base',
+  variant: Variant = defaultVariant,
   useRepl: boolean,
   prelude = ''
 ) {
@@ -29,7 +29,7 @@ function startRepl(
       start(
         // the object being passed as argument fits the interface ReplOptions in the repl module.
         {
-          eval: (cmd, unusedContext, unusedFilename, callback) => {
+          eval: (cmd, _unusedContext, _unusedFilename, callback) => {
             runInContext(cmd, context, options).then(obj => {
               if (obj.status === 'finished' || obj.status === 'suspended-non-det') {
                 callback(null, obj.value)
@@ -65,7 +65,7 @@ function validChapterVariant(variant: any): boolean {
 function main() {
   const opt = require('node-getopt')
     .create([
-      ['v', 'variant=VARIANT', 'set the Source variant (i.e., no-tco)', 'base'],
+      ['v', 'variant=VARIANT', 'set the Source variant (i.e., no-tco)', defaultVariant],
       ['h', 'help', 'display this help'],
       ['e', 'eval', "don't show REPL, only display output of evaluation"]
     ])

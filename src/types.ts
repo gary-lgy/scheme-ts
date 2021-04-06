@@ -41,7 +41,11 @@ export interface SourceError {
 }
 
 export type ExecutionMethod = 'native' | 'interpreter' | 'auto'
-export type Variant = 'base' | 'no-tco' | 'macro'
+
+export type BaseVariant = 'base'
+export type NoTCOVariant = 'no-tco'
+export type MacroVariant = 'macro'
+export type Variant = BaseVariant | NoTCOVariant | MacroVariant
 
 export interface SourceLanguage {
   variant: Variant

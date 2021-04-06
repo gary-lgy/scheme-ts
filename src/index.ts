@@ -1,4 +1,5 @@
 import { SourceMapConsumer } from 'source-map'
+import { defaultVariant } from './constants'
 import createContext from './createContext'
 import { evaluateProgram } from './interpreter/interpreter'
 import { parse } from './parser/parser'
@@ -33,7 +34,7 @@ const DEFAULT_OPTIONS: IOptions = {
   steps: 1000,
   stepLimit: 1000,
   executionMethod: 'auto',
-  variant: 'base',
+  variant: defaultVariant,
   originalMaxExecTime: 1000,
   isPrelude: false
 }

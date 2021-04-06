@@ -1,3 +1,4 @@
+import { defaultVariant } from './constants'
 import { importNativeBuiltins } from './interpreter/BuiltIns'
 import { EVProcedure, ExpressibleValue } from './interpreter/ExpressibleValue'
 import * as misc from './stdlib/misc'
@@ -113,7 +114,7 @@ export const importBuiltins = (context: Context, externalBuiltIns: CustomBuiltIn
 }
 
 const createContext = <T>(
-  variant: Variant = 'base',
+  variant: Variant = defaultVariant,
   externalSymbols: string[] = [],
   externalContext?: T,
   externalBuiltIns: CustomBuiltIns = defaultBuiltIns,
