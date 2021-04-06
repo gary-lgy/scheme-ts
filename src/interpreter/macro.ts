@@ -23,14 +23,13 @@ import { handleRuntimeError, popEnvironment, pushEnvironment } from './util'
 export function* expandMacro(
   context: Context,
   macro: EVMacro,
-  suppliedArgs: SyntaxNode[],
+  suppliedArgs: ExpressibleValue[],
   node: SyntaxNode
-): Generator<Context, SyntaxNode> {
+): ValueGenerator {
   checkNumberOfArguments(context, macro.name, macro.argumentPassingStyle, suppliedArgs.length, node)
-  // Convert the syntax forms to expressible values for use in the macro body
   const { parameters, args: actualArgs } = matchArgumentsToParameters(
     macro.argumentPassingStyle,
-    suppliedArgs.map(syntaxToExpressibleValue)
+    suppliedArgs
   )
   const environment = extendEnvironmentWithNewBindings(
     macro.environment,
@@ -48,11 +47,7 @@ export function* expandMacro(
 
   popEnvironment(context)
 
-  try {
-    return expressibleValueToSyntax(result, node)
-  } catch (e: any) {
-    return handleRuntimeError(context, new MacroExpansionError(e, node))
-  }
+  return result
 }
 
 /**
@@ -64,7 +59,18 @@ export function* useMacro(
   suppliedArgs: SyntaxNode[],
   node: SyntaxNode
 ): ValueGenerator {
-  const expandedSyntax = yield* expandMacro(context, macro, suppliedArgs, node)
+  // Convert the syntax forms to expressible values for use in the macro body
+  const suppliedSExpressions = suppliedArgs.map(syntaxToExpressibleValue)
+
+  const expandedSExpression = yield* expandMacro(context, macro, suppliedSExpressions, node)
+
+  let expandedSyntax: SyntaxNode
+  try {
+    expandedSyntax = expressibleValueToSyntax(expandedSExpression, node)
+  } catch (e: any) {
+    return handleRuntimeError(context, new MacroExpansionError(e, node))
+  }
+
   return yield* evaluate(expandedSyntax, context)
 }
 
