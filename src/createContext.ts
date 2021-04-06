@@ -1,6 +1,3 @@
-// Variable determining chapter of Source is contained in this file.
-
-import { GLOBAL } from './constants'
 import { importNativeBuiltins } from './interpreter/BuiltIns'
 import { EVProcedure, ExpressibleValue } from './interpreter/ExpressibleValue'
 import * as misc from './stdlib/misc'
@@ -61,14 +58,6 @@ const defineSymbol = (context: Context, name: string, value: ExpressibleValue) =
   globalEnvironment.head[name] = value
 }
 
-export const importExternalSymbols = (context: Context, externalSymbols: string[]) => {
-  ensureGlobalEnvironmentExist(context)
-
-  externalSymbols.forEach(symbol => {
-    defineSymbol(context, symbol, GLOBAL[symbol])
-  })
-}
-
 const importExternalBuiltins = (context: Context, externalBuiltIns: CustomBuiltIns) => {
   const rawDisplay = (v: Value) =>
     externalBuiltIns.rawDisplay(
@@ -91,24 +80,7 @@ const importExternalBuiltins = (context: Context, externalBuiltIns: CustomBuiltI
     }
   }
 
-  const errorProcedure: EVProcedure = {
-    type: 'EVProcedure',
-    name: 'error',
-    parameterPassingStyle: {
-      style: 'var-args',
-      numCompulsoryParameters: 1
-    },
-    variant: 'BuiltInProcedure',
-    body: (args: ExpressibleValue[]): never => {
-      if (args[0].type !== 'EVString') {
-        throw new Error(`error expected the first argument to be a string, got ${args[0].type}`)
-      }
-      misc.error_message(args[0].value, args.slice(1))
-    }
-  }
-
   defineSymbol(context, 'display', displayProcedure)
-  defineSymbol(context, 'error', errorProcedure)
 }
 
 /**
@@ -121,13 +93,16 @@ const defaultBuiltIns: CustomBuiltIns = {
   prompt: misc.rawDisplay,
   // See issue #11
   alert: misc.rawDisplay,
-  visualiseList: (v: Value) => {
+  visualiseList: () => {
     throw new Error('List visualizer is not enabled')
   }
 }
 
 const importPrelude = (context: Context) => {
-  context.prelude = stdlibPrelude
+  if (context.variant !== 'macro') {
+    context.prelude = stdlibPrelude
+  }
+  // TODO: add prelude for macro variant
 }
 
 export const importBuiltins = (context: Context, externalBuiltIns: CustomBuiltIns) => {
@@ -148,7 +123,6 @@ const createContext = <T>(
 
   importPrelude(context)
   importBuiltins(context, externalBuiltIns)
-  importExternalSymbols(context, externalSymbols)
 
   return context
 }

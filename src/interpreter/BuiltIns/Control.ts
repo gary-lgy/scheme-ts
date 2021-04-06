@@ -1,5 +1,6 @@
 import { Context } from '../../types'
 import { flattenPairToList } from '../../utils/listHelpers'
+import { stringify } from '../../utils/stringify'
 import { EVProcedure, ExpressibleValue } from '../ExpressibleValue'
 import { ValueGenerator } from '../interpreter'
 import { apply as applyProcedure, isParentInTailContext } from '../procedure'
@@ -40,5 +41,19 @@ export const apply: EVProcedure = {
     } else {
       return yield* applyProcedure(context, proc, actualArguments, context.runtime.nodes[0])
     }
+  }
+}
+
+export const error: EVProcedure = {
+  type: 'EVProcedure',
+  name: 'error',
+  parameterPassingStyle: {
+    style: 'var-args',
+    numCompulsoryParameters: 1
+  },
+  variant: 'BuiltInProcedure',
+  body: (args: ExpressibleValue[]): never => {
+    const output = args.map(value => stringify(value)).join(' ')
+    throw new Error(output)
   }
 }

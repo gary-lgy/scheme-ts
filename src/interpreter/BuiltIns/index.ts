@@ -13,7 +13,7 @@ import {
   remainder,
   subtract
 } from './Arithmetic'
-import { apply } from './Control'
+import { apply, error } from './Control'
 import { eq, equal, eqv } from './Equal'
 import { genSym, macroexpand } from './Macro'
 import { car, cdr, cons, list, setCar, setCdr } from './Pair'
@@ -59,7 +59,10 @@ export const importNativeBuiltins = (context: Context) => {
   defineBuiltin(frame, 'equal?', equal)
 
   defineBuiltin(frame, 'apply', apply)
+  defineBuiltin(frame, 'error', error)
 
-  defineBuiltin(frame, 'macroexpand', macroexpand)
-  defineBuiltin(frame, 'gensym', genSym)
+  if (context.variant === 'macro') {
+    defineBuiltin(frame, 'macroexpand', macroexpand)
+    defineBuiltin(frame, 'gensym', genSym)
+  }
 }

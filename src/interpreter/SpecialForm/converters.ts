@@ -34,35 +34,48 @@ export const listToSpecialForm = (
   context: Context
 ): SpecialForm | null => {
   switch (tag) {
+    // These primitives are present for all sublanguages
     case 'define':
       return listToDefine(list, context)
     case 'lambda':
       return listToLambda(list, context)
-    case 'defmacro':
-      return listToDefMacro(list, context)
     case 'set!':
       return listToSetBang(list, context)
     case 'if':
       return listToIf(list, context)
-    case 'let':
-    case 'let*':
-    case 'letrec':
-      return listToLet(tag, list, context)
-    case 'cond':
-      return listToCond(list, context)
-    case 'begin':
-      return listToBegin(list, context)
     case 'quote':
     case 'quasiquote':
     case 'unquote':
     case 'unquote-splicing':
       return listToQuote(tag, list, context)
-    case 'and':
-      return listToAnd(list)
-    case 'or':
-      return listToOr(list)
-    default:
-      return null
+  }
+
+  if (context.variant === 'macro') {
+    // defmacro is only available for the sublanguage with macros
+    switch (tag) {
+      case 'defmacro':
+        return listToDefMacro(list, context)
+      default:
+        return null
+    }
+  } else {
+    // Hardwired special forms are only available for the sublanguages without macros
+    switch (tag) {
+      case 'let':
+      case 'let*':
+      case 'letrec':
+        return listToLet(tag, list, context)
+      case 'cond':
+        return listToCond(list, context)
+      case 'begin':
+        return listToBegin(list, context)
+      case 'and':
+        return listToAnd(list)
+      case 'or':
+        return listToOr(list)
+      default:
+        return null
+    }
   }
 }
 
