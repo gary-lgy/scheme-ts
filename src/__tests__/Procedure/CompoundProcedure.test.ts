@@ -1,6 +1,6 @@
-import { InvalidNumberOfArguments, NotEnoughArguments } from '../errors/errors'
-import { makeList, makeNumber } from '../interpreter/ExpressibleValue'
-import { evaluateUntilDone } from '../testHelpers'
+import { InvalidNumberOfArguments, NotEnoughArguments } from '../../errors/errors'
+import { makeList, makeNumber } from '../../interpreter/ExpressibleValue'
+import { evaluateUntilDone } from '../../testHelpers'
 
 describe('number of arguments', () => {
   describe('fixed number of arguments', () => {

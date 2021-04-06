@@ -217,13 +217,6 @@ export const isParentInTailContext = (context: Context): boolean => {
   return context.runtime.inTailContext.length >= 2 && context.runtime.inTailContext[1]
 }
 
-/**
- * Check whether the current node is in tail context
- */
-export const isNodeInTailContext = (context: Context): boolean => {
-  return context.runtime.inTailContext[0]
-}
-
 /** Unconditionally enter tail context.
  * Note that this function is intentionally unexported
  * because we can enter tail context unconditionally only

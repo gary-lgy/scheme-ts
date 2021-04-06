@@ -1,7 +1,14 @@
-import { EVMacro, makeList, makeNumber, makeSymbol } from '../interpreter/ExpressibleValue'
+import {
+  EVMacro,
+  EVPair,
+  EVSymbol,
+  makeList,
+  makeNumber,
+  makeSymbol
+} from '../interpreter/ExpressibleValue'
 import { FixedArgsWithParameterNames, VarArgsWithParameterNames } from '../interpreter/procedure'
-import { syntheticIdentifierPrefix } from '../interpreter/util'
 import { evaluateUntilDone } from '../testHelpers'
+import { flattenPairToList, List } from '../utils/listHelpers'
 
 describe('defitition', () => {
   test('fixed-args', () => {
@@ -59,26 +66,20 @@ describe('defitition', () => {
 
 describe('gensym', () => {
   test('returns a synthetic identifier', () => {
-    expect(evaluateUntilDone('(gensym)')).toEqual(makeSymbol(syntheticIdentifierPrefix + 0, false))
+    expect((evaluateUntilDone('(gensym)') as any).isFromSource).toBe(false)
   })
 
   test('returns a different identifier for each invocation', () => {
-    expect(
-      evaluateUntilDone(
-        '(list (gensym) (gensym) (gensym) (gensym) (gensym) (gensym) (gensym) (gensym))'
-      )
-    ).toEqual(
-      makeList(
-        makeSymbol(syntheticIdentifierPrefix + 0, false),
-        makeSymbol(syntheticIdentifierPrefix + 1, false),
-        makeSymbol(syntheticIdentifierPrefix + 2, false),
-        makeSymbol(syntheticIdentifierPrefix + 3, false),
-        makeSymbol(syntheticIdentifierPrefix + 4, false),
-        makeSymbol(syntheticIdentifierPrefix + 5, false),
-        makeSymbol(syntheticIdentifierPrefix + 6, false),
-        makeSymbol(syntheticIdentifierPrefix + 7, false)
-      )
-    )
+    const result = evaluateUntilDone(
+      '(list (gensym) (gensym) (gensym) (gensym) (gensym) (gensym) (gensym) (gensym))'
+    ) as EVPair
+
+    const symbols = (flattenPairToList(result).value as List).map(
+      element => element.value
+    ) as EVSymbol[]
+
+    const symbolsSet = new Set(symbols)
+    expect(symbolsSet.size).toEqual(symbols.length)
   })
 })
 
@@ -146,6 +147,22 @@ describe('use', () => {
         (list x y)
       `)
       expect(result).toEqual(makeList(makeNumber(20), makeNumber(10)))
+    })
+
+    describe('passsing synthetic symbol to a nested macro', () => {
+      test('should work correctly', () => {
+        const result = evaluateUntilDone(`
+        (defmacro let-and-get-10 (x)
+          \`(let ((,x 10)) ,x))
+
+        (defmacro test ()
+          (let ((temp (gensym)))
+            \`(let ((,temp 20))
+                (let-and-get-10 ,temp))))
+        (test)
+      `)
+        expect(result).toEqual(makeNumber(10))
+      })
     })
   })
 })

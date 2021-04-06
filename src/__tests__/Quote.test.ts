@@ -243,4 +243,10 @@ describe('quasiquote', () => {
     const expected = '(list 3 4 5 6)'
     expect(actual).toEqual(expected)
   })
+
+  test('quasiquote dotted list', () => {
+    const actual = evaluateUntilDone('`(1 2 . 3)')
+    const expected = makePair(makeNumber(1), makePair(makeNumber(2), makeNumber(3)))
+    expect(actual).toEqual(expected)
+  })
 })
