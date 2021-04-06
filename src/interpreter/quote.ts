@@ -9,7 +9,7 @@ import {
 } from '../lang/SchemeSyntax'
 import { Context } from '../types'
 import { flattenPairToList } from '../utils/listHelpers'
-import { ExpressibleValue, makeImproperList, makeList } from './ExpressibleValue'
+import { ExpressibleValue, makeImproperList, makeList, makeSymbol } from './ExpressibleValue'
 import { evaluate, ValueGenerator } from './interpreter'
 import { handleRuntimeError, isDefined } from './util'
 
@@ -35,7 +35,8 @@ const quoteLiteral = (
     case 'Identifier':
       return {
         type: 'EVSymbol',
-        value: literal.name
+        value: literal.name,
+        isFromSource: literal.isFromSource
       }
   }
 }
@@ -91,7 +92,7 @@ function* handleSpecialQuotationForm(
     case 'quasiquote': {
       return [
         makeList(
-          { type: 'EVSymbol', value: 'quasiquote' },
+          makeSymbol(quoteType, true),
           ...(yield* quasiquoteExpressionInner(
             subExpression,
             context,
@@ -108,7 +109,7 @@ function* handleSpecialQuotationForm(
       } else if (quoteLevel > unquoteLevel) {
         return [
           makeList(
-            { type: 'EVSymbol', value: 'unquote' },
+            makeSymbol(quoteType, true),
             ...(yield* quasiquoteExpressionInner(
               subExpression,
               context,
@@ -154,7 +155,7 @@ function* handleSpecialQuotationForm(
       } else if (quoteLevel > unquoteLevel) {
         return [
           makeList(
-            { type: 'EVSymbol', value: 'unquote-splicing' },
+            makeSymbol(quoteType, true),
             ...(yield* quasiquoteExpressionInner(
               subExpression,
               context,

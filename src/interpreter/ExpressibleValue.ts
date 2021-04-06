@@ -43,12 +43,14 @@ export const makeString = (value: string): EVString => {
 export type EVSymbol = {
   type: 'EVSymbol'
   value: string
+  isFromSource: boolean
 }
 
-export const makeSymbol = (value: string): EVSymbol => {
+export const makeSymbol = (value: string, isFromSource: boolean = true): EVSymbol => {
   return {
     type: 'EVSymbol',
-    value
+    value,
+    isFromSource
   }
 }
 

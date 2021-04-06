@@ -65,5 +65,8 @@ export interface SyntaxBool {
 export interface SyntaxIdentifier {
   type: 'Identifier'
   name: string
+  // Whether the identifier came from the source code or macro expansion.
+  // Used to disallow the user from using certain identifiers so that symbols from gensym cannot collide with identifiers from the source code.
+  isFromSource: boolean
   loc: SourceLocation
 }

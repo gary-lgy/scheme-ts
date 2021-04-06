@@ -33,15 +33,11 @@ export function* expandMacro(
     suppliedArgs.length,
     node
   )
-  const { parameters, args: actualArgs } = matchArgumentsToParameters(
-    macro.parameterPasssingStyle,
-    suppliedArgs
-  )
   const environment = extendEnvironmentWithNewBindings(
+    context,
     macro.environment,
     macro.name,
-    parameters,
-    actualArgs
+    matchArgumentsToParameters(macro.parameterPasssingStyle, suppliedArgs)
   )
   pushEnvironment(context, environment)
 
@@ -89,7 +85,7 @@ const syntaxToExpressibleValue = (syntax: SyntaxNode): ExpressibleValue => {
     case 'StringLiteral':
       return makeString(syntax.value)
     case 'Identifier':
-      return makeSymbol(syntax.name)
+      return makeSymbol(syntax.name, syntax.isFromSource)
     case 'DottedList':
       return makeImproperList(
         syntax.pre.map(syntaxToExpressibleValue),
@@ -109,7 +105,12 @@ const expressibleValueToSyntax = (value: ExpressibleValue, macroNode: SyntaxNode
     case 'EVString':
       return { type: 'StringLiteral', value: value.value, loc: macroNode.loc }
     case 'EVSymbol':
-      return { type: 'Identifier', name: value.value, loc: macroNode.loc }
+      return {
+        type: 'Identifier',
+        name: value.value,
+        isFromSource: value.isFromSource,
+        loc: macroNode.loc
+      }
     case 'EVPair':
       const list = flattenPairToList(value)
       if (list.type === 'List') {

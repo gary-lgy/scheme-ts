@@ -93,7 +93,7 @@ class ExpressionGenerator implements SchemeVisitor<SyntaxNode> {
     return {
       type: 'List',
       elements: [
-        { type: 'Identifier', name: 'quote', loc: contextToLocation(ctx) },
+        { type: 'Identifier', name: 'quote', isFromSource: true, loc: contextToLocation(ctx) },
         ctx.expression().accept(this)
       ],
       loc: contextToLocation(ctx)
@@ -104,7 +104,7 @@ class ExpressionGenerator implements SchemeVisitor<SyntaxNode> {
     return {
       type: 'List',
       elements: [
-        { type: 'Identifier', name: 'quasiquote', loc: contextToLocation(ctx) },
+        { type: 'Identifier', name: 'quasiquote', isFromSource: true, loc: contextToLocation(ctx) },
         ctx.expression().accept(this)
       ],
       loc: contextToLocation(ctx)
@@ -115,7 +115,7 @@ class ExpressionGenerator implements SchemeVisitor<SyntaxNode> {
     return {
       type: 'List',
       elements: [
-        { type: 'Identifier', name: 'unquote', loc: contextToLocation(ctx) },
+        { type: 'Identifier', name: 'unquote', isFromSource: true, loc: contextToLocation(ctx) },
         ctx.expression().accept(this)
       ],
       loc: contextToLocation(ctx)
@@ -126,7 +126,12 @@ class ExpressionGenerator implements SchemeVisitor<SyntaxNode> {
     return {
       type: 'List',
       elements: [
-        { type: 'Identifier', name: 'unquote-splicing', loc: contextToLocation(ctx) },
+        {
+          type: 'Identifier',
+          name: 'unquote-splicing',
+          isFromSource: true,
+          loc: contextToLocation(ctx)
+        },
         ctx.expression().accept(this)
       ],
       loc: contextToLocation(ctx)
@@ -163,6 +168,7 @@ class ExpressionGenerator implements SchemeVisitor<SyntaxNode> {
   visitIdentifier(ctx: IdentifierContext): SyntaxIdentifier {
     return {
       type: 'Identifier',
+      isFromSource: true,
       name: ctx.text,
       loc: contextToLocation(ctx)
     }

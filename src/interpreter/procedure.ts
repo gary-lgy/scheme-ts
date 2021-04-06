@@ -12,7 +12,7 @@ import {
   NonTailCallExpressibleValue
 } from './ExpressibleValue'
 import { evaluate, ValueGenerator } from './interpreter'
-import { handleRuntimeError, popEnvironment, pushEnvironment } from './util'
+import { handleRuntimeError, introduceBinding, popEnvironment, pushEnvironment } from './util'
 
 // For BuiltIn procedures, we only need to check the number of arguments
 // The parameter names are meaningless and unnecessary
@@ -30,6 +30,8 @@ export type VarArgsWithParameterNames = VarArgs & {
   compulsoryParameters: SyntaxIdentifier[]
   restParameters: SyntaxIdentifier
 }
+
+export type ParameterArgumentPair = { parameter: SyntaxIdentifier; argument: ExpressibleValue }
 
 export const checkNumberOfArguments = (
   context: Context,
@@ -76,21 +78,28 @@ export function* listOfArguments(
 }
 
 export const extendEnvironmentWithNewBindings = (
+  context: Context,
   environment: Environment,
   procedureName: string,
-  parameters: string[],
-  args: ExpressibleValue[]
+  paramArgPairs: ParameterArgumentPair[]
 ): Environment => {
   const frame = {}
   const newEnvironment: Environment = {
     name: procedureName,
     tail: environment,
     head: frame,
-    procedureName: '(' + [procedureName, ...args.map(arg => stringify(arg))].join(' ') + ')'
+    procedureName:
+      '(' + [procedureName, ...paramArgPairs.map(pair => stringify(pair.argument))].join(' ') + ')'
   }
-  parameters.forEach((param, index) => {
-    frame[param] = args[index]
-  })
+  paramArgPairs.forEach(pair =>
+    introduceBinding(
+      context,
+      frame,
+      pair.parameter.isFromSource,
+      pair.parameter.name,
+      pair.argument
+    )
+  )
   return newEnvironment
 }
 
@@ -131,15 +140,11 @@ function* applyCompoundProcedure(
   procedure: EVCompoundProcedure,
   suppliedArgs: ExpressibleValue[]
 ): ValueGenerator {
-  const { parameters, args: argsToPass } = matchArgumentsToParameters(
-    procedure.parameterPassingStyle,
-    suppliedArgs
-  )
   const environment = extendEnvironmentWithNewBindings(
+    context,
     procedure.environment,
     procedure.name,
-    parameters,
-    argsToPass
+    matchArgumentsToParameters(procedure.parameterPassingStyle, suppliedArgs)
   )
   pushEnvironment(context, environment)
 
@@ -187,25 +192,21 @@ function* applyBuiltInProcedure(
 
 /** Match the arguments with parameters according to the argument passing style. */
 export const matchArgumentsToParameters = (
-  argumentPassingStyle: NamedParameterPassingStyle,
+  parameterPassingStyle: NamedParameterPassingStyle,
   args: ExpressibleValue[]
-): { parameters: string[]; args: ExpressibleValue[] } => {
-  if (argumentPassingStyle.style === 'fixed-args') {
-    return {
-      parameters: argumentPassingStyle.parameters.map(param => param.name),
-      args
-    }
+): ParameterArgumentPair[] => {
+  if (parameterPassingStyle.style === 'fixed-args') {
+    return parameterPassingStyle.parameters.map((parameter, index) => ({
+      parameter,
+      argument: args[index]
+    }))
   } else {
-    return {
-      parameters: [
-        ...argumentPassingStyle.compulsoryParameters.map(param => param.name),
-        argumentPassingStyle.restParameters.name
-      ],
-      args: [
-        ...args.slice(0, argumentPassingStyle.numCompulsoryParameters),
-        makeList(...args.slice(argumentPassingStyle.numCompulsoryParameters))
-      ]
-    }
+    return parameterPassingStyle.compulsoryParameters
+      .map((parameter, index) => ({ parameter, argument: args[index] }))
+      .concat({
+        parameter: parameterPassingStyle.restParameters,
+        argument: makeList(...args.slice(parameterPassingStyle.numCompulsoryParameters))
+      })
   }
 }
 

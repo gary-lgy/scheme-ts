@@ -9,6 +9,7 @@ import { quasiquoteExpression, quoteExpression } from '../quote'
 import {
   extendCurrentEnvironment,
   handleRuntimeError,
+  introduceBinding,
   isTruthy,
   popEnvironment,
   pushEnvironment,
@@ -83,7 +84,7 @@ function* evaluateDefineForm(defineForm: DefineForm, context: Context): ValueGen
   }
 
   const frame = context.runtime.environments[0].head
-  frame[defineForm.name.name] = value
+  introduceBinding(context, frame, defineForm.name.isFromSource, defineForm.name.name, value)
   return makeEmptyList()
 }
 
@@ -159,7 +160,8 @@ function* evaluateCondForm(condForm: CondForm, context: Context): ValueGenerator
 function* evaluateLetForm(letForm: LetForm, context: Context): ValueGenerator {
   const frame: Frame = {}
   for (const binding of letForm.bindings) {
-    frame[binding.name.name] = yield* evaluate(binding.value, context)
+    const value = yield* evaluate(binding.value, context)
+    introduceBinding(context, frame, binding.name.isFromSource, binding.name.name, value)
   }
   const newEnvironment = extendCurrentEnvironment(context, 'letEnvironment', frame)
 
@@ -174,7 +176,9 @@ function* evaluateLetStarForm(letStarForm: LetStarForm, context: Context): Value
   let numNewFrames = 0
   for (const binding of letStarForm.bindings) {
     const frame: Frame = {}
-    frame[binding.name.name] = yield* evaluate(binding.value, context)
+    const value = yield* evaluate(binding.value, context)
+    introduceBinding(context, frame, binding.name.isFromSource, binding.name.name, value)
+
     const newEnvironment = extendCurrentEnvironment(context, 'let*Environment', frame)
     pushEnvironment(context, newEnvironment)
     numNewFrames++
@@ -192,7 +196,7 @@ function* evaluateLetStarForm(letStarForm: LetStarForm, context: Context): Value
 function* evaluateLetRecForm(letRecForm: LetRecForm, context: Context): ValueGenerator {
   const frame: Frame = {}
   for (const binding of letRecForm.bindings) {
-    frame[binding.name.name] = makeEmptyList()
+    introduceBinding(context, frame, binding.name.isFromSource, binding.name.name, makeEmptyList())
   }
   const newEnvironment = extendCurrentEnvironment(context, 'letrecEnvironment', frame)
   pushEnvironment(context, newEnvironment)
@@ -258,6 +262,6 @@ function* evaluateDefMacroForm(defMacroForm: DefMacroForm, context: Context): Va
     parameterPasssingStyle: defMacroForm.parameterPassingStyle
   }
   const frame = context.runtime.environments[0].head
-  frame[defMacroForm.name.name] = macro
+  introduceBinding(context, frame, defMacroForm.name.isFromSource, defMacroForm.name.name, macro)
   return makeEmptyList()
 }

@@ -207,10 +207,7 @@ describe('quasiquote', () => {
 
   test('unquote & unquote-splicing', () => {
     const actual = evaluateUntilDone("`(( foo ,(- 10 3)) ,@(cdr '(c)) ,(car '(cons)))")
-    const expected = makeList(makeList(makeSymbol('foo'), makeNumber(7)), {
-      type: 'EVSymbol',
-      value: 'cons'
-    })
+    const expected = makeList(makeList(makeSymbol('foo'), makeNumber(7)), makeSymbol('cons'))
     expect(actual).toEqual(expected)
   })
 
