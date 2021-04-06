@@ -15,7 +15,8 @@ const createEmptyRuntime = () => ({
   environments: [],
   value: undefined,
   nodes: [],
-  inTailContext: []
+  inTailContext: [],
+  nextUniqueSymbolNumber: 0
 })
 
 const createGlobalEnvironment = () => ({

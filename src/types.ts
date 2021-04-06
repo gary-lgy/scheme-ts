@@ -60,6 +60,7 @@ export interface Context<T = any> {
     environments: Environment[]
     nodes: SyntaxNode[]
     inTailContext: boolean[]
+    nextUniqueSymbolNumber: number
   }
 
   moduleParams?: any

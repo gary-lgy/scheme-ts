@@ -15,7 +15,7 @@ import {
 } from './Arithmetic'
 import { apply } from './Control'
 import { eq, equal, eqv } from './Equal'
-import { macroexpand } from './Macro'
+import { genSym, macroexpand } from './Macro'
 import { car, cdr, cons, list, setCar, setCdr } from './Pair'
 import { isBool, isNull, isNumber, isPair, isProcedure, isString, isSymbol } from './TypePredicates'
 
@@ -61,4 +61,5 @@ export const importNativeBuiltins = (context: Context) => {
   defineBuiltin(frame, 'apply', apply)
 
   defineBuiltin(frame, 'macroexpand', macroexpand)
+  defineBuiltin(frame, 'gensym', genSym)
 }

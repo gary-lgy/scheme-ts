@@ -50,10 +50,10 @@ export const setVariable = (context: Context, name: string, value: ExpressibleVa
   return handleRuntimeError(context, new errors.UndefinedVariable(name, context.runtime.nodes[0]))
 }
 
-export const macroIdentifierPrefix = '$:'
+export const syntheticIdentifierPrefix = '$:'
 
 const isAllowedAsUserIdentifier = (name: string): boolean => {
-  return !name.startsWith(macroIdentifierPrefix)
+  return !name.startsWith(syntheticIdentifierPrefix)
 }
 
 export const introduceBinding = (

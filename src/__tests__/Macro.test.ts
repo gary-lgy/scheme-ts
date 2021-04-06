@@ -1,5 +1,6 @@
 import { EVMacro, makeList, makeNumber, makeSymbol } from '../interpreter/ExpressibleValue'
 import { FixedArgsWithParameterNames, VarArgsWithParameterNames } from '../interpreter/procedure'
+import { syntheticIdentifierPrefix } from '../interpreter/util'
 import { evaluateUntilDone } from '../testHelpers'
 
 describe('defitition', () => {
@@ -56,6 +57,31 @@ describe('defitition', () => {
   })
 })
 
+describe('gensym', () => {
+  test('returns a synthetic identifier', () => {
+    expect(evaluateUntilDone('(gensym)')).toEqual(makeSymbol(syntheticIdentifierPrefix + 0, false))
+  })
+
+  test('returns a different identifier for each invocation', () => {
+    expect(
+      evaluateUntilDone(
+        '(list (gensym) (gensym) (gensym) (gensym) (gensym) (gensym) (gensym) (gensym))'
+      )
+    ).toEqual(
+      makeList(
+        makeSymbol(syntheticIdentifierPrefix + 0, false),
+        makeSymbol(syntheticIdentifierPrefix + 1, false),
+        makeSymbol(syntheticIdentifierPrefix + 2, false),
+        makeSymbol(syntheticIdentifierPrefix + 3, false),
+        makeSymbol(syntheticIdentifierPrefix + 4, false),
+        makeSymbol(syntheticIdentifierPrefix + 5, false),
+        makeSymbol(syntheticIdentifierPrefix + 6, false),
+        makeSymbol(syntheticIdentifierPrefix + 7, false)
+      )
+    )
+  })
+})
+
 describe('use', () => {
   describe('no name conflicts', () => {
     test('should work correctly', () => {
@@ -104,7 +130,24 @@ describe('use', () => {
     })
   })
 
-  // TODO: gensym
+  describe('preventing name conflicts with gensym', () => {
+    test('should work correctly', () => {
+      const result = evaluateUntilDone(`
+        (define x 10)
+        (define y 20)
+
+        (defmacro swap! (a b)
+          (let ((x (gensym)))
+            \`(let ((,x ,a))
+                  (set! ,a ,b)
+                  (set! ,b ,x))))
+
+        (swap! x y)
+        (list x y)
+      `)
+      expect(result).toEqual(makeList(makeNumber(20), makeNumber(10)))
+    })
+  })
 })
 
 describe('macroexpand', () => {

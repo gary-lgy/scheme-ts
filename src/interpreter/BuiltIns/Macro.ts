@@ -1,9 +1,9 @@
 import { Context } from '../../types'
 import { flattenPairToList } from '../../utils/listHelpers'
-import { EVProcedure, ExpressibleValue } from '../ExpressibleValue'
+import { EVProcedure, EVSymbol, ExpressibleValue, makeSymbol } from '../ExpressibleValue'
 import { ValueGenerator } from '../interpreter'
 import { expandMacro } from '../macro'
-import { getVariable } from '../util'
+import { getVariable, syntheticIdentifierPrefix } from '../util'
 
 export const macroexpand: EVProcedure = {
   type: 'EVProcedure',
@@ -46,5 +46,20 @@ export const macroexpand: EVProcedure = {
       list.value.map(element => element.value).slice(1),
       context.runtime.nodes[0]
     )
+  }
+}
+
+export const genSym: EVProcedure = {
+  type: 'EVProcedure',
+  variant: 'BuiltInProcedure',
+  name: 'gensym',
+  parameterPassingStyle: {
+    style: 'fixed-args',
+    numParams: 0
+  },
+  body: (_args: ExpressibleValue[], context: Context): EVSymbol => {
+    const seqNumber: number = context.runtime.nextUniqueSymbolNumber++
+    const symbolName: string = syntheticIdentifierPrefix + seqNumber
+    return makeSymbol(symbolName, false)
   }
 }

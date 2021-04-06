@@ -1,6 +1,6 @@
 /* tslint:disable: max-classes-per-file */
 import { ExpressibleValue } from '../interpreter/ExpressibleValue'
-import { macroIdentifierPrefix } from '../interpreter/util'
+import { syntheticIdentifierPrefix } from '../interpreter/util'
 import { SyntaxNode } from '../lang/SchemeSyntax'
 import { stringify } from '../utils/stringify'
 import { RuntimeSourceError } from './runtimeSourceError'
@@ -343,6 +343,6 @@ export class DisallowedIdentifier extends RuntimeSourceError {
   }
 
   public explain() {
-    return `'${this.name}' cannot be used as an identifier because user identifiers cannot start with ${macroIdentifierPrefix}`
+    return `'${this.name}' cannot be used as an identifier because user identifiers cannot start with ${syntheticIdentifierPrefix}`
   }
 }
