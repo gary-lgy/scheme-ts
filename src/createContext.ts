@@ -1,8 +1,9 @@
 import { defaultVariant } from './constants'
 import { importNativeBuiltins } from './interpreter/BuiltIns'
 import { EVProcedure, ExpressibleValue } from './interpreter/ExpressibleValue'
+import { stdlibMacros } from './stdlib/macros.prelude'
 import * as misc from './stdlib/misc'
-import { stdlibPrelude } from './stdlib/prelude'
+import { stdlibProcedures } from './stdlib/procedures.prelude'
 import { Context, CustomBuiltIns, Value, Variant } from './types'
 import { stringify } from './utils/stringify'
 
@@ -100,10 +101,10 @@ const defaultBuiltIns: CustomBuiltIns = {
 }
 
 const importPrelude = (context: Context) => {
-  if (context.variant !== 'macro') {
-    context.prelude = stdlibPrelude
+  context.prelude = stdlibProcedures
+  if (context.variant === 'macro') {
+    context.prelude += stdlibMacros
   }
-  // TODO: add prelude for macro variant
 }
 
 export const importBuiltins = (context: Context, externalBuiltIns: CustomBuiltIns) => {

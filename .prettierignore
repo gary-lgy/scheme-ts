@@ -1,2 +1,3 @@
-src/stdlib/prelude.ts
+src/stdlib/procedures.prelude.ts
+src/stdlib/macros.prelude.ts
 src/stdlib/sicp-mce.ts
