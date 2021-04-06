@@ -57,11 +57,14 @@
     (caddr clause))
   (define (expand-procedure-clause clause rest-clauses)
     ; apply the procedure to the result of evaluating the predicate if the result is truthy
-    (let ((temp (gensym)))
-      \`(let ((,temp ,(clause-predicate clause)))
-         (if ,temp
-           (,(procedure-clause-procedure clause) ,temp)
-           ,(expand-clauses rest-clauses)))))
+    (if (null? (cdddr clause))
+      (let ((temp (gensym)))
+        \`(let ((,temp ,(clause-predicate clause)))
+           (if ,temp
+             (,(procedure-clause-procedure clause) ,temp)
+             ,(expand-clauses rest-clauses))))
+      (error "procedure clause in cond must have exactly 3 elements")))
+
 
   ; normal clause: predicate followed by at least one expression, e.g., (cond ((+ 1 1) (display "yes") (do-something)))
   (define (expand-normal-clause clause rest-clauses)

@@ -2,13 +2,19 @@ import {
   EVMacro,
   EVPair,
   EVSymbol,
+  ExpressibleValue,
   makeList,
   makeNumber,
   makeSymbol
 } from '../interpreter/ExpressibleValue'
 import { FixedArgsWithParameterNames, VarArgsWithParameterNames } from '../interpreter/procedure'
-import { evaluateUntilDone } from '../testHelpers'
+import { prepareContext, runUntilDone } from '../testHelpers'
 import { flattenPairToList, List } from '../utils/listHelpers'
+
+function evaluateUntilDone(code: string): ExpressibleValue {
+  const context = prepareContext('macro')
+  return runUntilDone(code, context).value
+}
 
 describe('defitition', () => {
   test('fixed-args', () => {

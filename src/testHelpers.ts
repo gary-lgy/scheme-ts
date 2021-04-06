@@ -1,10 +1,9 @@
-import { Context, createContext } from '.'
+import { Context, createContext, Variant } from '.'
 import { ExpressibleValue } from './interpreter/ExpressibleValue'
 import { evaluateProgram } from './interpreter/interpreter'
 import { parse } from './parser/parser'
-import { sicpMce } from './stdlib/sicp-mce'
 
-const runUntilDone = (
+export const runUntilDone = (
   code: string,
   context: Context
 ): { value: ExpressibleValue; maxNumEnvironment: number } => {
@@ -33,8 +32,8 @@ const runUntilDone = (
   return { value: itValue.value, maxNumEnvironment }
 }
 
-const prepareContext = (prelude?: string): Context => {
-  const context = createContext()
+export const prepareContext = (variant: Variant, prelude?: string): Context => {
+  const context = createContext(variant)
   context.errors = []
 
   if (context.prelude) {
@@ -45,20 +44,4 @@ const prepareContext = (prelude?: string): Context => {
   }
 
   return context
-}
-
-export const evaluateUntilDone = (code: string, prelude?: string): ExpressibleValue => {
-  const context = prepareContext(prelude)
-  return runUntilDone(code, context).value
-}
-
-export const evaluateInMce = (code: string): ExpressibleValue => {
-  return evaluateUntilDone(code, sicpMce)
-}
-
-export const evaluateAndCountEnvironmentsUntilDone = (
-  code: string
-): ReturnType<typeof runUntilDone> => {
-  const context = prepareContext()
-  return runUntilDone(code, context)
 }

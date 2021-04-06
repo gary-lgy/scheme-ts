@@ -16,7 +16,8 @@ import { evaluate, ValueGenerator } from './interpreter'
 import {
   checkNumberOfArguments,
   extendEnvironmentWithNewBindings,
-  matchArgumentsToParameters
+  matchArgumentsToParameters,
+  tryEnterTailContext
 } from './procedure'
 import { handleRuntimeError, popEnvironment, pushEnvironment } from './util'
 
@@ -73,6 +74,8 @@ export function* useMacro(
     return handleRuntimeError(context, new MacroExpansionError(e, node))
   }
 
+  // Must pass down the tail context of the macro use site
+  tryEnterTailContext(context)
   return yield* evaluate(expandedSyntax, context)
 }
 
