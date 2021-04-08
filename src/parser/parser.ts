@@ -169,7 +169,7 @@ class ExpressionGenerator implements SchemeVisitor<SyntaxNode> {
     return {
       type: 'Identifier',
       isFromSource: true,
-      name: ctx.text,
+      name: ctx.text.toLowerCase(),
       loc: contextToLocation(ctx)
     }
   }
