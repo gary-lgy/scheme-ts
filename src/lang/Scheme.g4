@@ -44,7 +44,7 @@ COMMENT
    ;
 
 fragment LETTER
-   : ('a' .. 'z')
+   : ('a' .. 'z') | ('A' .. 'Z')
 ;
 
 fragment DIGIT
