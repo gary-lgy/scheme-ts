@@ -64,7 +64,7 @@ export function parseError(errors: SourceError[], verbose: boolean = verboseErro
       const elaboration = error.elaborate()
       return `Line ${line}, Column ${column}: ${explanation}\n${elaboration}\n`
     } else {
-      return `Line ${line}: ${explanation}`
+      return `Line ${line}, Column ${column}: ${explanation}`
     }
   })
   return errorMessagesArr.join('\n')
