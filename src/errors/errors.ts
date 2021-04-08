@@ -1,11 +1,12 @@
 /* tslint:disable: max-classes-per-file */
 import { ExpressibleValue } from '../interpreter/ExpressibleValue'
-import { SchemeExpression } from '../lang/scheme'
+import { syntheticIdentifierPrefix } from '../interpreter/util'
+import { SyntaxNode } from '../lang/SchemeSyntax'
 import { stringify } from '../utils/stringify'
 import { RuntimeSourceError } from './runtimeSourceError'
 
 export class DefineSyntaxError extends RuntimeSourceError {
-  constructor(node: SchemeExpression) {
+  constructor(node: SyntaxNode) {
     super(node)
   }
 
@@ -19,7 +20,7 @@ export class DefineSyntaxError extends RuntimeSourceError {
 }
 
 export class LambdaSyntaxError extends RuntimeSourceError {
-  constructor(node: SchemeExpression) {
+  constructor(node: SyntaxNode) {
     super(node)
   }
 
@@ -33,7 +34,7 @@ export class LambdaSyntaxError extends RuntimeSourceError {
 }
 
 export class SetSyntaxError extends RuntimeSourceError {
-  constructor(node: SchemeExpression) {
+  constructor(node: SyntaxNode) {
     super(node)
   }
 
@@ -43,7 +44,7 @@ export class SetSyntaxError extends RuntimeSourceError {
 }
 
 export class IfSyntaxError extends RuntimeSourceError {
-  constructor(node: SchemeExpression) {
+  constructor(node: SyntaxNode) {
     super(node)
   }
 
@@ -53,7 +54,7 @@ export class IfSyntaxError extends RuntimeSourceError {
 }
 
 export class LetSyntaxError extends RuntimeSourceError {
-  constructor(node: SchemeExpression) {
+  constructor(node: SyntaxNode) {
     super(node)
   }
 
@@ -63,7 +64,7 @@ export class LetSyntaxError extends RuntimeSourceError {
 }
 
 export class CondSyntaxError extends RuntimeSourceError {
-  constructor(node: SchemeExpression) {
+  constructor(node: SyntaxNode) {
     super(node)
   }
 
@@ -79,7 +80,7 @@ export class CondSyntaxError extends RuntimeSourceError {
 }
 
 export class CondProcedureClauseError extends RuntimeSourceError {
-  constructor(node: SchemeExpression) {
+  constructor(node: SyntaxNode) {
     super(node)
   }
 
@@ -89,7 +90,7 @@ export class CondProcedureClauseError extends RuntimeSourceError {
 }
 
 export class BeginSyntaxError extends RuntimeSourceError {
-  constructor(node: SchemeExpression) {
+  constructor(node: SyntaxNode) {
     super(node)
   }
 
@@ -112,7 +113,7 @@ const quoteTypeToShorthand = (type: QuoteType): string => {
   }
 }
 export class QuoteSyntaxError extends RuntimeSourceError {
-  constructor(public quoteType: QuoteType, node: SchemeExpression) {
+  constructor(public quoteType: QuoteType, node: SyntaxNode) {
     super(node)
   }
 
@@ -123,8 +124,28 @@ export class QuoteSyntaxError extends RuntimeSourceError {
   }
 }
 
+export class DefMacroSyntaxError extends RuntimeSourceError {
+  constructor(node: SyntaxNode) {
+    super(node)
+  }
+
+  public explain() {
+    return "Syntax for `set!' is incorrect. Please use `(set! variable value) body)'"
+  }
+}
+
+export class MacroExpansionError extends RuntimeSourceError {
+  constructor(private expandedResult: ExpressibleValue, node: SyntaxNode) {
+    super(node)
+  }
+
+  public explain() {
+    return `A macro must expand to a value convertible to an S-expression, but got ${this.expandedResult.type}.`
+  }
+}
+
 export class BuiltinProcedureError extends RuntimeSourceError {
-  constructor(public cause: Error, node?: SchemeExpression) {
+  constructor(public cause: Error, node?: SyntaxNode) {
     super(node)
   }
   public explain() {
@@ -133,7 +154,7 @@ export class BuiltinProcedureError extends RuntimeSourceError {
 }
 
 export class UnexpectedQuotationError extends RuntimeSourceError {
-  constructor(node: SchemeExpression) {
+  constructor(node: SyntaxNode) {
     super(node)
   }
 
@@ -143,7 +164,7 @@ export class UnexpectedQuotationError extends RuntimeSourceError {
 }
 
 export class UnquoteInWrongContext extends RuntimeSourceError {
-  constructor(node: SchemeExpression) {
+  constructor(node: SyntaxNode) {
     super(node)
   }
 
@@ -153,7 +174,7 @@ export class UnquoteInWrongContext extends RuntimeSourceError {
 }
 
 export class UnquoteSplicingEvaluatedToNonList extends RuntimeSourceError {
-  constructor(public result: ExpressibleValue, node: SchemeExpression) {
+  constructor(public result: ExpressibleValue, node: SyntaxNode) {
     super(node)
   }
 
@@ -163,7 +184,7 @@ export class UnquoteSplicingEvaluatedToNonList extends RuntimeSourceError {
 }
 
 export class UnquoteSplicingInNonListContext extends RuntimeSourceError {
-  constructor(node: SchemeExpression) {
+  constructor(node: SyntaxNode) {
     super(node)
   }
 
@@ -173,7 +194,7 @@ export class UnquoteSplicingInNonListContext extends RuntimeSourceError {
 }
 
 export class UnexpectedDottedList extends RuntimeSourceError {
-  constructor(node: SchemeExpression) {
+  constructor(node: SyntaxNode) {
     super(node)
   }
 
@@ -195,7 +216,7 @@ export class UnreachableCodeReached extends RuntimeSourceError {
 export class MaximumStackLimitExceeded extends RuntimeSourceError {
   public static MAX_CALLS_TO_SHOW = 3
 
-  constructor(node: SchemeExpression, private calls: string[]) {
+  constructor(node: SyntaxNode, private calls: string[]) {
     super(node)
   }
 
@@ -205,7 +226,7 @@ export class MaximumStackLimitExceeded extends RuntimeSourceError {
 }
 
 export class CallingNonFunctionValue extends RuntimeSourceError {
-  constructor(private callee: ExpressibleValue, public node: SchemeExpression) {
+  constructor(private callee: ExpressibleValue, public node: SyntaxNode) {
     super(node)
   }
 
@@ -215,7 +236,7 @@ export class CallingNonFunctionValue extends RuntimeSourceError {
 }
 
 export class UndefinedVariable extends RuntimeSourceError {
-  constructor(public name: string, node: SchemeExpression) {
+  constructor(public name: string, node: SyntaxNode) {
     super(node)
   }
 
@@ -229,7 +250,7 @@ export class UndefinedVariable extends RuntimeSourceError {
 }
 
 export class UnassignedVariable extends RuntimeSourceError {
-  constructor(public name: string, node: SchemeExpression) {
+  constructor(public name: string, node: SyntaxNode) {
     super(node)
   }
 
@@ -244,7 +265,7 @@ export class UnassignedVariable extends RuntimeSourceError {
 
 export class InvalidNumberOfArguments extends RuntimeSourceError {
   constructor(
-    node: SchemeExpression,
+    node: SyntaxNode,
     private procedureName: string,
     private expected: number,
     private got: number
@@ -264,7 +285,7 @@ export class InvalidNumberOfArguments extends RuntimeSourceError {
 
 export class NotEnoughArguments extends RuntimeSourceError {
   constructor(
-    node: SchemeExpression,
+    node: SyntaxNode,
     private procedureName: string,
     private expected: number,
     private got: number
@@ -283,7 +304,7 @@ export class NotEnoughArguments extends RuntimeSourceError {
 }
 
 export class VariableRedeclaration extends RuntimeSourceError {
-  constructor(private node: SchemeExpression, private name: string, private writable?: boolean) {
+  constructor(private node: SyntaxNode, private name: string, private writable?: boolean) {
     super(node)
   }
 
@@ -313,5 +334,15 @@ export class VariableRedeclaration extends RuntimeSourceError {
     } else {
       return ''
     }
+  }
+}
+
+export class DisallowedIdentifier extends RuntimeSourceError {
+  constructor(private name: string, node: SyntaxNode) {
+    super(node)
+  }
+
+  public explain() {
+    return `'${this.name}' cannot be used as an identifier because user identifiers cannot start with ${syntheticIdentifierPrefix}`
   }
 }

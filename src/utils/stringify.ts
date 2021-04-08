@@ -129,10 +129,12 @@ export const stringify = (
         return stringifyPair(v, indentLevel)
       case 'EVProcedure':
         if (v.variant === 'BuiltInProcedure') {
-          return '[built-in procedure]'
+          return `[built-in procedure '${v.name}']`
         } else {
-          return '[compound procedure]'
+          return `[compound procedure '${v.name}']`
         }
+      case 'EVMacro':
+        return `[macro '${v.name}']`
       case 'TailCall':
         throw new Error('stringify should not see a TailCall value')
     }

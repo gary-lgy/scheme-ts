@@ -6,7 +6,7 @@
 /* tslint:disable:max-classes-per-file */
 
 import { ExpressibleValue } from './interpreter/ExpressibleValue'
-import { SchemeExpression, SourceLocation } from './lang/scheme'
+import { SourceLocation, SyntaxNode } from './lang/SchemeSyntax'
 
 /**
  * Defines functions that act as built-ins, but might rely on
@@ -41,7 +41,11 @@ export interface SourceError {
 }
 
 export type ExecutionMethod = 'native' | 'interpreter' | 'auto'
-export type Variant = 'base' | 'no-tco'
+
+export type BaseVariant = 'base'
+export type NoTCOVariant = 'no-tco'
+export type MacroVariant = 'macro'
+export type Variant = BaseVariant | NoTCOVariant | MacroVariant
 
 export interface SourceLanguage {
   variant: Variant
@@ -58,8 +62,9 @@ export interface Context<T = any> {
   runtime: {
     isRunning: boolean
     environments: Environment[]
-    nodes: SchemeExpression[]
+    nodes: SyntaxNode[]
     inTailContext: boolean[]
+    nextUniqueSymbolNumber: number
   }
 
   moduleParams?: any

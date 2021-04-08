@@ -1,6 +1,7 @@
 import * as errors from '../../errors/errors'
-import { SchemeExpression, SchemeIdentifier, SchemeList } from '../../lang/scheme'
+import { SyntaxIdentifier, SyntaxList, SyntaxNode } from '../../lang/SchemeSyntax'
 import { Context } from '../../types'
+import { NamedCallSignature } from '../procedure'
 import { handleRuntimeError, isDefined } from '../util'
 import {
   AndForm,
@@ -9,6 +10,7 @@ import {
   CondElseClause,
   CondForm,
   DefineForm,
+  DefMacroForm,
   IfForm,
   LambdaForm,
   LetBinding,
@@ -28,10 +30,11 @@ import {
 // If no conversion is possible, return undefined
 export const listToSpecialForm = (
   tag: string,
-  list: SchemeList,
+  list: SyntaxList,
   context: Context
 ): SpecialForm | null => {
   switch (tag) {
+    // These primitives are present for all sublanguages
     case 'define':
       return listToDefine(list, context)
     case 'lambda':
@@ -40,29 +43,43 @@ export const listToSpecialForm = (
       return listToSetBang(list, context)
     case 'if':
       return listToIf(list, context)
-    case 'let':
-    case 'let*':
-    case 'letrec':
-      return listToLet(tag, list, context)
-    case 'cond':
-      return listToCond(list, context)
-    case 'begin':
-      return listToBegin(list, context)
     case 'quote':
     case 'quasiquote':
     case 'unquote':
     case 'unquote-splicing':
       return listToQuote(tag, list, context)
-    case 'and':
-      return listToAnd(list)
-    case 'or':
-      return listToOr(list)
-    default:
-      return null
+  }
+
+  if (context.variant === 'macro') {
+    // defmacro is only available for the sublanguage with macros
+    switch (tag) {
+      case 'defmacro':
+        return listToDefMacro(list, context)
+      default:
+        return null
+    }
+  } else {
+    // Hardwired special forms are only available for the sublanguages without macros
+    switch (tag) {
+      case 'let':
+      case 'let*':
+      case 'letrec':
+        return listToLet(tag, list, context)
+      case 'cond':
+        return listToCond(list, context)
+      case 'begin':
+        return listToBegin(list, context)
+      case 'and':
+        return listToAnd(list)
+      case 'or':
+        return listToOr(list)
+      default:
+        return null
+    }
   }
 }
 
-const listToDefine = (list: SchemeList, context: Context): DefineForm => {
+const listToDefine = (list: SyntaxList, context: Context): DefineForm => {
   if (list.elements.length < 3) {
     return handleRuntimeError(context, new errors.DefineSyntaxError(list))
   }
@@ -72,7 +89,7 @@ const listToDefine = (list: SchemeList, context: Context): DefineForm => {
       return handleRuntimeError(context, new errors.DefineSyntaxError(list))
     }
 
-    const argsList: SchemeIdentifier[] = list.elements[1].elements.map(element => {
+    const argsList: SyntaxIdentifier[] = list.elements[1].elements.map(element => {
       if (element.type !== 'Identifier') {
         return handleRuntimeError(context, new errors.DefineSyntaxError(list))
       }
@@ -83,7 +100,7 @@ const listToDefine = (list: SchemeList, context: Context): DefineForm => {
       tag: 'define',
       variant: 'procedure',
       name: argsList[0],
-      argumentPassingStyle: {
+      callSignature: {
         style: 'fixed-args',
         numParams: argsList.length - 1,
         parameters: argsList.slice(1)
@@ -102,7 +119,7 @@ const listToDefine = (list: SchemeList, context: Context): DefineForm => {
       value: list.elements[2]
     }
   } else if (list.elements[1].type === 'DottedList') {
-    const beforeDot: SchemeIdentifier[] = list.elements[1].pre.map(expr => {
+    const beforeDot: SyntaxIdentifier[] = list.elements[1].pre.map(expr => {
       if (expr.type !== 'Identifier') {
         return handleRuntimeError(context, new errors.DefineSyntaxError(list))
       }
@@ -111,13 +128,13 @@ const listToDefine = (list: SchemeList, context: Context): DefineForm => {
     if (list.elements[1].post.type !== 'Identifier') {
       return handleRuntimeError(context, new errors.DefineSyntaxError(list))
     }
-    const afterDot: SchemeIdentifier = list.elements[1].post
+    const afterDot: SyntaxIdentifier = list.elements[1].post
 
     return {
       tag: 'define',
       variant: 'procedure',
       name: beforeDot[0],
-      argumentPassingStyle: {
+      callSignature: {
         style: 'var-args',
         numCompulsoryParameters: beforeDot.length - 1,
         compulsoryParameters: beforeDot.slice(1),
@@ -130,72 +147,74 @@ const listToDefine = (list: SchemeList, context: Context): DefineForm => {
   }
 }
 
-const listToLambda = (list: SchemeList, context: Context): LambdaForm => {
+const listToLambda = (list: SyntaxList, context: Context): LambdaForm => {
   if (list.elements.length <= 2) {
     return handleRuntimeError(context, new errors.LambdaSyntaxError(list))
   }
 
-  if (list.elements[1].type === 'List') {
-    // Fixed number of arguments
-    const parameters: SchemeIdentifier[] = []
-    list.elements[1].elements.forEach(element => {
-      if (element.type === 'Identifier') {
-        return parameters.push(element)
-      } else {
-        return handleRuntimeError(context, new errors.LambdaSyntaxError(list))
-      }
-    })
-    return {
-      tag: 'lambda',
-      body: list.elements.slice(2),
-      argumentPassingStyle: {
-        style: 'fixed-args',
-        numParams: parameters.length,
-        parameters
-      }
-    }
-  } else if (list.elements[1].type === 'DottedList') {
-    // variable number of arguments with compulsory arguments
-    const compulsoryParameters: SchemeIdentifier[] = list.elements[1].pre.map(element => {
-      if (element.type === 'Identifier') {
-        return element
-      } else {
-        return handleRuntimeError(context, new errors.LambdaSyntaxError(list))
-      }
-    })
-    if (list.elements[1].post.type !== 'Identifier') {
-      return handleRuntimeError(context, new errors.LambdaSyntaxError(list))
-    }
-    const restParameters: SchemeIdentifier = list.elements[1].post
-
-    return {
-      tag: 'lambda',
-      body: list.elements.slice(2),
-      argumentPassingStyle: {
-        style: 'var-args',
-        numCompulsoryParameters: compulsoryParameters.length,
-        compulsoryParameters,
-        restParameters
-      }
-    }
-  } else if (list.elements[1].type === 'Identifier') {
-    // variable number of arguments without compulsory arguments
-    return {
-      tag: 'lambda',
-      body: list.elements.slice(2),
-      argumentPassingStyle: {
-        style: 'var-args',
-        numCompulsoryParameters: 0,
-        compulsoryParameters: [],
-        restParameters: list.elements[1]
-      }
-    }
-  } else {
+  const callSignature = parseParameters(list.elements[1])
+  if (!callSignature) {
     return handleRuntimeError(context, new errors.LambdaSyntaxError(list))
+  }
+
+  return {
+    tag: 'lambda',
+    body: list.elements.slice(2),
+    callSignature: callSignature
   }
 }
 
-const listToSetBang = (list: SchemeList, context: Context): SetBangForm => {
+const parseParameters = (list: SyntaxNode): NamedCallSignature | null => {
+  if (list.type === 'List') {
+    // Fixed number of arguments
+    const parameters: SyntaxIdentifier[] = []
+    for (const element of list.elements) {
+      if (element.type === 'Identifier') {
+        parameters.push(element)
+      } else {
+        return null
+      }
+    }
+    return {
+      style: 'fixed-args',
+      numParams: parameters.length,
+      parameters
+    }
+  } else if (list.type === 'DottedList') {
+    // variable number of arguments with compulsory arguments
+    const compulsoryParameters: SyntaxIdentifier[] = []
+    for (const element of list.pre) {
+      if (element.type === 'Identifier') {
+        compulsoryParameters.push(element)
+      } else {
+        return null
+      }
+    }
+    if (list.post.type !== 'Identifier') {
+      return null
+    }
+    const restParameters: SyntaxIdentifier = list.post
+
+    return {
+      style: 'var-args',
+      numCompulsoryParameters: compulsoryParameters.length,
+      compulsoryParameters,
+      restParameters
+    }
+  } else if (list.type === 'Identifier') {
+    // variable number of arguments without compulsory arguments
+    return {
+      style: 'var-args',
+      numCompulsoryParameters: 0,
+      compulsoryParameters: [],
+      restParameters: list
+    }
+  } else {
+    return null
+  }
+}
+
+const listToSetBang = (list: SyntaxList, context: Context): SetBangForm => {
   if (list.elements.length !== 3 || list.elements[1].type !== 'Identifier') {
     return handleRuntimeError(context, new errors.SetSyntaxError(list))
   }
@@ -206,7 +225,7 @@ const listToSetBang = (list: SchemeList, context: Context): SetBangForm => {
   }
 }
 
-const listToIf = (list: SchemeList, context: Context): IfForm => {
+const listToIf = (list: SyntaxList, context: Context): IfForm => {
   if (list.elements.length < 3 || list.elements.length > 4) {
     return handleRuntimeError(context, new errors.IfSyntaxError(list))
   }
@@ -220,7 +239,7 @@ const listToIf = (list: SchemeList, context: Context): IfForm => {
 
 const listToLet = (
   tag: 'let' | 'let*' | 'letrec',
-  list: SchemeList,
+  list: SyntaxList,
   context: Context
 ): LetForm | LetStarForm | LetRecForm => {
   if (list.elements.length < 3 || list.elements[1].type !== 'List') {
@@ -244,15 +263,11 @@ const listToLet = (
   return {
     tag,
     bindings,
-    body: {
-      type: 'Sequence',
-      expressions: list.elements.slice(2),
-      loc: list.loc
-    }
+    body: list.elements.slice(2)
   }
 }
 
-const listToCond = (list: SchemeList, context: Context): CondForm => {
+const listToCond = (list: SyntaxList, context: Context): CondForm => {
   if (list.elements.length <= 1) {
     return handleRuntimeError(context, new errors.CondSyntaxError(list))
   }
@@ -278,7 +293,7 @@ const listToCond = (list: SchemeList, context: Context): CondForm => {
 }
 
 const parseCondClause = (
-  clause: SchemeExpression,
+  clause: SyntaxNode,
   context: Context,
   throwSyntaxError: () => never
 ): CondClause | CondElseClause => {
@@ -330,24 +345,20 @@ const parseCondClause = (
   }
 }
 
-const listToBegin = (list: SchemeList, context: Context): BeginForm => {
+const listToBegin = (list: SyntaxList, context: Context): BeginForm => {
   if (list.elements.length <= 1) {
     return handleRuntimeError(context, new errors.BeginSyntaxError(list))
   }
 
   return {
     tag: 'begin',
-    body: {
-      type: 'Sequence',
-      expressions: list.elements.slice(1),
-      loc: list.elements[1].loc
-    }
+    body: list.elements.slice(1)
   }
 }
 
 const listToQuote = (
   tag: 'quote' | 'quasiquote' | 'unquote' | 'unquote-splicing',
-  list: SchemeList,
+  list: SyntaxList,
   context: Context
 ): QuoteForm | QuasiquoteForm | UnquoteForm | UnquoteSplicingForm => {
   if (list.elements.length !== 2) {
@@ -359,10 +370,33 @@ const listToQuote = (
   }
 }
 
-const listToAnd = (list: SchemeList): AndForm => {
+const listToAnd = (list: SyntaxList): AndForm => {
   return { tag: 'and', arguments: list.elements.slice(1) }
 }
 
-const listToOr = (list: SchemeList): OrForm => {
+const listToOr = (list: SyntaxList): OrForm => {
   return { tag: 'or', arguments: list.elements.slice(1) }
+}
+
+const listToDefMacro = (list: SyntaxList, context: Context): DefMacroForm => {
+  if (list.elements.length < 4) {
+    return handleRuntimeError(context, new errors.DefMacroSyntaxError(list))
+  }
+
+  const name = list.elements[1]
+  if (name.type !== 'Identifier') {
+    return handleRuntimeError(context, new errors.DefMacroSyntaxError(list))
+  }
+
+  const callSignature = parseParameters(list.elements[2])
+  if (!callSignature) {
+    return handleRuntimeError(context, new errors.DefMacroSyntaxError(list))
+  }
+
+  return {
+    tag: 'defmacro',
+    name,
+    callSignature: callSignature,
+    body: list.elements.slice(3)
+  }
 }

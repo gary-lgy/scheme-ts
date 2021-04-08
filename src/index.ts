@@ -1,6 +1,7 @@
 import { SourceMapConsumer } from 'source-map'
+import { defaultVariant } from './constants'
 import createContext from './createContext'
-import { evaluate } from './interpreter/interpreter'
+import { evaluateProgram } from './interpreter/interpreter'
 import { parse } from './parser/parser'
 import { PreemptiveScheduler } from './schedulers'
 import {
@@ -33,7 +34,7 @@ const DEFAULT_OPTIONS: IOptions = {
   steps: 1000,
   stepLimit: 1000,
   executionMethod: 'auto',
-  variant: 'base',
+  variant: defaultVariant,
   originalMaxExecTime: 1000,
   isPrelude: false
 }
@@ -93,7 +94,7 @@ export async function runInContext(
     return runInContext(code, context, options)
   }
 
-  const it = evaluate(program, context)
+  const it = evaluateProgram(program, context)
   const scheduler: Scheduler = new PreemptiveScheduler(theOptions.steps)
   return scheduler.run(it, context)
 }

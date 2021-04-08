@@ -1,6 +1,6 @@
 import { Context } from '..'
 import * as errors from '../errors/errors'
-import { SchemeExpression, SchemeIdentifier } from '../lang/scheme'
+import { SyntaxIdentifier, SyntaxNode } from '../lang/SchemeSyntax'
 import { Environment } from '../types'
 import { stringify } from '../utils/stringify'
 import {
@@ -12,56 +12,49 @@ import {
   NonTailCallExpressibleValue
 } from './ExpressibleValue'
 import { evaluate, ValueGenerator } from './interpreter'
-import { handleRuntimeError, popEnvironment, pushEnvironment } from './util'
+import { handleRuntimeError, introduceBinding, popEnvironment, pushEnvironment } from './util'
 
 // For BuiltIn procedures, we only need to check the number of arguments
 // The parameter names are meaningless and unnecessary
-export type BuiltInProcedureArgumentPassingStyle = FixedArgs | VarArgs
+export type CallSignature = FixedArgs | VarArgs
 
 type FixedArgs = { style: 'fixed-args'; numParams: number }
 type VarArgs = { style: 'var-args'; numCompulsoryParameters: number }
 
 // For compound procedures, we need both the number of arguments and the parameter names
 // in order to extend the function environment with the arguments
-export type CompoundProcedureArgumentPassingStyle =
-  | FixedArgsWithParameterNames
-  | VarArgsWithParameterNames
+export type NamedCallSignature = FixedArgsWithParameterNames | VarArgsWithParameterNames
 
-type FixedArgsWithParameterNames = FixedArgs & { parameters: SchemeIdentifier[] }
-type VarArgsWithParameterNames = VarArgs & {
-  compulsoryParameters: SchemeIdentifier[]
-  restParameters: SchemeIdentifier
+export type FixedArgsWithParameterNames = FixedArgs & { parameters: SyntaxIdentifier[] }
+export type VarArgsWithParameterNames = VarArgs & {
+  compulsoryParameters: SyntaxIdentifier[]
+  restParameters: SyntaxIdentifier
 }
 
-const checkNumberOfArguments = (
+export type ParameterArgumentPair = { parameter: SyntaxIdentifier; argument: ExpressibleValue }
+
+export const checkNumberOfArguments = (
   context: Context,
-  procedure: EVProcedure,
+  name: string,
+  callSignature: CallSignature,
   numArgs: number,
-  callExpression: SchemeExpression
+  callExpression: SyntaxNode
 ) => {
-  if (
-    procedure.argumentPassingStyle.style === 'fixed-args' &&
-    procedure.argumentPassingStyle.numParams !== numArgs
-  ) {
+  if (callSignature.style === 'fixed-args' && callSignature.numParams !== numArgs) {
     handleRuntimeError(
       context,
-      new errors.InvalidNumberOfArguments(
-        callExpression,
-        procedure.name,
-        procedure.argumentPassingStyle.numParams,
-        numArgs
-      )
+      new errors.InvalidNumberOfArguments(callExpression, name, callSignature.numParams, numArgs)
     )
   } else if (
-    procedure.argumentPassingStyle.style === 'var-args' &&
-    numArgs < procedure.argumentPassingStyle.numCompulsoryParameters
+    callSignature.style === 'var-args' &&
+    numArgs < callSignature.numCompulsoryParameters
   ) {
     handleRuntimeError(
       context,
       new errors.NotEnoughArguments(
         callExpression,
-        procedure.name,
-        procedure.argumentPassingStyle.numCompulsoryParameters,
+        name,
+        callSignature.numCompulsoryParameters,
         numArgs
       )
     )
@@ -69,7 +62,7 @@ const checkNumberOfArguments = (
 }
 
 export function* listOfArguments(
-  expressions: SchemeExpression[],
+  expressions: SyntaxNode[],
   context: Context
 ): Generator<Context, ExpressibleValue[]> {
   const values: ExpressibleValue[] = []
@@ -79,22 +72,29 @@ export function* listOfArguments(
   return values
 }
 
-const extendProcedureEnvironment = (
+export const extendEnvironmentWithNewBindings = (
+  context: Context,
   environment: Environment,
   procedureName: string,
-  parameters: string[],
-  args: ExpressibleValue[]
+  paramArgPairs: ParameterArgumentPair[]
 ): Environment => {
   const frame = {}
   const newEnvironment: Environment = {
     name: procedureName,
     tail: environment,
     head: frame,
-    procedureName: '(' + [procedureName, ...args.map(arg => stringify(arg))].join(' ') + ')'
+    procedureName:
+      '(' + [procedureName, ...paramArgPairs.map(pair => stringify(pair.argument))].join(' ') + ')'
   }
-  parameters.forEach((param, index) => {
-    frame[param] = args[index]
-  })
+  paramArgPairs.forEach(pair =>
+    introduceBinding(
+      context,
+      frame,
+      pair.parameter.isFromSource,
+      pair.parameter.name,
+      pair.argument
+    )
+  )
   return newEnvironment
 }
 
@@ -102,10 +102,16 @@ export function* apply(
   context: Context,
   procedure: EVProcedure,
   suppliedArgs: ExpressibleValue[],
-  node: SchemeExpression
+  node: SyntaxNode
 ): Generator<Context, NonTailCallExpressibleValue> {
   while (true) {
-    checkNumberOfArguments(context, procedure, suppliedArgs.length, node)
+    checkNumberOfArguments(
+      context,
+      procedure.name,
+      procedure.callSignature,
+      suppliedArgs.length,
+      node
+    )
 
     let result: ExpressibleValue
     if (procedure.variant === 'CompoundProcedure') {
@@ -129,12 +135,11 @@ function* applyCompoundProcedure(
   procedure: EVCompoundProcedure,
   suppliedArgs: ExpressibleValue[]
 ): ValueGenerator {
-  const { parameters, args: argsToPass } = makeArguments(procedure, suppliedArgs)
-  const environment = extendProcedureEnvironment(
+  const environment = extendEnvironmentWithNewBindings(
+    context,
     procedure.environment,
     procedure.name,
-    parameters,
-    argsToPass
+    matchArgumentsToParameters(procedure.callSignature, suppliedArgs)
   )
   pushEnvironment(context, environment)
 
@@ -166,7 +171,7 @@ function* applyBuiltInProcedure(
   context: Context,
   procedure: EVBuiltInProcedure,
   suppliedArgs: ExpressibleValue[],
-  node: SchemeExpression
+  node: SyntaxNode
 ): ValueGenerator {
   try {
     const result = procedure.body(suppliedArgs, context)
@@ -180,29 +185,23 @@ function* applyBuiltInProcedure(
   }
 }
 
-/** Match the arguments with parameters according to the argument passing style. */
-const makeArguments = (
-  procedure: EVCompoundProcedure,
+/** Match the arguments with parameters according to the call signature. */
+export const matchArgumentsToParameters = (
+  callSignature: NamedCallSignature,
   args: ExpressibleValue[]
-): { parameters: string[]; args: ExpressibleValue[] } => {
-  const argumentPassingStyle = procedure.argumentPassingStyle
-
-  if (argumentPassingStyle.style === 'fixed-args') {
-    return {
-      parameters: argumentPassingStyle.parameters.map(param => param.name),
-      args
-    }
+): ParameterArgumentPair[] => {
+  if (callSignature.style === 'fixed-args') {
+    return callSignature.parameters.map((parameter, index) => ({
+      parameter,
+      argument: args[index]
+    }))
   } else {
-    return {
-      parameters: [
-        ...argumentPassingStyle.compulsoryParameters.map(param => param.name),
-        argumentPassingStyle.restParameters.name
-      ],
-      args: [
-        ...args.slice(0, argumentPassingStyle.numCompulsoryParameters),
-        makeList(...args.slice(argumentPassingStyle.numCompulsoryParameters))
-      ]
-    }
+    return callSignature.compulsoryParameters
+      .map((parameter, index) => ({ parameter, argument: args[index] }))
+      .concat({
+        parameter: callSignature.restParameters,
+        argument: makeList(...args.slice(callSignature.numCompulsoryParameters))
+      })
   }
 }
 
@@ -211,13 +210,6 @@ const makeArguments = (
  */
 export const isParentInTailContext = (context: Context): boolean => {
   return context.runtime.inTailContext.length >= 2 && context.runtime.inTailContext[1]
-}
-
-/**
- * Check whether the current node is in tail context
- */
-export const isNodeInTailContext = (context: Context): boolean => {
-  return context.runtime.inTailContext[0]
 }
 
 /** Unconditionally enter tail context.

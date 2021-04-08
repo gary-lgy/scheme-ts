@@ -12,7 +12,6 @@ import {
   ProgramContext,
   QuasiquoteContext,
   QuoteContext,
-  SequenceContext,
   StringContext,
   UnquoteContext,
   UnquoteSplicingContext
@@ -163,17 +162,6 @@ export interface SchemeListener extends ParseTreeListener {
    * @param ctx the parse tree
    */
   exitProgram?: (ctx: ProgramContext) => void
-
-  /**
-   * Enter a parse tree produced by `SchemeParser.sequence`.
-   * @param ctx the parse tree
-   */
-  enterSequence?: (ctx: SequenceContext) => void
-  /**
-   * Exit a parse tree produced by `SchemeParser.sequence`.
-   * @param ctx the parse tree
-   */
-  exitSequence?: (ctx: SequenceContext) => void
 
   /**
    * Enter a parse tree produced by `SchemeParser.expression`.

@@ -1,20 +1,20 @@
 import * as errors from '../errors/errors'
 import {
-  SchemeBoolLiteral,
-  SchemeExpression,
-  SchemeIdentifier,
-  SchemeList,
-  SchemeNumberLiteral,
-  SchemeStringLiteral
-} from '../lang/scheme'
+  SyntaxBool,
+  SyntaxIdentifier,
+  SyntaxList,
+  SyntaxNode,
+  SyntaxNumber,
+  SyntaxString
+} from '../lang/SchemeSyntax'
 import { Context } from '../types'
 import { flattenPairToList } from '../utils/listHelpers'
-import { ExpressibleValue, makeImproperList, makeList } from './ExpressibleValue'
+import { ExpressibleValue, makeImproperList, makeList, makeSymbol } from './ExpressibleValue'
 import { evaluate, ValueGenerator } from './interpreter'
 import { handleRuntimeError, isDefined } from './util'
 
 const quoteLiteral = (
-  literal: SchemeBoolLiteral | SchemeNumberLiteral | SchemeStringLiteral | SchemeIdentifier
+  literal: SyntaxBool | SyntaxNumber | SyntaxString | SyntaxIdentifier
 ): ExpressibleValue => {
   switch (literal.type) {
     case 'BoolLiteral':
@@ -35,15 +35,13 @@ const quoteLiteral = (
     case 'Identifier':
       return {
         type: 'EVSymbol',
-        value: literal.name
+        value: literal.name,
+        isFromSource: literal.isFromSource
       }
   }
 }
 
-export const quoteExpression = (
-  expression: SchemeExpression,
-  context: Context
-): ExpressibleValue => {
+export const quoteExpression = (expression: SyntaxNode, context: Context): ExpressibleValue => {
   switch (expression.type) {
     case 'BoolLiteral':
     case 'NumberLiteral':
@@ -57,18 +55,12 @@ export const quoteExpression = (
         expression.pre.map(elem => quoteExpression(elem, context)),
         quoteExpression(expression.post, context)
       )
-    case 'Program':
-    case 'Sequence':
-      return handleRuntimeError(
-        context,
-        new errors.UnexpectedQuotationError(context.runtime.nodes[0])
-      )
   }
 }
 
 // Handle (quasiquote expr), (unquote expr), and (unquote-splicing expr) specially, if they have not been redefined
 function* handleSpecialQuotationForm(
-  expression: SchemeList,
+  expression: SyntaxList,
   context: Context,
   quoteLevel: number,
   unquoteLevel: number,
@@ -100,7 +92,7 @@ function* handleSpecialQuotationForm(
     case 'quasiquote': {
       return [
         makeList(
-          { type: 'EVSymbol', value: 'quasiquote' },
+          makeSymbol(quoteType, true),
           ...(yield* quasiquoteExpressionInner(
             subExpression,
             context,
@@ -117,7 +109,7 @@ function* handleSpecialQuotationForm(
       } else if (quoteLevel > unquoteLevel) {
         return [
           makeList(
-            { type: 'EVSymbol', value: 'unquote' },
+            makeSymbol(quoteType, true),
             ...(yield* quasiquoteExpressionInner(
               subExpression,
               context,
@@ -163,7 +155,7 @@ function* handleSpecialQuotationForm(
       } else if (quoteLevel > unquoteLevel) {
         return [
           makeList(
-            { type: 'EVSymbol', value: 'unquote-splicing' },
+            makeSymbol(quoteType, true),
             ...(yield* quasiquoteExpressionInner(
               subExpression,
               context,
@@ -183,10 +175,7 @@ function* handleSpecialQuotationForm(
   }
 }
 
-export function* quasiquoteExpression(
-  expression: SchemeExpression,
-  context: Context
-): ValueGenerator {
+export function* quasiquoteExpression(expression: SyntaxNode, context: Context): ValueGenerator {
   const quoted = yield* quasiquoteExpressionInner(expression, context, 1, 1, false)
   if (quoted.length !== 1) {
     return handleRuntimeError(
@@ -198,7 +187,7 @@ export function* quasiquoteExpression(
 }
 
 function* quasiquoteExpressionInner(
-  expression: SchemeExpression,
+  expression: SyntaxNode,
   context: Context,
   quoteLevel: number,
   unquoteLevel: number,
@@ -253,11 +242,5 @@ function* quasiquoteExpressionInner(
       ))[0]
       return [makeImproperList(beforeDot, afterDot)]
     }
-    case 'Program':
-    case 'Sequence':
-      return handleRuntimeError(
-        context,
-        new errors.UnexpectedQuotationError(context.runtime.nodes[0])
-      )
   }
 }

@@ -1,5 +1,5 @@
 import { UNKNOWN_LOCATION } from '../constants'
-import { SchemeExpression, SourceLocation } from '../lang/scheme'
+import { SourceLocation, SyntaxNode } from '../lang/SchemeSyntax'
 import { ErrorSeverity, ErrorType, SourceError } from '../types'
 
 export class RuntimeSourceError implements SourceError {
@@ -7,7 +7,7 @@ export class RuntimeSourceError implements SourceError {
   public severity = ErrorSeverity.ERROR
   public location: SourceLocation
 
-  constructor(node?: SchemeExpression) {
+  constructor(node?: SyntaxNode) {
     this.location = node ? node.loc! : UNKNOWN_LOCATION
   }
 

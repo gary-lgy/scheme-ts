@@ -1,10 +1,7 @@
-import { SchemeExpression } from '../lang/scheme'
+import { SyntaxNode } from '../lang/SchemeSyntax'
 import { Context, Environment } from '../types'
 import { ValueGenerator } from './interpreter'
-import {
-  BuiltInProcedureArgumentPassingStyle,
-  CompoundProcedureArgumentPassingStyle
-} from './procedure'
+import { CallSignature, NamedCallSignature } from './procedure'
 
 // An expressible value is a value that can be the result of an evaluation
 export type ExpressibleValue = NonTailCallExpressibleValue | TailCall
@@ -15,6 +12,7 @@ export type NonTailCallExpressibleValue =
   | EVSymbol
   | EVBool
   | EVProcedure
+  | EVMacro
   | EVPair
   | EVEmptyList
 
@@ -45,12 +43,14 @@ export const makeString = (value: string): EVString => {
 export type EVSymbol = {
   type: 'EVSymbol'
   value: string
+  isFromSource: boolean
 }
 
-export const makeSymbol = (value: string): EVSymbol => {
+export const makeSymbol = (value: string, isFromSource: boolean = true): EVSymbol => {
   return {
     type: 'EVSymbol',
-    value
+    value,
+    isFromSource
   }
 }
 
@@ -72,19 +72,27 @@ export type EVProcedure = {
 
 export type EVCompoundProcedure = {
   variant: 'CompoundProcedure'
-  argumentPassingStyle: CompoundProcedureArgumentPassingStyle
-  body: SchemeExpression[]
+  callSignature: NamedCallSignature
+  body: SyntaxNode[]
   environment: Environment
   name: string
 }
 
 export type EVBuiltInProcedure = {
   variant: 'BuiltInProcedure'
-  argumentPassingStyle: BuiltInProcedureArgumentPassingStyle
+  callSignature: CallSignature
   name: string
   body:
     | ((args: ExpressibleValue[], context: Context) => ExpressibleValue)
     | ((args: ExpressibleValue[], context: Context) => ValueGenerator)
+}
+
+export type EVMacro = {
+  type: 'EVMacro'
+  name: string
+  callSignature: NamedCallSignature
+  body: SyntaxNode[]
+  environment: Environment
 }
 
 export type EVEmptyList = {
@@ -134,5 +142,5 @@ export type TailCall = {
   type: 'TailCall'
   procedure: EVProcedure
   args: ExpressibleValue[]
-  node: SchemeExpression
+  node: SyntaxNode
 }

@@ -1,5 +1,5 @@
-; // magic file that is both typescript and scheme
-; export const stdlibPrelude = `
+// magic file that is both typescript and scheme
+export const stdlibProcedures = `
 ;; pair accessors
 
 (define (caar xs)
@@ -137,4 +137,6 @@
     (begin
       (proc (car xs))
       (for-each proc (cdr xs)))))
-; `
+;
+
+`

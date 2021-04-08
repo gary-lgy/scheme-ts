@@ -1,11 +1,7 @@
 grammar Scheme;
 
 program
-   : sequence EOF
-   ;
-
-sequence
-   : expression*
+   : expression+ EOF
    ;
 
 expression
