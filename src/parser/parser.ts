@@ -1,5 +1,11 @@
 /* tslint:disable:max-classes-per-file */
-import { ANTLRInputStream, CommonTokenStream, ParserRuleContext } from 'antlr4ts'
+import {
+  ANTLRErrorListener,
+  ANTLRInputStream,
+  CommonTokenStream,
+  ParserRuleContext,
+  Recognizer
+} from 'antlr4ts'
 import { ErrorNode } from 'antlr4ts/tree/ErrorNode'
 import { ParseTree } from 'antlr4ts/tree/ParseTree'
 import { RuleNode } from 'antlr4ts/tree/RuleNode'
@@ -201,6 +207,40 @@ class ExpressionGenerator implements SchemeVisitor<SyntaxNode> {
   }
 }
 
+class ThrowingErrorListener implements ANTLRErrorListener<any> {
+  private static formatErrorMessage(msg: string): string {
+    if (msg.includes("mismatched input '<EOF>'")) {
+      return 'unexpected EOF'
+    } else if (msg.includes('no viable alternative')) {
+      return msg.replace('no viable alternative', 'syntax error')
+    } else {
+      return msg
+    }
+  }
+
+  public syntaxError<T>(
+    _recognizer: Recognizer<T, any>,
+    _offendingSymbol: T,
+    line: number,
+    charPositionInLine: number,
+    msg: string
+  ): void {
+    throw new FatalSyntaxError(
+      {
+        start: {
+          line,
+          column: charPositionInLine + 1
+        },
+        end: {
+          line,
+          column: charPositionInLine + 1
+        }
+      },
+      ThrowingErrorListener.formatErrorMessage(msg)
+    )
+  }
+}
+
 function convertSource(program: ProgramContext): SchemeProgram {
   const generator = new ExpressionGenerator()
   return {
@@ -214,6 +254,9 @@ export function parse(source: string, context: Context) {
   const tokenStream = new CommonTokenStream(lexer)
   const parser = new SchemeParser(tokenStream)
   parser.buildParseTree = true
+
+  parser.removeErrorListeners()
+  parser.addErrorListener(new ThrowingErrorListener())
 
   let program: SchemeProgram | undefined
   try {
