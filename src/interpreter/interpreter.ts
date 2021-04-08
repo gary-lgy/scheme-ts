@@ -1,16 +1,15 @@
 import * as errors from '../errors/errors'
 import {
-  SchemeBoolLiteral,
-  SchemeDottedList,
-  SchemeExpression,
-  SchemeExpressionType,
-  SchemeIdentifier,
-  SchemeList,
-  SchemeNumberLiteral,
   SchemeProgram,
-  SchemeSequence,
-  SchemeStringLiteral
-} from '../lang/scheme'
+  SyntaxBool,
+  SyntaxDottedList,
+  SyntaxIdentifier,
+  SyntaxList,
+  SyntaxNode,
+  SyntaxNodeType,
+  SyntaxNumber,
+  SyntaxString
+} from '../lang/SchemeSyntax'
 import { Context } from '../types'
 import {
   ExpressibleValue,
@@ -20,12 +19,13 @@ import {
   makeString,
   TailCall
 } from './ExpressibleValue'
+import { useMacro } from './macro'
 import { apply, isParentInTailContext, listOfArguments, tryEnterTailContext } from './procedure'
 import { listToSpecialForm } from './SpecialForm/converters'
 import { evaluateSpecialForm } from './SpecialForm/evaluators'
 import { extendCurrentEnvironment, getVariable, handleRuntimeError, pushEnvironment } from './util'
 
-function* visit(context: Context, node: SchemeExpression) {
+function* visit(context: Context, node: SyntaxNode) {
   context.runtime.nodes.unshift(node)
   // Start each node in non-tail context
   // The evaluator for the node can change this to true when it enters tail context
@@ -40,34 +40,10 @@ function* leave(context: Context) {
 }
 
 export type ValueGenerator = Generator<Context, ExpressibleValue | TailCall>
-export type Evaluator<T extends SchemeExpression> = (node: T, context: Context) => ValueGenerator
+export type Evaluator<T extends SyntaxNode> = (node: T, context: Context) => ValueGenerator
 
-export const evaluators: { [key in SchemeExpressionType]: Evaluator<SchemeExpression> } = {
-  Program: function* (node: SchemeProgram, context: Context): ValueGenerator {
-    context.numberOfOuterEnvironments += 1
-    const environment = extendCurrentEnvironment(context, 'programEnvironment')
-    pushEnvironment(context, environment)
-    const result = yield* evaluate(node.body, context)
-
-    if (result.type === 'TailCall') {
-      return handleRuntimeError(
-        context,
-        new errors.UnreachableCodeReached('top-level eval should not return a TailCall object')
-      )
-    }
-
-    return result
-  },
-
-  Sequence: function* (node: SchemeSequence, context: Context): ValueGenerator {
-    let result: ExpressibleValue
-    for (const expression of node.expressions) {
-      result = yield* evaluate(expression, context)
-    }
-    return result!
-  },
-
-  List: function* (node: SchemeList, context: Context): ValueGenerator {
+export const evaluators: { [key in SyntaxNodeType]: Evaluator<SyntaxNode> } = {
+  List: function* (node: SyntaxList, context: Context): ValueGenerator {
     if (node.elements.length === 0) {
       // Empty list - return empty list
       return makeEmptyList()
@@ -83,43 +59,51 @@ export const evaluators: { [key in SchemeExpressionType]: Evaluator<SchemeExpres
       return yield* evaluateSpecialForm(specialForm, context)
     }
 
-    // Procedure invocation - procedure is the value bound to the identifier
-    const procedure = yield* evaluate(firstElement, context)
-    if (procedure.type !== 'EVProcedure') {
-      return handleRuntimeError(context, new errors.CallingNonFunctionValue(procedure, node))
-    }
-
-    const args = yield* listOfArguments(node.elements.slice(1), context)
-    if (isParentInTailContext(context)) {
-      const tailCall: TailCall = {
-        type: 'TailCall',
-        procedure,
-        args,
-        node
+    const firstElementValue = yield* evaluate(firstElement, context)
+    if (firstElementValue.type === 'EVProcedure') {
+      // Procedure invocation
+      const procedure = firstElementValue
+      const args = yield* listOfArguments(node.elements.slice(1), context)
+      if (isParentInTailContext(context)) {
+        const tailCall: TailCall = {
+          type: 'TailCall',
+          procedure,
+          args,
+          node
+        }
+        return tailCall
+      } else {
+        return yield* apply(context, procedure, args, node)
       }
-      return tailCall
+    } else if (firstElementValue.type === 'EVMacro') {
+      // Macro use
+      const macro = firstElementValue
+      return yield* useMacro(context, macro, node.elements.slice(1), node)
     } else {
-      return yield* apply(context, procedure, args, node)
+      return handleRuntimeError(
+        context,
+        new errors.CallingNonFunctionValue(firstElementValue, node)
+      )
     }
   },
 
-  DottedList: function* (node: SchemeDottedList, context: Context): ValueGenerator {
+  DottedList: function* (node: SyntaxDottedList, context: Context): ValueGenerator {
     return handleRuntimeError(context, new errors.UnexpectedDottedList(node))
   },
 
-  StringLiteral: function* (node: SchemeStringLiteral): ValueGenerator {
+  StringLiteral: function* (node: SyntaxString): ValueGenerator {
     return makeString(node.value)
   },
 
-  NumberLiteral: function* (node: SchemeNumberLiteral): ValueGenerator {
+  NumberLiteral: function* (node: SyntaxNumber): ValueGenerator {
     return makeNumber(node.value)
   },
 
-  BoolLiteral: function* (node: SchemeBoolLiteral): ValueGenerator {
+  BoolLiteral: function* (node: SyntaxBool): ValueGenerator {
     return makeBool(node.value)
   },
 
-  Identifier: function* (node: SchemeIdentifier, context: Context): ValueGenerator {
+  Identifier: function* (node: SyntaxIdentifier, context: Context): ValueGenerator {
     const boundValue = getVariable(context, node.name)
     if (boundValue) {
       return boundValue
@@ -129,7 +113,27 @@ export const evaluators: { [key in SchemeExpressionType]: Evaluator<SchemeExpres
   }
 }
 
-export function* evaluate(node: SchemeExpression, context: Context): ValueGenerator {
+export function* evaluateProgram(program: SchemeProgram, context: Context): ValueGenerator {
+  context.numberOfOuterEnvironments += 1
+  const environment = extendCurrentEnvironment(context, 'programEnvironment')
+  pushEnvironment(context, environment)
+
+  let result!: ExpressibleValue
+  for (const expression of program.body) {
+    result = yield* evaluate(expression, context)
+  }
+
+  if (result.type === 'TailCall') {
+    return handleRuntimeError(
+      context,
+      new errors.UnreachableCodeReached('top-level eval should not return a TailCall object')
+    )
+  }
+
+  return result
+}
+
+export function* evaluate(node: SyntaxNode, context: Context): ValueGenerator {
   yield* visit(context, node)
   const evaluator = evaluators[node.type]
   const result = yield* evaluator(node, context)
@@ -138,7 +142,7 @@ export function* evaluate(node: SchemeExpression, context: Context): ValueGenera
 }
 
 export function* evaluateSequence(
-  expressions: SchemeExpression[],
+  expressions: SyntaxNode[],
   context: Context,
   isTailSequence: boolean,
   defaultResult?: ExpressibleValue

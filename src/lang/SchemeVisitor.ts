@@ -12,7 +12,6 @@ import {
   ProgramContext,
   QuasiquoteContext,
   QuoteContext,
-  SequenceContext,
   StringContext,
   UnquoteContext,
   UnquoteSplicingContext
@@ -112,13 +111,6 @@ export interface SchemeVisitor<Result> extends ParseTreeVisitor<Result> {
    * @return the visitor result
    */
   visitProgram?: (ctx: ProgramContext) => Result
-
-  /**
-   * Visit a parse tree produced by `SchemeParser.sequence`.
-   * @param ctx the parse tree
-   * @return the visitor result
-   */
-  visitSequence?: (ctx: SequenceContext) => Result
 
   /**
    * Visit a parse tree produced by `SchemeParser.expression`.

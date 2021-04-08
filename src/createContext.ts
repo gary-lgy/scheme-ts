@@ -1,10 +1,9 @@
-// Variable determining chapter of Source is contained in this file.
-
-import { GLOBAL } from './constants'
+import { defaultVariant } from './constants'
 import { importNativeBuiltins } from './interpreter/BuiltIns'
 import { EVProcedure, ExpressibleValue } from './interpreter/ExpressibleValue'
+import { stdlibMacros } from './stdlib/macros.prelude'
 import * as misc from './stdlib/misc'
-import { stdlibPrelude } from './stdlib/prelude'
+import { stdlibProcedures } from './stdlib/procedures.prelude'
 import { Context, CustomBuiltIns, Value, Variant } from './types'
 import { stringify } from './utils/stringify'
 
@@ -15,7 +14,8 @@ const createEmptyRuntime = () => ({
   environments: [],
   value: undefined,
   nodes: [],
-  inTailContext: []
+  inTailContext: [],
+  nextUniqueSymbolNumber: 0
 })
 
 const createGlobalEnvironment = () => ({
@@ -60,14 +60,6 @@ const defineSymbol = (context: Context, name: string, value: ExpressibleValue) =
   globalEnvironment.head[name] = value
 }
 
-export const importExternalSymbols = (context: Context, externalSymbols: string[]) => {
-  ensureGlobalEnvironmentExist(context)
-
-  externalSymbols.forEach(symbol => {
-    defineSymbol(context, symbol, GLOBAL[symbol])
-  })
-}
-
 const importExternalBuiltins = (context: Context, externalBuiltIns: CustomBuiltIns) => {
   const rawDisplay = (v: Value) =>
     externalBuiltIns.rawDisplay(
@@ -79,7 +71,7 @@ const importExternalBuiltins = (context: Context, externalBuiltIns: CustomBuiltI
   const displayProcedure: EVProcedure = {
     type: 'EVProcedure',
     name: 'display',
-    argumentPassingStyle: {
+    callSignature: {
       style: 'fixed-args',
       numParams: 1
     },
@@ -90,24 +82,7 @@ const importExternalBuiltins = (context: Context, externalBuiltIns: CustomBuiltI
     }
   }
 
-  const errorProcedure: EVProcedure = {
-    type: 'EVProcedure',
-    name: 'error',
-    argumentPassingStyle: {
-      style: 'var-args',
-      numCompulsoryParameters: 1
-    },
-    variant: 'BuiltInProcedure',
-    body: (args: ExpressibleValue[]): never => {
-      if (args[0].type !== 'EVString') {
-        throw new Error(`error expected the first argument to be a string, got ${args[0].type}`)
-      }
-      misc.error_message(args[0].value, args.slice(1))
-    }
-  }
-
   defineSymbol(context, 'display', displayProcedure)
-  defineSymbol(context, 'error', errorProcedure)
 }
 
 /**
@@ -120,13 +95,16 @@ const defaultBuiltIns: CustomBuiltIns = {
   prompt: misc.rawDisplay,
   // See issue #11
   alert: misc.rawDisplay,
-  visualiseList: (v: Value) => {
+  visualiseList: () => {
     throw new Error('List visualizer is not enabled')
   }
 }
 
 const importPrelude = (context: Context) => {
-  context.prelude = stdlibPrelude
+  context.prelude = stdlibProcedures
+  if (context.variant === 'macro') {
+    context.prelude += stdlibMacros
+  }
 }
 
 export const importBuiltins = (context: Context, externalBuiltIns: CustomBuiltIns) => {
@@ -137,7 +115,7 @@ export const importBuiltins = (context: Context, externalBuiltIns: CustomBuiltIn
 }
 
 const createContext = <T>(
-  variant: Variant = 'base',
+  variant: Variant = defaultVariant,
   externalSymbols: string[] = [],
   externalContext?: T,
   externalBuiltIns: CustomBuiltIns = defaultBuiltIns,
@@ -147,7 +125,6 @@ const createContext = <T>(
 
   importPrelude(context)
   importBuiltins(context, externalBuiltIns)
-  importExternalSymbols(context, externalSymbols)
 
   return context
 }

@@ -25,7 +25,7 @@ export const extendCurrentEnvironment = (
   }
 }
 
-export const getVariable = (context: Context, name: string) => {
+export const getVariable = (context: Context, name: string): ExpressibleValue | null => {
   let environment: Environment | null = context.runtime.environments[0]
   while (environment) {
     if (environment.head.hasOwnProperty(name)) {
@@ -34,10 +34,10 @@ export const getVariable = (context: Context, name: string) => {
       environment = environment.tail
     }
   }
-  return undefined
+  return null
 }
 
-export const setVariable = (context: Context, name: string, value: any) => {
+export const setVariable = (context: Context, name: string, value: ExpressibleValue): void => {
   let environment: Environment | null = context.runtime.environments[0]
   while (environment) {
     if (environment.head.hasOwnProperty(name)) {
@@ -48,6 +48,29 @@ export const setVariable = (context: Context, name: string, value: any) => {
     }
   }
   return handleRuntimeError(context, new errors.UndefinedVariable(name, context.runtime.nodes[0]))
+}
+
+export const syntheticIdentifierPrefix = '$:'
+
+const isAllowedAsUserIdentifier = (name: string): boolean => {
+  return !name.startsWith(syntheticIdentifierPrefix)
+}
+
+export const introduceBinding = (
+  context: Context,
+  frame: Frame,
+  isUserIdentifier: boolean,
+  name: string,
+  value: ExpressibleValue
+): void => {
+  if (isUserIdentifier && !isAllowedAsUserIdentifier(name)) {
+    return handleRuntimeError(
+      context,
+      new errors.DisallowedIdentifier(name, context.runtime.nodes[0])
+    )
+  }
+
+  frame[name] = value
 }
 
 export const isDefined = (context: Context, name: string): boolean => {
