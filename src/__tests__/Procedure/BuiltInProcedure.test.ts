@@ -112,6 +112,42 @@ describe.each<Variant>(['base', 'no-tco', 'macro'])('miscellaneous library featu
         )
       })
     })
+
+    describe('remainder', () => {
+      test('both positive', () => {
+        expect(evaluateUntilDone('(remainder 13 4)')).toEqual(makeNumber(1))
+      })
+
+      test('negative + positive', () => {
+        expect(evaluateUntilDone('(remainder -13 4)')).toEqual(makeNumber(-1))
+      })
+
+      test('positive + negative', () => {
+        expect(evaluateUntilDone('(remainder 13 -4)')).toEqual(makeNumber(1))
+      })
+
+      test('both negative', () => {
+        expect(evaluateUntilDone('(remainder -13 -4)')).toEqual(makeNumber(-1))
+      })
+    })
+
+    describe('modulo', () => {
+      test('both positive', () => {
+        expect(evaluateUntilDone('(modulo 13 4)')).toEqual(makeNumber(1))
+      })
+
+      test('negative + positive', () => {
+        expect(evaluateUntilDone('(modulo -13 4)')).toEqual(makeNumber(3))
+      })
+
+      test('positive + negative', () => {
+        expect(evaluateUntilDone('(modulo 13 -4)')).toEqual(makeNumber(-3))
+      })
+
+      test('both negative', () => {
+        expect(evaluateUntilDone('(modulo -13 -4)')).toEqual(makeNumber(-1))
+      })
+    })
   })
 
   describe('pair procedures', () => {

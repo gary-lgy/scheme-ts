@@ -123,6 +123,23 @@ export const remainder: EVProcedure = {
   }
 }
 
+export const modulo: EVProcedure = {
+  type: 'EVProcedure',
+  variant: 'BuiltInProcedure',
+  name: 'modulo',
+  callSignature: {
+    style: 'fixed-args',
+    numParams: 2
+  },
+  body: (args: ExpressibleValue[]) => {
+    const mappedArgs = mustMapToNumbers('modulo', args)
+    if (mappedArgs[1] === 0) {
+      throw new Error('division by zero')
+    }
+    return makeNumber(((mappedArgs[0] % mappedArgs[1]) + mappedArgs[1]) % mappedArgs[1])
+  }
+}
+
 export const numberEqual: EVProcedure = {
   type: 'EVProcedure',
   variant: 'BuiltInProcedure',
