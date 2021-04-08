@@ -208,6 +208,16 @@ class ExpressionGenerator implements SchemeVisitor<SyntaxNode> {
 }
 
 class ThrowingErrorListener implements ANTLRErrorListener<any> {
+  private static formatErrorMessage(msg: string): string {
+    if (msg.includes("mismatched input '<EOF>'")) {
+      return 'unexpected EOF'
+    } else if (msg.includes('no viable alternative')) {
+      return msg.replace('no viable alternative', 'syntax error')
+    } else {
+      return msg
+    }
+  }
+
   public syntaxError<T>(
     _recognizer: Recognizer<T, any>,
     _offendingSymbol: T,
@@ -226,7 +236,7 @@ class ThrowingErrorListener implements ANTLRErrorListener<any> {
           column: charPositionInLine + 1
         }
       },
-      msg
+      ThrowingErrorListener.formatErrorMessage(msg)
     )
   }
 }
