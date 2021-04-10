@@ -1,10 +1,10 @@
 import { Context } from '..'
 import * as errors from '../errors/errors'
 import { Environment } from '../types'
-import { stringify } from '../utils/stringify'
+import { stringify, stringifyCallSignature } from '../utils/stringify'
 import {
-  EVBuiltInProcedure,
-  EVCompoundProcedure,
+  BuiltInProcedure,
+  CompoundProcedure,
   ExpressibleValue,
   makeList,
   NonTailCallExpressibleValue,
@@ -44,7 +44,12 @@ export const checkNumberOfArguments = (
   if (callSignature.style === 'fixed-args' && callSignature.numParams !== numArgs) {
     handleRuntimeError(
       context,
-      new errors.InvalidNumberOfArguments(callExpression, name, callSignature.numParams, numArgs)
+      new errors.InvalidNumberOfArguments(
+        callExpression,
+        stringifyCallSignature(name, callSignature),
+        callSignature.numParams,
+        numArgs
+      )
     )
   } else if (
     callSignature.style === 'var-args' &&
@@ -54,7 +59,7 @@ export const checkNumberOfArguments = (
       context,
       new errors.NotEnoughArguments(
         callExpression,
-        name,
+        stringifyCallSignature(name, callSignature),
         callSignature.numCompulsoryParameters,
         numArgs
       )
@@ -133,7 +138,7 @@ export function* apply(
 
 function* applyCompoundProcedure(
   context: Context,
-  procedure: EVCompoundProcedure,
+  procedure: CompoundProcedure,
   suppliedArgs: ExpressibleValue[]
 ): ValueGenerator {
   const environment = extendEnvironmentWithNewBindings(
@@ -170,7 +175,7 @@ function* applyCompoundProcedure(
 
 function* applyBuiltInProcedure(
   context: Context,
-  procedure: EVBuiltInProcedure,
+  procedure: BuiltInProcedure,
   suppliedArgs: ExpressibleValue[],
   node: SyntaxNode
 ): ValueGenerator {

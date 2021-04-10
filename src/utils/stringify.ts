@@ -1,5 +1,6 @@
 import { MAX_LIST_DISPLAY_LENGTH } from '../constants'
 import { ExpressibleValue, Pair } from '../interpreter/ExpressibleValue'
+import { CallSignature, NamedCallSignature } from '../interpreter/procedure'
 import { flattenPairToList, ImproperList, List } from './listHelpers'
 
 function makeIndent(indent: number | string): string {
@@ -128,11 +129,9 @@ export const stringify = (
       case 'pair':
         return stringifyPair(v, indentLevel)
       case 'procedure':
-        if (v.variant === 'BuiltInProcedure') {
-          return `[built-in procedure '${v.name}']`
-        } else {
-          return `[compound procedure '${v.name}']`
-        }
+        const procedureVariant =
+          v.variant === 'CompoundProcedure' ? 'compound procedure' : 'built-in procedure'
+        return `[${procedureVariant} ${stringifyCallSignature(v.name, v.callSignature)}]`
       case 'macro':
         return `[macro '${v.name}']`
       case 'TailCall':
@@ -141,4 +140,30 @@ export const stringify = (
   }
 
   return stringifyValue(value, 0)
+}
+
+export const stringifyCallSignature = (
+  name: string,
+  callSignature: CallSignature | NamedCallSignature
+): string => {
+  let argNames: string[] = []
+  if (callSignature.style === 'fixed-args') {
+    if ('parameters' in callSignature) {
+      argNames = callSignature.parameters.map(param => param.value)
+    } else {
+      argNames = Array.from({ length: callSignature.numParams }).map((_, index) => `arg${index}`)
+    }
+  } else {
+    if ('compulsoryParameters' in callSignature) {
+      argNames = callSignature.compulsoryParameters
+        .map(param => param.value)
+        .concat(['.', callSignature.restParameters.value])
+    } else {
+      argNames = Array.from({ length: callSignature.numCompulsoryParameters })
+        .map((_, index) => `arg${index}`)
+        .concat(['.', 'rest-args'])
+    }
+  }
+
+  return `(${[name, ...argNames].join(' ')})`
 }

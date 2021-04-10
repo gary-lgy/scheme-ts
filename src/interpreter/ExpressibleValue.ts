@@ -27,9 +27,9 @@ export type NonTailCallExpressibleValue =
 
 export type Procedure = {
   type: 'procedure'
-} & (EVCompoundProcedure | EVBuiltInProcedure)
+} & (CompoundProcedure | BuiltInProcedure)
 
-export type EVCompoundProcedure = {
+export type CompoundProcedure = {
   variant: 'CompoundProcedure'
   callSignature: NamedCallSignature
   body: SyntaxNode[]
@@ -37,7 +37,7 @@ export type EVCompoundProcedure = {
   name: string
 }
 
-export type EVBuiltInProcedure = {
+export type BuiltInProcedure = {
   variant: 'BuiltInProcedure'
   callSignature: CallSignature
   name: string
@@ -66,7 +66,9 @@ export const makePair = (
   tail: ExpressibleValue,
   loc?: SourceLocation
 ): Pair => {
-  return { type: 'pair', head, tail, loc }
+  const location =
+    loc ?? ('loc' in head && head.loc ? head.loc : 'loc' in tail && tail.loc ? tail.loc : undefined)
+  return { type: 'pair', head, tail, loc: location }
 }
 
 export const makeList = (values: ExpressibleValue[], loc?: SourceLocation): Pair | SEmptyList => {
