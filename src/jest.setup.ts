@@ -1,5 +1,5 @@
-import { areValuesEqual } from './src/interpreter/BuiltIns/Equal'
-import { ExpressibleValue } from './src/interpreter/ExpressibleValue'
+import { areValuesEqual } from './interpreter/BuiltIns/Equal'
+import { ExpressibleValue } from './interpreter/ExpressibleValue'
 
 expect.extend({
   toHaveMatchingValue(received: ExpressibleValue, expected: ExpressibleValue) {

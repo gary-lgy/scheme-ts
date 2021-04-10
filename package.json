@@ -100,7 +100,7 @@
       ]
     ],
     "setupFilesAfterEnv": [
-      "<rootDir>/jest.setup.ts"
+      "<rootDir>/src/jest.setup.ts"
     ]
   },
   "husky": {
