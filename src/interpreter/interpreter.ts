@@ -1,26 +1,25 @@
 import * as errors from '../errors/errors'
+import { Context } from '../types'
+import { ExpressibleValue, TailCall } from './ExpressibleValue'
+import { useMacro } from './macro'
+import { apply, isParentInTailContext, listOfArguments, tryEnterTailContext } from './procedure'
 import {
   SchemeProgram,
-  SyntaxBool,
   SyntaxDottedList,
-  SyntaxIdentifier,
   SyntaxList,
   SyntaxNode,
-  SyntaxNodeType,
-  SyntaxNumber,
-  SyntaxString
-} from '../lang/SchemeSyntax'
-import { Context } from '../types'
+  SyntaxNodeType
+} from './SchemeSyntax'
 import {
-  ExpressibleValue,
   makeBool,
   makeEmptyList,
   makeNumber,
   makeString,
-  TailCall
-} from './ExpressibleValue'
-import { useMacro } from './macro'
-import { apply, isParentInTailContext, listOfArguments, tryEnterTailContext } from './procedure'
+  SBool,
+  SNumber,
+  SString,
+  SSymbol
+} from './SExpression'
 import { listToSpecialForm } from './SpecialForm/converters'
 import { evaluateSpecialForm } from './SpecialForm/evaluators'
 import { extendCurrentEnvironment, getVariable, handleRuntimeError, pushEnvironment } from './util'
@@ -43,24 +42,24 @@ export type ValueGenerator = Generator<Context, ExpressibleValue | TailCall>
 export type Evaluator<T extends SyntaxNode> = (node: T, context: Context) => ValueGenerator
 
 export const evaluators: { [key in SyntaxNodeType]: Evaluator<SyntaxNode> } = {
-  List: function* (node: SyntaxList, context: Context): ValueGenerator {
+  list: function* (node: SyntaxList, context: Context): ValueGenerator {
     if (node.elements.length === 0) {
       // Empty list - return empty list
       return makeEmptyList()
     }
 
     const firstElement = node.elements[0]
-    if (firstElement.type === 'Identifier' && !getVariable(context, firstElement.name)) {
+    if (firstElement.type === 'symbol' && !getVariable(context, firstElement.value)) {
       // No procedure bound to the name - treat it as a special form
-      const specialForm = listToSpecialForm(firstElement.name, node, context)
+      const specialForm = listToSpecialForm(firstElement.value, node, context)
       if (!specialForm) {
-        return handleRuntimeError(context, new errors.UndefinedVariable(firstElement.name, node))
+        return handleRuntimeError(context, new errors.UndefinedVariable(firstElement.value, node))
       }
       return yield* evaluateSpecialForm(specialForm, context)
     }
 
     const firstElementValue = yield* evaluate(firstElement, context)
-    if (firstElementValue.type === 'EVProcedure') {
+    if (firstElementValue.type === 'procedure') {
       // Procedure invocation
       const procedure = firstElementValue
       const args = yield* listOfArguments(node.elements.slice(1), context)
@@ -75,7 +74,7 @@ export const evaluators: { [key in SyntaxNodeType]: Evaluator<SyntaxNode> } = {
       } else {
         return yield* apply(context, procedure, args, node)
       }
-    } else if (firstElementValue.type === 'EVMacro') {
+    } else if (firstElementValue.type === 'macro') {
       // Macro use
       const macro = firstElementValue
       return yield* useMacro(context, macro, node.elements.slice(1), node)
@@ -87,28 +86,28 @@ export const evaluators: { [key in SyntaxNodeType]: Evaluator<SyntaxNode> } = {
     }
   },
 
-  DottedList: function* (node: SyntaxDottedList, context: Context): ValueGenerator {
+  'dotted list': function* (node: SyntaxDottedList, context: Context): ValueGenerator {
     return handleRuntimeError(context, new errors.UnexpectedDottedList(node))
   },
 
-  StringLiteral: function* (node: SyntaxString): ValueGenerator {
+  string: function* (node: SString): ValueGenerator {
     return makeString(node.value)
   },
 
-  NumberLiteral: function* (node: SyntaxNumber): ValueGenerator {
+  number: function* (node: SNumber): ValueGenerator {
     return makeNumber(node.value)
   },
 
-  BoolLiteral: function* (node: SyntaxBool): ValueGenerator {
+  boolean: function* (node: SBool): ValueGenerator {
     return makeBool(node.value)
   },
 
-  Identifier: function* (node: SyntaxIdentifier, context: Context): ValueGenerator {
-    const boundValue = getVariable(context, node.name)
+  symbol: function* (node: SSymbol, context: Context): ValueGenerator {
+    const boundValue = getVariable(context, node.value)
     if (boundValue) {
       return boundValue
     } else {
-      return handleRuntimeError(context, new errors.UndefinedVariable(node.name, node))
+      return handleRuntimeError(context, new errors.UndefinedVariable(node.value, node))
     }
   }
 }

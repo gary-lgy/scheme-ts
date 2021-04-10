@@ -1,7 +1,7 @@
 /* tslint:disable: max-classes-per-file */
 import { ExpressibleValue } from '../interpreter/ExpressibleValue'
+import { SyntaxNode } from '../interpreter/SchemeSyntax'
 import { syntheticIdentifierPrefix } from '../interpreter/util'
-import { SyntaxNode } from '../lang/SchemeSyntax'
 import { stringify } from '../utils/stringify'
 import { RuntimeSourceError } from './runtimeSourceError'
 

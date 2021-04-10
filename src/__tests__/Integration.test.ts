@@ -1,4 +1,5 @@
-import { ExpressibleValue, makeBool, makeList, makeSymbol } from '../interpreter/ExpressibleValue'
+import { ExpressibleValue, makeList } from '../interpreter/ExpressibleValue'
+import { makeBool, makeSymbol } from '../interpreter/SExpression'
 import { prepareContext, runUntilDone } from '../testHelpers'
 import { Variant } from '../types'
 import { stringify } from '../utils/stringify'
@@ -61,12 +62,12 @@ describe.each<Variant>(['base', 'no-tco', 'macro'])('integration tests', variant
         (append (reverse (cdr liste)) (list (car liste)))))
     (define (is-palindrome liste)
       (equal? liste (reverse liste)))`
-    expect(evaluateUntilDone(prelude + ` (is-palindrome '(x (a b) a m a (a b) x))`)).toEqual(
-      makeBool(true)
-    )
-    expect(evaluateUntilDone(prelude + ` (is-palindrome '(my-reverse '(1 2 3 4 5)))`)).toEqual(
-      makeBool(false)
-    )
+    expect(
+      evaluateUntilDone(prelude + ` (is-palindrome '(x (a b) a m a (a b) x))`)
+    ).toHaveMatchingValue(makeBool(true))
+    expect(
+      evaluateUntilDone(prelude + ` (is-palindrome '(my-reverse '(1 2 3 4 5)))`)
+    ).toHaveMatchingValue(makeBool(false))
   })
 
   test('8', () => {
@@ -356,29 +357,29 @@ describe.each<Variant>(['base', 'no-tco', 'macro'])('integration tests', variant
       (else (append (combinaison k (cdr liste))
             (add-element (car liste)
                          (combinaison (- k 1) (cdr liste)))))))`
-    expect(evaluateUntilDone(prelude + ` (combinaison 3 '(a b c d e f))`)).toEqual(
-      makeList(
-        makeList(makeSymbol('d'), makeSymbol('e'), makeSymbol('f')),
-        makeList(makeSymbol('c'), makeSymbol('e'), makeSymbol('f')),
-        makeList(makeSymbol('c'), makeSymbol('d'), makeSymbol('f')),
-        makeList(makeSymbol('c'), makeSymbol('d'), makeSymbol('e')),
-        makeList(makeSymbol('b'), makeSymbol('e'), makeSymbol('f')),
-        makeList(makeSymbol('b'), makeSymbol('d'), makeSymbol('f')),
-        makeList(makeSymbol('b'), makeSymbol('d'), makeSymbol('e')),
-        makeList(makeSymbol('b'), makeSymbol('c'), makeSymbol('f')),
-        makeList(makeSymbol('b'), makeSymbol('c'), makeSymbol('e')),
-        makeList(makeSymbol('b'), makeSymbol('c'), makeSymbol('d')),
-        makeList(makeSymbol('a'), makeSymbol('e'), makeSymbol('f')),
-        makeList(makeSymbol('a'), makeSymbol('d'), makeSymbol('f')),
-        makeList(makeSymbol('a'), makeSymbol('d'), makeSymbol('e')),
-        makeList(makeSymbol('a'), makeSymbol('c'), makeSymbol('f')),
-        makeList(makeSymbol('a'), makeSymbol('c'), makeSymbol('e')),
-        makeList(makeSymbol('a'), makeSymbol('c'), makeSymbol('d')),
-        makeList(makeSymbol('a'), makeSymbol('b'), makeSymbol('f')),
-        makeList(makeSymbol('a'), makeSymbol('b'), makeSymbol('e')),
-        makeList(makeSymbol('a'), makeSymbol('b'), makeSymbol('d')),
-        makeList(makeSymbol('a'), makeSymbol('b'), makeSymbol('c'))
-      )
+    expect(evaluateUntilDone(prelude + ` (combinaison 3 '(a b c d e f))`)).toHaveMatchingValue(
+      makeList([
+        makeList([makeSymbol('d', true), makeSymbol('e', true), makeSymbol('f', true)]),
+        makeList([makeSymbol('c', true), makeSymbol('e', true), makeSymbol('f', true)]),
+        makeList([makeSymbol('c', true), makeSymbol('d', true), makeSymbol('f', true)]),
+        makeList([makeSymbol('c', true), makeSymbol('d', true), makeSymbol('e', true)]),
+        makeList([makeSymbol('b', true), makeSymbol('e', true), makeSymbol('f', true)]),
+        makeList([makeSymbol('b', true), makeSymbol('d', true), makeSymbol('f', true)]),
+        makeList([makeSymbol('b', true), makeSymbol('d', true), makeSymbol('e', true)]),
+        makeList([makeSymbol('b', true), makeSymbol('c', true), makeSymbol('f', true)]),
+        makeList([makeSymbol('b', true), makeSymbol('c', true), makeSymbol('e', true)]),
+        makeList([makeSymbol('b', true), makeSymbol('c', true), makeSymbol('d', true)]),
+        makeList([makeSymbol('a', true), makeSymbol('e', true), makeSymbol('f', true)]),
+        makeList([makeSymbol('a', true), makeSymbol('d', true), makeSymbol('f', true)]),
+        makeList([makeSymbol('a', true), makeSymbol('d', true), makeSymbol('e', true)]),
+        makeList([makeSymbol('a', true), makeSymbol('c', true), makeSymbol('f', true)]),
+        makeList([makeSymbol('a', true), makeSymbol('c', true), makeSymbol('e', true)]),
+        makeList([makeSymbol('a', true), makeSymbol('c', true), makeSymbol('d', true)]),
+        makeList([makeSymbol('a', true), makeSymbol('b', true), makeSymbol('f', true)]),
+        makeList([makeSymbol('a', true), makeSymbol('b', true), makeSymbol('e', true)]),
+        makeList([makeSymbol('a', true), makeSymbol('b', true), makeSymbol('d', true)]),
+        makeList([makeSymbol('a', true), makeSymbol('b', true), makeSymbol('c', true)])
+      ])
     )
   })
 
@@ -389,7 +390,7 @@ describe.each<Variant>(['base', 'no-tco', 'macro'])('integration tests', variant
 
   test('28', () => {
     const prelude = `(define (my-gcd n m) (if (= m 0) n (my-gcd m (modulo n m)))) (define (my-coprime n m) (= (my-gcd n m) 1))`
-    expect(evaluateUntilDone(prelude + ` (my-coprime 35 64)`)).toEqual(makeBool(true))
+    expect(evaluateUntilDone(prelude + ` (my-coprime 35 64)`)).toHaveMatchingValue(makeBool(true))
   })
 
   test('29', () => {
@@ -435,12 +436,18 @@ describe.each<Variant>(['base', 'no-tco', 'macro'])('integration tests', variant
             (and (my-is-tree-aux (cadr candidate))
                  (my-is-tree-aux (caddr candidate))))))
   (my-is-tree-aux candidate))`
-    expect(evaluateUntilDone(prelude + ` (my-is-tree '(a () ()))`)).toEqual(makeBool(true))
-    expect(evaluateUntilDone(prelude + ` (my-is-tree '(a () "123"))`)).toEqual(makeBool(false))
-    expect(evaluateUntilDone(prelude + ` (my-is-tree '(a (b () f) ()))`)).toEqual(makeBool(false))
-    expect(evaluateUntilDone(prelude + ` (my-is-tree '(my-is-tree '(a (b () ()))))`)).toEqual(
+    expect(evaluateUntilDone(prelude + ` (my-is-tree '(a () ()))`)).toHaveMatchingValue(
+      makeBool(true)
+    )
+    expect(evaluateUntilDone(prelude + ` (my-is-tree '(a () "123"))`)).toHaveMatchingValue(
       makeBool(false)
     )
+    expect(evaluateUntilDone(prelude + ` (my-is-tree '(a (b () f) ()))`)).toHaveMatchingValue(
+      makeBool(false)
+    )
+    expect(
+      evaluateUntilDone(prelude + ` (my-is-tree '(my-is-tree '(a (b () ()))))`)
+    ).toHaveMatchingValue(makeBool(false))
   })
 
   test('31', () => {
@@ -723,12 +730,12 @@ describe.each<Variant>(['base', 'no-tco', 'macro'])('integration tests', variant
             #t)
           (else
             (element-of-set? x (cdr set)))))`
-    expect(evaluateUntilDone(prelude + ` (element-of-set? 5 (list 1 3 5 7 9 7 5 3 1))`)).toEqual(
-      makeBool(true)
-    )
+    expect(
+      evaluateUntilDone(prelude + ` (element-of-set? 5 (list 1 3 5 7 9 7 5 3 1))`)
+    ).toHaveMatchingValue(makeBool(true))
     expect(
       evaluateUntilDone(prelude + ` (element-of-set? 10086 (list 1 3 5 7 9 7 5 3 1))`)
-    ).toEqual(makeBool(false))
+    ).toHaveMatchingValue(makeBool(false))
   })
 
   test('42', () => {
@@ -1177,12 +1184,12 @@ describe.each<Variant>(['base', 'no-tco', 'macro'])('integration tests', variant
 
   test('66', () => {
     const prelude = `(and (= 2 2) (> 2 1))`
-    expect(evaluateUntilDone(prelude + ` `)).toEqual(makeBool(true))
+    expect(evaluateUntilDone(prelude + ` `)).toHaveMatchingValue(makeBool(true))
   })
 
   test('67', () => {
     const prelude = `(and (= 2 2) (< 2 1))`
-    expect(evaluateUntilDone(prelude + ` `)).toEqual(makeBool(false))
+    expect(evaluateUntilDone(prelude + ` `)).toHaveMatchingValue(makeBool(false))
   })
 
   test('68', () => {
@@ -1197,17 +1204,17 @@ describe.each<Variant>(['base', 'no-tco', 'macro'])('integration tests', variant
 
   test('70', () => {
     const prelude = `(and)`
-    expect(evaluateUntilDone(prelude + ` `)).toEqual(makeBool(true))
+    expect(evaluateUntilDone(prelude + ` `)).toHaveMatchingValue(makeBool(true))
   })
 
   test('71', () => {
     const prelude = `(or (= 2 2) (> 2 1))`
-    expect(evaluateUntilDone(prelude + ` `)).toEqual(makeBool(true))
+    expect(evaluateUntilDone(prelude + ` `)).toHaveMatchingValue(makeBool(true))
   })
 
   test('72', () => {
     const prelude = `(or #f #f #f)`
-    expect(evaluateUntilDone(prelude + ` `)).toEqual(makeBool(false))
+    expect(evaluateUntilDone(prelude + ` `)).toHaveMatchingValue(makeBool(false))
   })
 
   test('73', () => {
@@ -1267,47 +1274,47 @@ describe.each<Variant>(['base', 'no-tco', 'macro'])('integration tests', variant
 
   test('84', () => {
     const prelude = `(not #t)`
-    expect(evaluateUntilDone(prelude + ` `)).toEqual(makeBool(false))
+    expect(evaluateUntilDone(prelude + ` `)).toHaveMatchingValue(makeBool(false))
   })
 
   test('85', () => {
     const prelude = `(not (list))`
-    expect(evaluateUntilDone(prelude + ` `)).toEqual(makeBool(false))
+    expect(evaluateUntilDone(prelude + ` `)).toHaveMatchingValue(makeBool(false))
   })
 
   test('86', () => {
     const prelude = `(let ((x '(a))) (eq? x x)) `
-    expect(evaluateUntilDone(prelude + ` `)).toEqual(makeBool(true))
+    expect(evaluateUntilDone(prelude + ` `)).toHaveMatchingValue(makeBool(true))
   })
 
   test('87', () => {
     const prelude = `(let ((p (lambda (x) x))) (eq? p p))`
-    expect(evaluateUntilDone(prelude + ` `)).toEqual(makeBool(true))
+    expect(evaluateUntilDone(prelude + ` `)).toHaveMatchingValue(makeBool(true))
   })
 
   test('88', () => {
     const prelude = `(let ((p (lambda (x) x))) (eq? p p))`
-    expect(evaluateUntilDone(prelude + ` `)).toEqual(makeBool(true))
+    expect(evaluateUntilDone(prelude + ` `)).toHaveMatchingValue(makeBool(true))
   })
 
   test('89', () => {
     const prelude = `(eq? car car)`
-    expect(evaluateUntilDone(prelude + ` `)).toEqual(makeBool(true))
+    expect(evaluateUntilDone(prelude + ` `)).toHaveMatchingValue(makeBool(true))
   })
 
   test('90', () => {
     const prelude = `(eq? '() '())`
-    expect(evaluateUntilDone(prelude + ` `)).toEqual(makeBool(true))
+    expect(evaluateUntilDone(prelude + ` `)).toHaveMatchingValue(makeBool(true))
   })
 
   test('91', () => {
     const prelude = `(eq? '() '())`
-    expect(evaluateUntilDone(prelude + ` `)).toEqual(makeBool(true))
+    expect(evaluateUntilDone(prelude + ` `)).toHaveMatchingValue(makeBool(true))
   })
 
   test('92', () => {
     const prelude = `(eq? 'mISSISSIppi 'mississippi)`
-    expect(evaluateUntilDone(prelude + ` `)).toEqual(makeBool(true))
+    expect(evaluateUntilDone(prelude + ` `)).toHaveMatchingValue(makeBool(true))
   })
 
   // This test fails for the macro sublanguage because the macros assume keywords have not been redefined
@@ -1328,12 +1335,12 @@ describe.each<Variant>(['base', 'no-tco', 'macro'])('integration tests', variant
 
   test('96', () => {
     const prelude = `(eqv? (cons 1 2) (cons 1 2))`
-    expect(evaluateUntilDone(prelude + ` `)).toEqual(makeBool(false))
+    expect(evaluateUntilDone(prelude + ` `)).toHaveMatchingValue(makeBool(false))
   })
 
   test('97', () => {
     const prelude = `(equal? "abc" "abc")`
-    expect(evaluateUntilDone(prelude + ` `)).toEqual(makeBool(true))
+    expect(evaluateUntilDone(prelude + ` `)).toHaveMatchingValue(makeBool(true))
   })
 
   test('98', () => {

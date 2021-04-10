@@ -1,6 +1,7 @@
 import { Variant } from '../..'
 import { InvalidNumberOfArguments, NotEnoughArguments } from '../../errors/errors'
-import { ExpressibleValue, makeList, makeNumber } from '../../interpreter/ExpressibleValue'
+import { ExpressibleValue, makeList } from '../../interpreter/ExpressibleValue'
+import { makeNumber } from '../../interpreter/SExpression'
 import { prepareContext, runUntilDone } from '../../testHelpers'
 
 describe.each<Variant>(['base', 'no-tco', 'macro'])('miscellaneous library features', variant => {
@@ -42,14 +43,14 @@ describe.each<Variant>(['base', 'no-tco', 'macro'])('miscellaneous library featu
 
     describe('var args', () => {
       test('with no compulsory arguments', () => {
-        expect(evaluateUntilDone('((lambda x x) 1 2 3)')).toEqual(
-          makeList(makeNumber(1), makeNumber(2), makeNumber(3))
+        expect(evaluateUntilDone('((lambda x x) 1 2 3)')).toHaveMatchingValue(
+          makeList([makeNumber(1), makeNumber(2), makeNumber(3)])
         )
       })
 
       test('with one compulsory argument', () => {
-        expect(evaluateUntilDone('((lambda (x . rest) (cons x rest)) 1 2 3)')).toEqual(
-          makeList(makeNumber(1), makeNumber(2), makeNumber(3))
+        expect(evaluateUntilDone('((lambda (x . rest) (cons x rest)) 1 2 3)')).toHaveMatchingValue(
+          makeList([makeNumber(1), makeNumber(2), makeNumber(3)])
         )
       })
 
@@ -57,7 +58,9 @@ describe.each<Variant>(['base', 'no-tco', 'macro'])('miscellaneous library featu
         test('with enough arguments', () => {
           expect(
             evaluateUntilDone('((lambda (x y . rest) (cons y (cons x rest))) 1 2 3 4)')
-          ).toEqual(makeList(makeNumber(2), makeNumber(1), makeNumber(3), makeNumber(4)))
+          ).toHaveMatchingValue(
+            makeList([makeNumber(2), makeNumber(1), makeNumber(3), makeNumber(4)])
+          )
         })
 
         test('without enough arguments', () => {
@@ -87,8 +90,8 @@ describe.each<Variant>(['base', 'no-tco', 'macro'])('miscellaneous library featu
   result
   `
 
-      expect(evaluateUntilDone(program)).toEqual(
-        makeList(makeNumber(10), makeNumber(30), makeNumber(20), makeNumber(10))
+      expect(evaluateUntilDone(program)).toHaveMatchingValue(
+        makeList([makeNumber(10), makeNumber(30), makeNumber(20), makeNumber(10)])
       )
     })
 
@@ -101,7 +104,7 @@ describe.each<Variant>(['base', 'no-tco', 'macro'])('miscellaneous library featu
       35
       (* 2 3)))`
 
-        expect(evaluateUntilDone(program)).toEqual(makeNumber(6))
+        expect(evaluateUntilDone(program)).toHaveMatchingValue(makeNumber(6))
       })
     })
   })

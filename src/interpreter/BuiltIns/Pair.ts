@@ -1,15 +1,8 @@
-import {
-  EVEmptyList,
-  EVPair,
-  EVProcedure,
-  ExpressibleValue,
-  makeEmptyList,
-  makeList,
-  makePair
-} from '../ExpressibleValue'
+import { ExpressibleValue, makeList, makePair, Pair, Procedure } from '../ExpressibleValue'
+import { makeEmptyList, SEmptyList } from '../SExpression'
 
-export const cons: EVProcedure = {
-  type: 'EVProcedure',
+export const cons: Procedure = {
+  type: 'procedure',
   variant: 'BuiltInProcedure',
   name: 'cons',
   callSignature: {
@@ -22,16 +15,16 @@ export const cons: EVProcedure = {
 export const mustDoOnPair = <T>(
   opName: string,
   pair: ExpressibleValue,
-  op: (pair: EVPair) => T
+  op: (pair: Pair) => T
 ): T => {
-  if (pair.type !== 'EVPair') {
+  if (pair.type !== 'pair') {
     throw new Error(opName + ' expects a pair as the only argument, but encountered ' + pair.type)
   }
   return op(pair)
 }
 
-export const car: EVProcedure = {
-  type: 'EVProcedure',
+export const car: Procedure = {
+  type: 'procedure',
   variant: 'BuiltInProcedure',
   name: 'car',
   callSignature: {
@@ -39,11 +32,11 @@ export const car: EVProcedure = {
     numParams: 1
   },
   body: (args: ExpressibleValue[]) =>
-    mustDoOnPair('car', args[0], (pair: EVPair): ExpressibleValue => pair.head)
+    mustDoOnPair('car', args[0], (pair: Pair): ExpressibleValue => pair.head)
 }
 
-export const cdr: EVProcedure = {
-  type: 'EVProcedure',
+export const cdr: Procedure = {
+  type: 'procedure',
   variant: 'BuiltInProcedure',
   name: 'cdr',
   callSignature: {
@@ -51,11 +44,11 @@ export const cdr: EVProcedure = {
     numParams: 1
   },
   body: (args: ExpressibleValue[]) =>
-    mustDoOnPair('cdr', args[0], (pair: EVPair): ExpressibleValue => pair.tail)
+    mustDoOnPair('cdr', args[0], (pair: Pair): ExpressibleValue => pair.tail)
 }
 
-export const setCar: EVProcedure = {
-  type: 'EVProcedure',
+export const setCar: Procedure = {
+  type: 'procedure',
   variant: 'BuiltInProcedure',
   name: 'set-car!',
   callSignature: {
@@ -66,15 +59,15 @@ export const setCar: EVProcedure = {
     mustDoOnPair(
       'set-car!',
       args[0],
-      (pair: EVPair): EVEmptyList => {
+      (pair: Pair): SEmptyList => {
         pair.head = args[1]
         return makeEmptyList()
       }
     )
 }
 
-export const setCdr: EVProcedure = {
-  type: 'EVProcedure',
+export const setCdr: Procedure = {
+  type: 'procedure',
   variant: 'BuiltInProcedure',
   name: 'set-cdr!',
   callSignature: {
@@ -85,20 +78,20 @@ export const setCdr: EVProcedure = {
     mustDoOnPair(
       'set-cdr!',
       args[0],
-      (pair: EVPair): EVEmptyList => {
+      (pair: Pair): SEmptyList => {
         pair.tail = args[1]
         return makeEmptyList()
       }
     )
 }
 
-export const list: EVProcedure = {
-  type: 'EVProcedure',
+export const list: Procedure = {
+  type: 'procedure',
   variant: 'BuiltInProcedure',
   name: 'list',
   callSignature: {
     style: 'var-args',
     numCompulsoryParameters: 0
   },
-  body: (args: ExpressibleValue[]) => makeList(...args)
+  body: (args: ExpressibleValue[]) => makeList(args)
 }

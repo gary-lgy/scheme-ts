@@ -1,5 +1,6 @@
 import { UNKNOWN_LOCATION } from '../constants'
-import { SourceLocation, SyntaxNode } from '../lang/SchemeSyntax'
+import { SyntaxNode } from '../interpreter/SchemeSyntax'
+import { SourceLocation } from '../interpreter/SExpression'
 import { ErrorSeverity, ErrorType, SourceError } from '../types'
 
 export class RuntimeSourceError implements SourceError {

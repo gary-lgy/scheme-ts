@@ -11,6 +11,20 @@ import { ParseTree } from 'antlr4ts/tree/ParseTree'
 import { RuleNode } from 'antlr4ts/tree/RuleNode'
 import { TerminalNode } from 'antlr4ts/tree/TerminalNode'
 import { UNKNOWN_LOCATION } from '../constants'
+import {
+  SchemeProgram,
+  SyntaxDottedList,
+  SyntaxList,
+  SyntaxNode
+} from '../interpreter/SchemeSyntax'
+import {
+  makeSymbol,
+  SBool,
+  SNumber,
+  SourceLocation,
+  SString,
+  SSymbol
+} from '../interpreter/SExpression'
 import { SchemeLexer } from '../lang/SchemeLexer'
 import {
   BoolContext,
@@ -27,17 +41,6 @@ import {
   UnquoteContext,
   UnquoteSplicingContext
 } from '../lang/SchemeParser'
-import {
-  SchemeProgram,
-  SourceLocation,
-  SyntaxBool,
-  SyntaxDottedList,
-  SyntaxIdentifier,
-  SyntaxList,
-  SyntaxNode,
-  SyntaxNumber,
-  SyntaxString
-} from '../lang/SchemeSyntax'
 import { SchemeVisitor } from '../lang/SchemeVisitor'
 import { Context, ErrorSeverity, ErrorType, SourceError } from '../types'
 
@@ -77,7 +80,7 @@ class ExpressionGenerator implements SchemeVisitor<SyntaxNode> {
 
   visitList(ctx: ListContext): SyntaxList {
     return {
-      type: 'List',
+      type: 'list',
       elements: ctx.expression().map(ex => ex.accept(this)),
       loc: contextToLocation(ctx)
     }
@@ -88,7 +91,7 @@ class ExpressionGenerator implements SchemeVisitor<SyntaxNode> {
     const preExpressions = expressions.slice(0, -1)
     const postExpression = expressions[expressions.length - 1]
     return {
-      type: 'DottedList',
+      type: 'dotted list',
       pre: preExpressions.map(ex => ex.accept(this)),
       post: postExpression.accept(this),
       loc: contextToLocation(ctx)
@@ -97,20 +100,17 @@ class ExpressionGenerator implements SchemeVisitor<SyntaxNode> {
 
   visitQuote(ctx: QuoteContext): SyntaxList {
     return {
-      type: 'List',
-      elements: [
-        { type: 'Identifier', name: 'quote', isFromSource: true, loc: contextToLocation(ctx) },
-        ctx.expression().accept(this)
-      ],
+      type: 'list',
+      elements: [makeSymbol('quote', true, contextToLocation(ctx)), ctx.expression().accept(this)],
       loc: contextToLocation(ctx)
     }
   }
 
   visitQuasiquote(ctx: QuasiquoteContext): SyntaxList {
     return {
-      type: 'List',
+      type: 'list',
       elements: [
-        { type: 'Identifier', name: 'quasiquote', isFromSource: true, loc: contextToLocation(ctx) },
+        makeSymbol('quasiquote', true, contextToLocation(ctx)),
         ctx.expression().accept(this)
       ],
       loc: contextToLocation(ctx)
@@ -119,9 +119,9 @@ class ExpressionGenerator implements SchemeVisitor<SyntaxNode> {
 
   visitUnquote(ctx: UnquoteContext): SyntaxList {
     return {
-      type: 'List',
+      type: 'list',
       elements: [
-        { type: 'Identifier', name: 'unquote', isFromSource: true, loc: contextToLocation(ctx) },
+        makeSymbol('unquote', true, contextToLocation(ctx)),
         ctx.expression().accept(this)
       ],
       loc: contextToLocation(ctx)
@@ -130,52 +130,47 @@ class ExpressionGenerator implements SchemeVisitor<SyntaxNode> {
 
   visitUnquoteSplicing(ctx: UnquoteSplicingContext): SyntaxList {
     return {
-      type: 'List',
+      type: 'list',
       elements: [
-        {
-          type: 'Identifier',
-          name: 'unquote-splicing',
-          isFromSource: true,
-          loc: contextToLocation(ctx)
-        },
+        makeSymbol('unquote-splicing', true, contextToLocation(ctx)),
         ctx.expression().accept(this)
       ],
       loc: contextToLocation(ctx)
     }
   }
 
-  visitString(ctx: StringContext): SyntaxString {
+  visitString(ctx: StringContext): SString {
     return {
-      type: 'StringLiteral',
+      type: 'string',
       // Remove the quotation marks
       value: ctx.text.slice(1, -1),
       loc: contextToLocation(ctx)
     }
   }
 
-  visitNumber(ctx: NumberContext): SyntaxNumber {
+  visitNumber(ctx: NumberContext): SNumber {
     return {
-      type: 'NumberLiteral',
+      type: 'number',
       value: Number(ctx.text),
       loc: contextToLocation(ctx)
     }
   }
 
-  visitBool(ctx: BoolContext): SyntaxBool {
+  visitBool(ctx: BoolContext): SBool {
     console.assert(ctx.text === '#t' || ctx.text === '#f')
 
     return {
-      type: 'BoolLiteral',
+      type: 'boolean',
       value: ctx.text === '#t' ? true : false,
       loc: contextToLocation(ctx)
     }
   }
 
-  visitIdentifier(ctx: IdentifierContext): SyntaxIdentifier {
+  visitIdentifier(ctx: IdentifierContext): SSymbol {
     return {
-      type: 'Identifier',
+      type: 'symbol',
       isFromSource: true,
-      name: ctx.text.toLowerCase(),
+      value: ctx.text.toLowerCase(),
       loc: contextToLocation(ctx)
     }
   }

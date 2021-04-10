@@ -1,5 +1,6 @@
-import { SyntaxIdentifier, SyntaxList, SyntaxNode } from '../../lang/SchemeSyntax'
 import { NamedCallSignature } from '../procedure'
+import { SyntaxList, SyntaxNode } from '../SchemeSyntax'
+import { SSymbol } from '../SExpression'
 
 export type SpecialForm =
   | DefineForm
@@ -24,12 +25,12 @@ export type DefineForm = {
 } & (
   | {
       variant: 'basic'
-      name: SyntaxIdentifier
+      name: SSymbol
       value: SyntaxNode
     }
   | {
       variant: 'procedure'
-      name: SyntaxIdentifier
+      name: SSymbol
       callSignature: NamedCallSignature
       body: SyntaxNode[]
     }
@@ -37,7 +38,7 @@ export type DefineForm = {
 
 export type SetBangForm = {
   tag: 'set!'
-  name: SyntaxIdentifier
+  name: SSymbol
   value: SyntaxNode
 }
 
@@ -55,7 +56,7 @@ export type IfForm = {
 }
 
 export type LetBinding = {
-  name: SyntaxIdentifier
+  name: SSymbol
   value: SyntaxNode
 }
 
@@ -126,7 +127,7 @@ export type OrForm = {
 
 export type DefMacroForm = {
   tag: 'defmacro'
-  name: SyntaxIdentifier
+  name: SSymbol
   callSignature: NamedCallSignature
   body: SyntaxNode[]
 }

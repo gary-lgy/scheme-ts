@@ -1,17 +1,8 @@
+import { UNKNOWN_LOCATION } from '../constants'
 import { MacroExpansionError } from '../errors/errors'
-import { SyntaxNode } from '../lang/SchemeSyntax'
 import { Context } from '../types'
 import { flattenPairToList } from '../utils/listHelpers'
-import {
-  EVMacro,
-  ExpressibleValue,
-  makeBool,
-  makeImproperList,
-  makeList,
-  makeNumber,
-  makeString,
-  makeSymbol
-} from './ExpressibleValue'
+import { ExpressibleValue, Macro, makeImproperList, makeList } from './ExpressibleValue'
 import { evaluate, ValueGenerator } from './interpreter'
 import {
   checkNumberOfArguments,
@@ -19,11 +10,12 @@ import {
   matchArgumentsToParameters,
   tryEnterTailContext
 } from './procedure'
+import { SyntaxNode } from './SchemeSyntax'
 import { handleRuntimeError, popEnvironment, pushEnvironment } from './util'
 
 export function* expandMacro(
   context: Context,
-  macro: EVMacro,
+  macro: Macro,
   suppliedArgs: ExpressibleValue[],
   node: SyntaxNode
 ): ValueGenerator {
@@ -52,7 +44,7 @@ export function* expandMacro(
  */
 export function* useMacro(
   context: Context,
-  macro: EVMacro,
+  macro: Macro,
   suppliedArgs: SyntaxNode[],
   node: SyntaxNode
 ): ValueGenerator {
@@ -63,7 +55,7 @@ export function* useMacro(
 
   let expandedSyntax: SyntaxNode
   try {
-    expandedSyntax = expressibleValueToSyntax(expandedSExpression, node)
+    expandedSyntax = expressibleValueToSyntax(expandedSExpression)
   } catch (e: any) {
     return handleRuntimeError(context, new MacroExpansionError(e, node))
   }
@@ -75,66 +67,56 @@ export function* useMacro(
 
 const syntaxToExpressibleValue = (syntax: SyntaxNode): ExpressibleValue => {
   switch (syntax.type) {
-    case 'BoolLiteral':
-      return makeBool(syntax.value)
-    case 'NumberLiteral':
-      return makeNumber(syntax.value)
-    case 'StringLiteral':
-      return makeString(syntax.value)
-    case 'Identifier':
-      return makeSymbol(syntax.name, syntax.isFromSource)
-    case 'DottedList':
+    case 'boolean':
+    case 'number':
+    case 'string':
+    case 'symbol':
+      return { ...syntax }
+    case 'dotted list':
       return makeImproperList(
         syntax.pre.map(syntaxToExpressibleValue),
-        syntaxToExpressibleValue(syntax.post)
+        syntaxToExpressibleValue(syntax.post),
+        syntax.loc
       )
-    case 'List':
-      return makeList(...syntax.elements.map(syntaxToExpressibleValue))
+    case 'list':
+      return makeList(syntax.elements.map(syntaxToExpressibleValue), syntax.loc)
   }
 }
 
-const expressibleValueToSyntax = (value: ExpressibleValue, macroNode: SyntaxNode): SyntaxNode => {
+const expressibleValueToSyntax = (value: ExpressibleValue): SyntaxNode => {
   switch (value.type) {
-    case 'EVBool':
-      return { type: 'BoolLiteral', value: value.value, loc: macroNode.loc }
-    case 'EVNumber':
-      return { type: 'NumberLiteral', value: value.value, loc: macroNode.loc }
-    case 'EVString':
-      return { type: 'StringLiteral', value: value.value, loc: macroNode.loc }
-    case 'EVSymbol':
-      return {
-        type: 'Identifier',
-        name: value.value,
-        isFromSource: value.isFromSource,
-        loc: macroNode.loc
-      }
-    case 'EVPair':
+    case 'boolean':
+    case 'number':
+    case 'string':
+    case 'symbol':
+      return value
+    case 'pair':
       const list = flattenPairToList(value)
       if (list.type === 'List') {
         return {
-          type: 'List',
-          elements: list.value.map(element => expressibleValueToSyntax(element.value, macroNode)),
-          loc: macroNode.loc
+          type: 'list',
+          elements: list.value.map(element => expressibleValueToSyntax(element.value)),
+          loc: value.loc ?? UNKNOWN_LOCATION
         }
       } else {
         return {
-          type: 'DottedList',
+          type: 'dotted list',
           pre: [
             ...list.value.properPart.map(element => element.value),
             list.value.lastPair.head
-          ].map(element => expressibleValueToSyntax(element, macroNode)),
-          post: expressibleValueToSyntax(list.value.lastPair.tail, macroNode),
-          loc: macroNode.loc
+          ].map(element => expressibleValueToSyntax(element)),
+          post: expressibleValueToSyntax(list.value.lastPair.tail),
+          loc: value.loc ?? UNKNOWN_LOCATION
         }
       }
-    case 'EVEmptyList':
+    case 'empty list':
       return {
-        type: 'List',
+        type: 'list',
         elements: [],
-        loc: macroNode.loc
+        loc: value.loc ?? UNKNOWN_LOCATION
       }
-    case 'EVMacro':
-    case 'EVProcedure':
+    case 'macro':
+    case 'procedure':
     case 'TailCall':
       throw value
   }

@@ -6,7 +6,8 @@
 /* tslint:disable:max-classes-per-file */
 
 import { ExpressibleValue } from './interpreter/ExpressibleValue'
-import { SourceLocation, SyntaxNode } from './lang/SchemeSyntax'
+import { SyntaxNode } from './interpreter/SchemeSyntax'
+import { SourceLocation } from './interpreter/SExpression'
 
 /**
  * Defines functions that act as built-ins, but might rely on

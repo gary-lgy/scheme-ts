@@ -1,4 +1,4 @@
-import { SourceLocation } from './lang/SchemeSyntax'
+import { SourceLocation } from './interpreter/SExpression'
 import { SourceLanguage, Variant } from './types'
 
 export const CUT = 'cut' // cut operator for Source 4.3

@@ -1,13 +1,11 @@
+import { ExpressibleValue, makeList, makePair } from '../interpreter/ExpressibleValue'
 import {
-  ExpressibleValue,
   makeBool,
   makeEmptyList,
-  makeList,
   makeNumber,
-  makePair,
   makeString,
   makeSymbol
-} from '../interpreter/ExpressibleValue'
+} from '../interpreter/SExpression'
 import { sicpMce } from '../stdlib/sicp-mce'
 import { prepareContext, runUntilDone } from '../testHelpers'
 import { Variant } from '../types'
@@ -20,60 +18,60 @@ describe.each<Variant>(['base', 'no-tco', 'macro'])('MCE', variant => {
 
   describe('self-evaluating', () => {
     test('number', () => {
-      expect(evaluateInMce('1')).toEqual(makeNumber(1))
+      expect(evaluateInMce('1')).toHaveMatchingValue(makeNumber(1))
     })
 
     test('string', () => {
-      expect(evaluateInMce('"MCE is awesome"')).toEqual(makeString('MCE is awesome'))
+      expect(evaluateInMce('"MCE is awesome"')).toHaveMatchingValue(makeString('MCE is awesome'))
     })
   })
 
   describe('variable', () => {
     test('definition', () => {
-      expect(evaluateInMce('(define x 10) x')).toEqual(makeNumber(10))
+      expect(evaluateInMce('(define x 10) x')).toHaveMatchingValue(makeNumber(10))
     })
 
     test('assignment', () => {
-      expect(evaluateInMce('(define x 10) (set! x 20) x')).toEqual(makeNumber(20))
+      expect(evaluateInMce('(define x 10) (set! x 20) x')).toHaveMatchingValue(makeNumber(20))
     })
   })
 
   test('quoted', () => {
-    expect(evaluateInMce(`'(1 "my-string" (3 (4)))`)).toEqual(
-      makeList(
+    expect(evaluateInMce(`'(1 "my-string" (3 (4)))`)).toHaveMatchingValue(
+      makeList([
         makeNumber(1),
         makeString('my-string'),
-        makeList(makeNumber(3), makeList(makeNumber(4)))
-      )
+        makeList([makeNumber(3), makeList([makeNumber(4)])])
+      ])
     )
   })
 
   describe('if', () => {
     describe('with truthy predicate', () => {
       test('returns consequent', () => {
-        expect(evaluateInMce("(if (< 0 1) 'consequent 'alternative)")).toEqual(
-          makeSymbol('consequent')
+        expect(evaluateInMce("(if (< 0 1) 'consequent 'alternative)")).toHaveMatchingValue(
+          makeSymbol('consequent', true)
         )
       })
 
       test('does not evaluate the alternative', () => {
-        expect(evaluateInMce(`(if (< 0 1) 'consequent (error "alternative evaluated"))`)).toEqual(
-          makeSymbol('consequent')
-        )
+        expect(
+          evaluateInMce(`(if (< 0 1) 'consequent (error "alternative evaluated"))`)
+        ).toHaveMatchingValue(makeSymbol('consequent', true))
       })
     })
 
     describe('with false predicate', () => {
       test('returns alternative', () => {
-        expect(evaluateInMce("(if (> 0 1) 'consequent 'alternative)")).toEqual(
-          makeSymbol('alternative')
+        expect(evaluateInMce("(if (> 0 1) 'consequent 'alternative)")).toHaveMatchingValue(
+          makeSymbol('alternative', true)
         )
       })
 
       test('does not evaluate the alternative', () => {
-        expect(evaluateInMce(`(if (> 0 1) (error "consequent evaluated") 'alternative)`)).toEqual(
-          makeSymbol('alternative')
-        )
+        expect(
+          evaluateInMce(`(if (> 0 1) (error "consequent evaluated") 'alternative)`)
+        ).toHaveMatchingValue(makeSymbol('alternative', true))
       })
     })
 
@@ -86,32 +84,34 @@ describe.each<Variant>(['base', 'no-tco', 'macro'])('MCE', variant => {
 
     describe('procedure', () => {
       test('built-in procedures', () => {
-        expect(evaluateInMce('(+ 1 2)')).toEqual(makeNumber(3))
-        expect(evaluateInMce('(- 1 2)')).toEqual(makeNumber(-1))
-        expect(evaluateInMce('(* 2 3)')).toEqual(makeNumber(6))
-        expect(evaluateInMce('(/ 3 2)')).toEqual(makeNumber(1.5))
+        expect(evaluateInMce('(+ 1 2)')).toHaveMatchingValue(makeNumber(3))
+        expect(evaluateInMce('(- 1 2)')).toHaveMatchingValue(makeNumber(-1))
+        expect(evaluateInMce('(* 2 3)')).toHaveMatchingValue(makeNumber(6))
+        expect(evaluateInMce('(/ 3 2)')).toHaveMatchingValue(makeNumber(1.5))
 
-        expect(evaluateInMce('(= 1 1)')).toEqual(makeBool(true))
-        expect(evaluateInMce('(= 1 2)')).toEqual(makeBool(false))
-        expect(evaluateInMce('(< 1 2)')).toEqual(makeBool(true))
-        expect(evaluateInMce('(< 2 1)')).toEqual(makeBool(false))
-        expect(evaluateInMce('(> 1 2)')).toEqual(makeBool(false))
-        expect(evaluateInMce('(> 2 1)')).toEqual(makeBool(true))
+        expect(evaluateInMce('(= 1 1)')).toHaveMatchingValue(makeBool(true))
+        expect(evaluateInMce('(= 1 2)')).toHaveMatchingValue(makeBool(false))
+        expect(evaluateInMce('(< 1 2)')).toHaveMatchingValue(makeBool(true))
+        expect(evaluateInMce('(< 2 1)')).toHaveMatchingValue(makeBool(false))
+        expect(evaluateInMce('(> 1 2)')).toHaveMatchingValue(makeBool(false))
+        expect(evaluateInMce('(> 2 1)')).toHaveMatchingValue(makeBool(true))
 
-        expect(evaluateInMce('(cons 2 1)')).toEqual(makePair(makeNumber(2), makeNumber(1)))
-        expect(evaluateInMce('(car (cons 2 1))')).toEqual(makeNumber(2))
-        expect(evaluateInMce('(cdr (cons 2 1))')).toEqual(makeNumber(1))
+        expect(evaluateInMce('(cons 2 1)')).toHaveMatchingValue(
+          makePair(makeNumber(2), makeNumber(1))
+        )
+        expect(evaluateInMce('(car (cons 2 1))')).toHaveMatchingValue(makeNumber(2))
+        expect(evaluateInMce('(cdr (cons 2 1))')).toHaveMatchingValue(makeNumber(1))
         expect(
           evaluateInMce('(define my-pair (cons 2 1)) (set-car! my-pair 3) (car my-pair)')
-        ).toEqual(makeNumber(3))
+        ).toHaveMatchingValue(makeNumber(3))
         expect(
           evaluateInMce('(define my-pair (cons 2 1)) (set-cdr! my-pair 3) (cdr my-pair)')
-        ).toEqual(makeNumber(3))
-        expect(evaluateInMce("(null? '())")).toEqual(makeBool(true))
-        expect(evaluateInMce("(null? '(1))")).toEqual(makeBool(false))
-        expect(evaluateInMce('(list)')).toEqual(makeEmptyList())
-        expect(evaluateInMce('(list 1 2 3)')).toEqual(
-          makeList(makeNumber(1), makeNumber(2), makeNumber(3))
+        ).toHaveMatchingValue(makeNumber(3))
+        expect(evaluateInMce("(null? '())")).toHaveMatchingValue(makeBool(true))
+        expect(evaluateInMce("(null? '(1))")).toHaveMatchingValue(makeBool(false))
+        expect(evaluateInMce('(list)')).toHaveMatchingValue(makeEmptyList())
+        expect(evaluateInMce('(list 1 2 3)')).toHaveMatchingValue(
+          makeList([makeNumber(1), makeNumber(2), makeNumber(3)])
         )
       })
 
@@ -125,8 +125,8 @@ describe.each<Variant>(['base', 'no-tco', 'macro'])('MCE', variant => {
         })
 
         test('application', () => {
-          expect(evaluateInMce('(define (fn x) (+ x 1)) (fn 2)')).toEqual(makeNumber(3))
-          expect(evaluateInMce('((lambda (x) (+ x 1)) 2)')).toEqual(makeNumber(3))
+          expect(evaluateInMce('(define (fn x) (+ x 1)) (fn 2)')).toHaveMatchingValue(makeNumber(3))
+          expect(evaluateInMce('((lambda (x) (+ x 1)) 2)')).toHaveMatchingValue(makeNumber(3))
         })
 
         test('lexical scope', () => {
@@ -139,7 +139,7 @@ describe.each<Variant>(['base', 'no-tco', 'macro'])('MCE', variant => {
              3 4)))
         (fn 1 2)
         `)
-          ).toEqual(makeList(makeNumber(3), makeNumber(2), makeNumber(4)))
+          ).toHaveMatchingValue(makeList([makeNumber(3), makeNumber(2), makeNumber(4)]))
         })
       })
 
@@ -153,7 +153,7 @@ describe.each<Variant>(['base', 'no-tco', 'macro'])('MCE', variant => {
         (* 2 3)
         "lambda")
         `)
-        ).toEqual(makeString('lambda'))
+        ).toHaveMatchingValue(makeString('lambda'))
       })
 
       describe('cond', () => {
@@ -161,14 +161,14 @@ describe.each<Variant>(['base', 'no-tco', 'macro'])('MCE', variant => {
           const actual = evaluateInMce(`
       (cond ((> 3 2) 'greater))
     `)
-          expect(actual).toEqual(makeSymbol('greater'))
+          expect(actual).toHaveMatchingValue(makeSymbol('greater', true))
         })
 
         test('basic clause with more than one body expression', () => {
           const actual = evaluateInMce(`
       (cond ((> 3 2) (+ 1 2) - (*) 'greater))
     `)
-          expect(actual).toEqual(makeSymbol('greater'))
+          expect(actual).toHaveMatchingValue(makeSymbol('greater', true))
         })
       })
 
@@ -178,7 +178,7 @@ describe.each<Variant>(['base', 'no-tco', 'macro'])('MCE', variant => {
             ((< 3 3) 'less)
             (else 'equal))
     `)
-        expect(actual).toEqual(makeSymbol('equal'))
+        expect(actual).toHaveMatchingValue(makeSymbol('equal', true))
       })
 
       test('else clause not reached', () => {
@@ -187,7 +187,7 @@ describe.each<Variant>(['base', 'no-tco', 'macro'])('MCE', variant => {
             ((< 3 4) 'less)
             (else 'equal))
     `)
-        expect(actual).toEqual(makeSymbol('less'))
+        expect(actual).toHaveMatchingValue(makeSymbol('less', true))
       })
 
       test('else clause with more than one expresions', () => {
@@ -196,7 +196,7 @@ describe.each<Variant>(['base', 'no-tco', 'macro'])('MCE', variant => {
             ((< 3 3) 'less)
             (else 'equal 'for-real 'equal!))
     `)
-        expect(actual).toEqual(makeSymbol('equal!'))
+        expect(actual).toHaveMatchingValue(makeSymbol('equal!', true))
       })
     })
 
@@ -210,7 +210,7 @@ describe.each<Variant>(['base', 'no-tco', 'macro'])('MCE', variant => {
               (false (set! x (+ x 1))))
         x
       `)
-        expect(actual).toEqual(makeNumber(11))
+        expect(actual).toHaveMatchingValue(makeNumber(11))
       })
 
       test('evaluates exactly one truthy clause', () => {
@@ -224,7 +224,7 @@ describe.each<Variant>(['base', 'no-tco', 'macro'])('MCE', variant => {
               (false (set! x (+ x 1))))
         x
       `)
-        expect(actual).toEqual(makeNumber(11))
+        expect(actual).toHaveMatchingValue(makeNumber(11))
       })
     })
   })

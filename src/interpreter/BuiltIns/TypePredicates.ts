@@ -1,78 +1,79 @@
-import { EVProcedure, ExpressibleValue, makeBool } from '../ExpressibleValue'
+import { ExpressibleValue, Procedure } from '../ExpressibleValue'
+import { makeBool } from '../SExpression'
 
-export const isNumber: EVProcedure = {
-  type: 'EVProcedure',
+export const isNumber: Procedure = {
+  type: 'procedure',
   variant: 'BuiltInProcedure',
   name: 'number?',
   callSignature: {
     style: 'fixed-args',
     numParams: 1
   },
-  body: (args: ExpressibleValue[]) => makeBool(args[0].type === 'EVNumber')
+  body: (args: ExpressibleValue[]) => makeBool(args[0].type === 'number')
 }
 
-export const isBool: EVProcedure = {
-  type: 'EVProcedure',
+export const isBool: Procedure = {
+  type: 'procedure',
   variant: 'BuiltInProcedure',
   name: 'boolean?',
   callSignature: {
     style: 'fixed-args',
     numParams: 1
   },
-  body: (args: ExpressibleValue[]) => makeBool(args[0].type === 'EVBool')
+  body: (args: ExpressibleValue[]) => makeBool(args[0].type === 'boolean')
 }
 
-export const isString: EVProcedure = {
-  type: 'EVProcedure',
+export const isString: Procedure = {
+  type: 'procedure',
   variant: 'BuiltInProcedure',
   name: 'string?',
   callSignature: {
     style: 'fixed-args',
     numParams: 1
   },
-  body: (args: ExpressibleValue[]) => makeBool(args[0].type === 'EVString')
+  body: (args: ExpressibleValue[]) => makeBool(args[0].type === 'string')
 }
 
-export const isSymbol: EVProcedure = {
-  type: 'EVProcedure',
+export const isSymbol: Procedure = {
+  type: 'procedure',
   variant: 'BuiltInProcedure',
   name: 'symbol?',
   callSignature: {
     style: 'fixed-args',
     numParams: 1
   },
-  body: (args: ExpressibleValue[]) => makeBool(args[0].type === 'EVSymbol')
+  body: (args: ExpressibleValue[]) => makeBool(args[0].type === 'symbol')
 }
 
-export const isProcedure: EVProcedure = {
-  type: 'EVProcedure',
+export const isProcedure: Procedure = {
+  type: 'procedure',
   variant: 'BuiltInProcedure',
   name: 'procedure?',
   callSignature: {
     style: 'fixed-args',
     numParams: 1
   },
-  body: (args: ExpressibleValue[]) => makeBool(args[0].type === 'EVProcedure')
+  body: (args: ExpressibleValue[]) => makeBool(args[0].type === 'procedure')
 }
 
-export const isPair: EVProcedure = {
-  type: 'EVProcedure',
+export const isPair: Procedure = {
+  type: 'procedure',
   variant: 'BuiltInProcedure',
   name: 'pair?',
   callSignature: {
     style: 'fixed-args',
     numParams: 1
   },
-  body: (args: ExpressibleValue[]) => makeBool(args[0].type === 'EVPair')
+  body: (args: ExpressibleValue[]) => makeBool(args[0].type === 'pair')
 }
 
-export const isNull: EVProcedure = {
-  type: 'EVProcedure',
+export const isNull: Procedure = {
+  type: 'procedure',
   variant: 'BuiltInProcedure',
   name: 'null?',
   callSignature: {
     style: 'fixed-args',
     numParams: 1
   },
-  body: (args: ExpressibleValue[]) => makeBool(args[0].type === 'EVEmptyList')
+  body: (args: ExpressibleValue[]) => makeBool(args[0].type === 'empty list')
 }

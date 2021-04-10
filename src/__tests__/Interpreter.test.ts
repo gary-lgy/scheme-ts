@@ -1,5 +1,6 @@
 import { CallingNonFunctionValue, UnexpectedDottedList } from '../errors/errors'
-import { ExpressibleValue, makeEmptyList } from '../interpreter/ExpressibleValue'
+import { ExpressibleValue } from '../interpreter/ExpressibleValue'
+import { makeEmptyList } from '../interpreter/SExpression'
 import { prepareContext, runUntilDone } from '../testHelpers'
 import { Variant } from '../types'
 
@@ -18,7 +19,7 @@ describe.each<Variant>(['base', 'no-tco', 'macro'])('interpreter', variant => {
 
   describe('empty list', () => {
     test('should return empty list', () => {
-      expect(evaluateUntilDone('()')).toEqual(makeEmptyList())
+      expect(evaluateUntilDone('()')).toHaveMatchingValue(makeEmptyList())
     })
   })
 

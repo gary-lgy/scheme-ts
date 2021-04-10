@@ -1,17 +1,18 @@
 import { Context } from '..'
 import * as errors from '../errors/errors'
-import { SyntaxIdentifier, SyntaxNode } from '../lang/SchemeSyntax'
 import { Environment } from '../types'
 import { stringify } from '../utils/stringify'
 import {
   EVBuiltInProcedure,
   EVCompoundProcedure,
-  EVProcedure,
   ExpressibleValue,
   makeList,
-  NonTailCallExpressibleValue
+  NonTailCallExpressibleValue,
+  Procedure
 } from './ExpressibleValue'
 import { evaluate, ValueGenerator } from './interpreter'
+import { SyntaxNode } from './SchemeSyntax'
+import { SSymbol } from './SExpression'
 import { handleRuntimeError, introduceBinding, popEnvironment, pushEnvironment } from './util'
 
 // For BuiltIn procedures, we only need to check the number of arguments
@@ -25,13 +26,13 @@ type VarArgs = { style: 'var-args'; numCompulsoryParameters: number }
 // in order to extend the function environment with the arguments
 export type NamedCallSignature = FixedArgsWithParameterNames | VarArgsWithParameterNames
 
-export type FixedArgsWithParameterNames = FixedArgs & { parameters: SyntaxIdentifier[] }
+export type FixedArgsWithParameterNames = FixedArgs & { parameters: SSymbol[] }
 export type VarArgsWithParameterNames = VarArgs & {
-  compulsoryParameters: SyntaxIdentifier[]
-  restParameters: SyntaxIdentifier
+  compulsoryParameters: SSymbol[]
+  restParameters: SSymbol
 }
 
-export type ParameterArgumentPair = { parameter: SyntaxIdentifier; argument: ExpressibleValue }
+export type ParameterArgumentPair = { parameter: SSymbol; argument: ExpressibleValue }
 
 export const checkNumberOfArguments = (
   context: Context,
@@ -91,7 +92,7 @@ export const extendEnvironmentWithNewBindings = (
       context,
       frame,
       pair.parameter.isFromSource,
-      pair.parameter.name,
+      pair.parameter.value,
       pair.argument
     )
   )
@@ -100,7 +101,7 @@ export const extendEnvironmentWithNewBindings = (
 
 export function* apply(
   context: Context,
-  procedure: EVProcedure,
+  procedure: Procedure,
   suppliedArgs: ExpressibleValue[],
   node: SyntaxNode
 ): Generator<Context, NonTailCallExpressibleValue> {
@@ -200,7 +201,7 @@ export const matchArgumentsToParameters = (
       .map((parameter, index) => ({ parameter, argument: args[index] }))
       .concat({
         parameter: callSignature.restParameters,
-        argument: makeList(...args.slice(callSignature.numCompulsoryParameters))
+        argument: makeList(args.slice(callSignature.numCompulsoryParameters))
       })
   }
 }

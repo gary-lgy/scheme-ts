@@ -1,9 +1,9 @@
-import { EVPair, ExpressibleValue } from '../interpreter/ExpressibleValue'
+import { ExpressibleValue, Pair } from '../interpreter/ExpressibleValue'
 
 // For flattening pairs into list
 export type ListElement = {
   value: ExpressibleValue
-  pair: EVPair
+  pair: Pair
 }
 export type List = ListElement[]
 
@@ -16,7 +16,7 @@ export type List = ListElement[]
  */
 export type ImproperList = {
   properPart: List
-  lastPair: EVPair
+  lastPair: Pair
 }
 
 /**
@@ -24,16 +24,16 @@ export type ImproperList = {
  * Otherwise, return an ImproperList object containing the proper part and the last pair.
  */
 export function flattenPairToList(
-  pair: EVPair
+  pair: Pair
 ): { type: 'List'; value: List } | { type: 'ImproperList'; value: ImproperList } {
-  const seen: Set<EVPair> = new Set()
+  const seen: Set<Pair> = new Set()
   const flattened: List = []
   while (true) {
     const tail = pair.tail
-    if (tail.type === 'EVEmptyList') {
+    if (tail.type === 'empty list') {
       flattened.push({ value: pair.head, pair })
       return { type: 'List', value: flattened }
-    } else if (tail.type === 'EVPair') {
+    } else if (tail.type === 'pair') {
       seen.add(pair)
       if (seen.has(tail)) {
         return {

@@ -1,5 +1,5 @@
 import { MAX_LIST_DISPLAY_LENGTH } from '../constants'
-import { EVPair, ExpressibleValue } from '../interpreter/ExpressibleValue'
+import { ExpressibleValue, Pair } from '../interpreter/ExpressibleValue'
 import { flattenPairToList, ImproperList, List } from './listHelpers'
 
 function makeIndent(indent: number | string): string {
@@ -45,7 +45,7 @@ export const stringify = (
   // Stringify functions
   // The real one is stringifyValue
 
-  const stringifyPair = (pair: EVPair, indentLevel: number) => {
+  const stringifyPair = (pair: Pair, indentLevel: number) => {
     const list = flattenPairToList(pair)
     if (list.type === 'List') {
       return stringifyList(list.value, indentLevel)
@@ -115,25 +115,25 @@ export const stringify = (
     }
 
     switch (v.type) {
-      case 'EVBool':
+      case 'boolean':
         return v.value ? '#t' : '#f'
-      case 'EVNumber':
+      case 'number':
         return `${v.value}`
-      case 'EVEmptyList':
+      case 'empty list':
         return '()'
-      case 'EVString':
+      case 'string':
         return `"${v.value}"`
-      case 'EVSymbol':
+      case 'symbol':
         return v.value
-      case 'EVPair':
+      case 'pair':
         return stringifyPair(v, indentLevel)
-      case 'EVProcedure':
+      case 'procedure':
         if (v.variant === 'BuiltInProcedure') {
           return `[built-in procedure '${v.name}']`
         } else {
           return `[compound procedure '${v.name}']`
         }
-      case 'EVMacro':
+      case 'macro':
         return `[macro '${v.name}']`
       case 'TailCall':
         throw new Error('stringify should not see a TailCall value')

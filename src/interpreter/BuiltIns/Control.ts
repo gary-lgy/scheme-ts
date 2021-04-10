@@ -1,12 +1,12 @@
 import { Context } from '../../types'
 import { flattenPairToList } from '../../utils/listHelpers'
 import { stringify } from '../../utils/stringify'
-import { EVProcedure, ExpressibleValue } from '../ExpressibleValue'
+import { ExpressibleValue, Procedure } from '../ExpressibleValue'
 import { ValueGenerator } from '../interpreter'
 import { apply as applyProcedure, isParentInTailContext } from '../procedure'
 
-export const apply: EVProcedure = {
-  type: 'EVProcedure',
+export const apply: Procedure = {
+  type: 'procedure',
   variant: 'BuiltInProcedure',
   name: 'apply',
   callSignature: {
@@ -15,7 +15,7 @@ export const apply: EVProcedure = {
   },
   body: function* (args: ExpressibleValue[], context: Context): ValueGenerator {
     const proc = args[0]
-    if (proc.type !== 'EVProcedure') {
+    if (proc.type !== 'procedure') {
       throw new Error(`\`apply' expected a procedure as the first argument, got ${proc.type}`)
     }
 
@@ -25,14 +25,14 @@ export const apply: EVProcedure = {
       actualArguments = []
     } else {
       const lastSuppliedArgument = args[args.length - 1]
-      if (lastSuppliedArgument.type !== 'EVPair' && lastSuppliedArgument.type !== 'EVEmptyList') {
+      if (lastSuppliedArgument.type !== 'pair' && lastSuppliedArgument.type !== 'empty list') {
         throw new Error(
           `\`apply' expected a list as the last argument, but got ${lastSuppliedArgument.type}`
         )
       }
 
       let tailArgList: ExpressibleValue[]
-      if (lastSuppliedArgument.type === 'EVEmptyList') {
+      if (lastSuppliedArgument.type === 'empty list') {
         tailArgList = []
       } else {
         const list = flattenPairToList(lastSuppliedArgument)
@@ -59,8 +59,8 @@ export const apply: EVProcedure = {
   }
 }
 
-export const error: EVProcedure = {
-  type: 'EVProcedure',
+export const error: Procedure = {
+  type: 'procedure',
   name: 'error',
   callSignature: {
     style: 'var-args',
