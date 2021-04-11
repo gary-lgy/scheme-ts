@@ -1,4 +1,5 @@
-import { ExpressibleValue } from '../../interpreter/ExpressibleValue'
+import { ExpressibleValue, makePair } from '../../interpreter/ExpressibleValue'
+import { makeEmptyList, makeNumber } from '../../interpreter/SExpression'
 import { prepareContext, runUntilDone } from '../../testHelpers'
 import { Variant } from '../../types'
 
@@ -11,517 +12,164 @@ describe.each<Variant>(['base', 'no-tco', 'macro'])('miscellaneous library featu
   }
 
   test('caar', () => {
-    expect(evaluateUntilDone(`(caar  ${list})`)).toMatchInlineSnapshot(`
-    Object {
-      "head": Object {
-        "head": Object {
-          "type": "EVNumber",
-          "value": 1,
-        },
-        "tail": Object {
-          "head": Object {
-            "type": "EVNumber",
-            "value": 2,
-          },
-          "tail": Object {
-            "type": "EVEmptyList",
-          },
-          "type": "EVPair",
-        },
-        "type": "EVPair",
-      },
-      "tail": Object {
-        "head": Object {
-          "type": "EVNumber",
-          "value": 3,
-        },
-        "tail": Object {
-          "head": Object {
-            "type": "EVNumber",
-            "value": 4,
-          },
-          "tail": Object {
-            "type": "EVEmptyList",
-          },
-          "type": "EVPair",
-        },
-        "type": "EVPair",
-      },
-      "type": "EVPair",
-    }
-  `)
+    expect(evaluateUntilDone(`(caar  ${list})`)).toHaveMatchingValue(
+      makePair(
+        makePair(makeNumber(1), makePair(makeNumber(2), makeEmptyList())),
+        makePair(makeNumber(3), makePair(makeNumber(4), makeEmptyList()))
+      )
+    )
   })
 
   test('cadr', () => {
-    expect(evaluateUntilDone(`(cadr  ${list})`)).toMatchInlineSnapshot(`
-    Object {
-      "head": Object {
-        "head": Object {
-          "type": "EVNumber",
-          "value": 9,
-        },
-        "tail": Object {
-          "head": Object {
-            "type": "EVNumber",
-            "value": 10,
-          },
-          "tail": Object {
-            "type": "EVEmptyList",
-          },
-          "type": "EVPair",
-        },
-        "type": "EVPair",
-      },
-      "tail": Object {
-        "head": Object {
-          "type": "EVNumber",
-          "value": 11,
-        },
-        "tail": Object {
-          "head": Object {
-            "type": "EVNumber",
-            "value": 12,
-          },
-          "tail": Object {
-            "type": "EVEmptyList",
-          },
-          "type": "EVPair",
-        },
-        "type": "EVPair",
-      },
-      "type": "EVPair",
-    }
-  `)
+    expect(evaluateUntilDone(`(cadr  ${list})`)).toHaveMatchingValue(
+      makePair(
+        makePair(makeNumber(9), makePair(makeNumber(10), makeEmptyList())),
+        makePair(makeNumber(11), makePair(makeNumber(12), makeEmptyList()))
+      )
+    )
   })
 
   test('cdar', () => {
-    expect(evaluateUntilDone(`(cdar  ${list})`)).toMatchInlineSnapshot(`
-    Object {
-      "head": Object {
-        "head": Object {
-          "type": "EVNumber",
-          "value": 5,
-        },
-        "tail": Object {
-          "head": Object {
-            "type": "EVNumber",
-            "value": 6,
-          },
-          "tail": Object {
-            "type": "EVEmptyList",
-          },
-          "type": "EVPair",
-        },
-        "type": "EVPair",
-      },
-      "tail": Object {
-        "head": Object {
-          "type": "EVNumber",
-          "value": 7,
-        },
-        "tail": Object {
-          "head": Object {
-            "type": "EVNumber",
-            "value": 8,
-          },
-          "tail": Object {
-            "type": "EVEmptyList",
-          },
-          "type": "EVPair",
-        },
-        "type": "EVPair",
-      },
-      "type": "EVPair",
-    }
-  `)
+    expect(evaluateUntilDone(`(cdar  ${list})`)).toHaveMatchingValue(
+      makePair(
+        makePair(makeNumber(5), makePair(makeNumber(6), makeEmptyList())),
+        makePair(makeNumber(7), makePair(makeNumber(8), makeEmptyList()))
+      )
+    )
   })
 
   test('cddr', () => {
-    expect(evaluateUntilDone(`(cddr  ${list})`)).toMatchInlineSnapshot(`
-    Object {
-      "head": Object {
-        "head": Object {
-          "type": "EVNumber",
-          "value": 13,
-        },
-        "tail": Object {
-          "type": "EVEmptyList",
-        },
-        "type": "EVPair",
-      },
-      "tail": Object {
-        "head": Object {
-          "type": "EVNumber",
-          "value": 14,
-        },
-        "tail": Object {
-          "head": Object {
-            "type": "EVNumber",
-            "value": 15,
-          },
-          "tail": Object {
-            "type": "EVEmptyList",
-          },
-          "type": "EVPair",
-        },
-        "type": "EVPair",
-      },
-      "type": "EVPair",
-    }
-  `)
+    expect(evaluateUntilDone(`(cddr  ${list})`)).toHaveMatchingValue(
+      makePair(
+        makePair(makeNumber(13), makeEmptyList()),
+        makePair(makeNumber(14), makePair(makeNumber(15), makeEmptyList()))
+      )
+    )
   })
 
   test('caaar', () => {
-    expect(evaluateUntilDone(`(caaar  ${list})`)).toMatchInlineSnapshot(`
-    Object {
-      "head": Object {
-        "type": "EVNumber",
-        "value": 1,
-      },
-      "tail": Object {
-        "head": Object {
-          "type": "EVNumber",
-          "value": 2,
-        },
-        "tail": Object {
-          "type": "EVEmptyList",
-        },
-        "type": "EVPair",
-      },
-      "type": "EVPair",
-    }
-  `)
+    expect(evaluateUntilDone(`(caaar  ${list})`)).toHaveMatchingValue(
+      makePair(makeNumber(1), makePair(makeNumber(2), makeEmptyList()))
+    )
   })
 
   test('caadr', () => {
-    expect(evaluateUntilDone(`(caadr  ${list})`)).toMatchInlineSnapshot(`
-    Object {
-      "head": Object {
-        "type": "EVNumber",
-        "value": 9,
-      },
-      "tail": Object {
-        "head": Object {
-          "type": "EVNumber",
-          "value": 10,
-        },
-        "tail": Object {
-          "type": "EVEmptyList",
-        },
-        "type": "EVPair",
-      },
-      "type": "EVPair",
-    }
-  `)
+    expect(evaluateUntilDone(`(caadr  ${list})`)).toHaveMatchingValue(
+      makePair(makeNumber(9), makePair(makeNumber(10), makeEmptyList()))
+    )
   })
 
   test('cadar', () => {
-    expect(evaluateUntilDone(`(cadar  ${list})`)).toMatchInlineSnapshot(`
-    Object {
-      "head": Object {
-        "type": "EVNumber",
-        "value": 5,
-      },
-      "tail": Object {
-        "head": Object {
-          "type": "EVNumber",
-          "value": 6,
-        },
-        "tail": Object {
-          "type": "EVEmptyList",
-        },
-        "type": "EVPair",
-      },
-      "type": "EVPair",
-    }
-  `)
+    expect(evaluateUntilDone(`(cadar  ${list})`)).toHaveMatchingValue(
+      makePair(makeNumber(5), makePair(makeNumber(6), makeEmptyList()))
+    )
   })
 
   test('caddr', () => {
-    expect(evaluateUntilDone(`(caddr  ${list})`)).toMatchInlineSnapshot(`
-    Object {
-      "head": Object {
-        "type": "EVNumber",
-        "value": 13,
-      },
-      "tail": Object {
-        "type": "EVEmptyList",
-      },
-      "type": "EVPair",
-    }
-  `)
+    expect(evaluateUntilDone(`(caddr  ${list})`)).toHaveMatchingValue(
+      makePair(makeNumber(13), makeEmptyList())
+    )
   })
 
   test('cdaar', () => {
-    expect(evaluateUntilDone(`(cdaar  ${list})`)).toMatchInlineSnapshot(`
-    Object {
-      "head": Object {
-        "type": "EVNumber",
-        "value": 3,
-      },
-      "tail": Object {
-        "head": Object {
-          "type": "EVNumber",
-          "value": 4,
-        },
-        "tail": Object {
-          "type": "EVEmptyList",
-        },
-        "type": "EVPair",
-      },
-      "type": "EVPair",
-    }
-  `)
+    expect(evaluateUntilDone(`(cdaar  ${list})`)).toHaveMatchingValue(
+      makePair(makeNumber(3), makePair(makeNumber(4), makeEmptyList()))
+    )
   })
 
   test('cdadr', () => {
-    expect(evaluateUntilDone(`(cdadr  ${list})`)).toMatchInlineSnapshot(`
-    Object {
-      "head": Object {
-        "type": "EVNumber",
-        "value": 11,
-      },
-      "tail": Object {
-        "head": Object {
-          "type": "EVNumber",
-          "value": 12,
-        },
-        "tail": Object {
-          "type": "EVEmptyList",
-        },
-        "type": "EVPair",
-      },
-      "type": "EVPair",
-    }
-  `)
+    expect(evaluateUntilDone(`(cdadr  ${list})`)).toHaveMatchingValue(
+      makePair(makeNumber(11), makePair(makeNumber(12), makeEmptyList()))
+    )
   })
 
   test('cddar', () => {
-    expect(evaluateUntilDone(`(cddar  ${list})`)).toMatchInlineSnapshot(`
-    Object {
-      "head": Object {
-        "type": "EVNumber",
-        "value": 7,
-      },
-      "tail": Object {
-        "head": Object {
-          "type": "EVNumber",
-          "value": 8,
-        },
-        "tail": Object {
-          "type": "EVEmptyList",
-        },
-        "type": "EVPair",
-      },
-      "type": "EVPair",
-    }
-  `)
+    expect(evaluateUntilDone(`(cddar  ${list})`)).toHaveMatchingValue(
+      makePair(makeNumber(7), makePair(makeNumber(8), makeEmptyList()))
+    )
   })
 
   test('cdddr', () => {
-    expect(evaluateUntilDone(`(cdddr  ${list})`)).toMatchInlineSnapshot(`
-    Object {
-      "head": Object {
-        "type": "EVNumber",
-        "value": 14,
-      },
-      "tail": Object {
-        "head": Object {
-          "type": "EVNumber",
-          "value": 15,
-        },
-        "tail": Object {
-          "type": "EVEmptyList",
-        },
-        "type": "EVPair",
-      },
-      "type": "EVPair",
-    }
-  `)
+    expect(evaluateUntilDone(`(cdddr  ${list})`)).toHaveMatchingValue(
+      makePair(makeNumber(14), makePair(makeNumber(15), makeEmptyList()))
+    )
   })
 
   test('caaaar', () => {
-    expect(evaluateUntilDone(`(caaaar  ${list})`)).toMatchInlineSnapshot(`
-    Object {
-      "type": "EVNumber",
-      "value": 1,
-    }
-  `)
+    expect(evaluateUntilDone(`(caaaar  ${list})`)).toHaveMatchingValue(makeNumber(1))
   })
 
   test('caaadr', () => {
-    expect(evaluateUntilDone(`(caaadr  ${list})`)).toMatchInlineSnapshot(`
-    Object {
-      "type": "EVNumber",
-      "value": 9,
-    }
-  `)
+    expect(evaluateUntilDone(`(caaadr  ${list})`)).toHaveMatchingValue(makeNumber(9))
   })
 
   test('caadar', () => {
-    expect(evaluateUntilDone(`(caadar  ${list})`)).toMatchInlineSnapshot(`
-    Object {
-      "type": "EVNumber",
-      "value": 5,
-    }
-  `)
+    expect(evaluateUntilDone(`(caadar  ${list})`)).toHaveMatchingValue(makeNumber(5))
   })
 
   test('caaddr', () => {
-    expect(evaluateUntilDone(`(caaddr  ${list})`)).toMatchInlineSnapshot(`
-    Object {
-      "type": "EVNumber",
-      "value": 13,
-    }
-  `)
+    expect(evaluateUntilDone(`(caaddr  ${list})`)).toHaveMatchingValue(makeNumber(13))
   })
 
   test('cadaar', () => {
-    expect(evaluateUntilDone(`(cadaar  ${list})`)).toMatchInlineSnapshot(`
-    Object {
-      "type": "EVNumber",
-      "value": 3,
-    }
-  `)
+    expect(evaluateUntilDone(`(cadaar  ${list})`)).toHaveMatchingValue(makeNumber(3))
   })
 
   test('cadadr', () => {
-    expect(evaluateUntilDone(`(cadadr  ${list})`)).toMatchInlineSnapshot(`
-    Object {
-      "type": "EVNumber",
-      "value": 11,
-    }
-  `)
+    expect(evaluateUntilDone(`(cadadr  ${list})`)).toHaveMatchingValue(makeNumber(11))
   })
 
   test('caddar', () => {
-    expect(evaluateUntilDone(`(caddar  ${list})`)).toMatchInlineSnapshot(`
-    Object {
-      "type": "EVNumber",
-      "value": 7,
-    }
-  `)
+    expect(evaluateUntilDone(`(caddar  ${list})`)).toHaveMatchingValue(makeNumber(7))
   })
 
   test('cadddr', () => {
-    expect(evaluateUntilDone(`(cadddr  ${list})`)).toMatchInlineSnapshot(`
-    Object {
-      "type": "EVNumber",
-      "value": 14,
-    }
-  `)
+    expect(evaluateUntilDone(`(cadddr  ${list})`)).toHaveMatchingValue(makeNumber(14))
   })
 
   test('cdaaar', () => {
-    expect(evaluateUntilDone(`(cdaaar  ${list})`)).toMatchInlineSnapshot(`
-    Object {
-      "head": Object {
-        "type": "EVNumber",
-        "value": 2,
-      },
-      "tail": Object {
-        "type": "EVEmptyList",
-      },
-      "type": "EVPair",
-    }
-  `)
+    expect(evaluateUntilDone(`(cdaaar  ${list})`)).toHaveMatchingValue(
+      makePair(makeNumber(2), makeEmptyList())
+    )
   })
 
   test('cdaadr', () => {
-    expect(evaluateUntilDone(`(cdaadr  ${list})`)).toMatchInlineSnapshot(`
-    Object {
-      "head": Object {
-        "type": "EVNumber",
-        "value": 10,
-      },
-      "tail": Object {
-        "type": "EVEmptyList",
-      },
-      "type": "EVPair",
-    }
-  `)
+    expect(evaluateUntilDone(`(cdaadr  ${list})`)).toHaveMatchingValue(
+      makePair(makeNumber(10), makeEmptyList())
+    )
   })
 
   test('cdadar', () => {
-    expect(evaluateUntilDone(`(cdadar  ${list})`)).toMatchInlineSnapshot(`
-    Object {
-      "head": Object {
-        "type": "EVNumber",
-        "value": 6,
-      },
-      "tail": Object {
-        "type": "EVEmptyList",
-      },
-      "type": "EVPair",
-    }
-  `)
+    expect(evaluateUntilDone(`(cdadar  ${list})`)).toHaveMatchingValue(
+      makePair(makeNumber(6), makeEmptyList())
+    )
   })
 
   test('cdaddr', () => {
-    expect(evaluateUntilDone(`(cdaddr  ${list})`)).toMatchInlineSnapshot(`
-    Object {
-      "type": "EVEmptyList",
-    }
-  `)
+    expect(evaluateUntilDone(`(cdaddr  ${list})`)).toHaveMatchingValue(makeEmptyList())
   })
 
   test('cddaar', () => {
-    expect(evaluateUntilDone(`(cddaar  ${list})`)).toMatchInlineSnapshot(`
-    Object {
-      "head": Object {
-        "type": "EVNumber",
-        "value": 4,
-      },
-      "tail": Object {
-        "type": "EVEmptyList",
-      },
-      "type": "EVPair",
-    }
-  `)
+    expect(evaluateUntilDone(`(cddaar  ${list})`)).toHaveMatchingValue(
+      makePair(makeNumber(4), makeEmptyList())
+    )
   })
 
   test('cddadr', () => {
-    expect(evaluateUntilDone(`(cddadr  ${list})`)).toMatchInlineSnapshot(`
-    Object {
-      "head": Object {
-        "type": "EVNumber",
-        "value": 12,
-      },
-      "tail": Object {
-        "type": "EVEmptyList",
-      },
-      "type": "EVPair",
-    }
-  `)
+    expect(evaluateUntilDone(`(cddadr  ${list})`)).toHaveMatchingValue(
+      makePair(makeNumber(12), makeEmptyList())
+    )
   })
 
   test('cdddar', () => {
-    expect(evaluateUntilDone(`(cdddar  ${list})`)).toMatchInlineSnapshot(`
-    Object {
-      "head": Object {
-        "type": "EVNumber",
-        "value": 8,
-      },
-      "tail": Object {
-        "type": "EVEmptyList",
-      },
-      "type": "EVPair",
-    }
-  `)
+    expect(evaluateUntilDone(`(cdddar  ${list})`)).toHaveMatchingValue(
+      makePair(makeNumber(8), makeEmptyList())
+    )
   })
 
   test('cddddr', () => {
-    expect(evaluateUntilDone(`(cddddr  ${list})`)).toMatchInlineSnapshot(`
-    Object {
-      "head": Object {
-        "type": "EVNumber",
-        "value": 15,
-      },
-      "tail": Object {
-        "type": "EVEmptyList",
-      },
-      "type": "EVPair",
-    }
-  `)
+    expect(evaluateUntilDone(`(cddddr  ${list})`)).toHaveMatchingValue(
+      makePair(makeNumber(15), makeEmptyList())
+    )
   })
 })

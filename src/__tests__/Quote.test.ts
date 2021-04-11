@@ -4,19 +4,17 @@ import {
   UnquoteSplicingEvaluatedToNonList,
   UnquoteSplicingInNonListContext
 } from '../errors/errors'
+import { ExpressibleValue, makeList, makePair } from '../interpreter/ExpressibleValue'
 import {
-  EVBool,
-  EVNumber,
-  EVString,
-  EVSymbol,
-  ExpressibleValue,
   makeBool,
-  makeList,
   makeNumber,
-  makePair,
   makeString,
-  makeSymbol
-} from '../interpreter/ExpressibleValue'
+  makeSymbol,
+  SBool,
+  SNumber,
+  SString,
+  SSymbol
+} from '../interpreter/SExpression'
 import { prepareContext, runUntilDone } from '../testHelpers'
 import { Variant } from '../types'
 import { stringify } from '../utils/stringify'
@@ -73,82 +71,82 @@ describe.each<Variant>(['base', 'no-tco', 'macro'])('quotation', variant => {
   describe('quote', () => {
     test('quote number', () => {
       const actual = evaluateUntilDone("'1")
-      const expected: EVNumber = makeNumber(1)
-      expect(actual).toEqual(expected)
+      const expected: SNumber = makeNumber(1)
+      expect(actual).toHaveMatchingValue(expected)
     })
 
     test('quote string', () => {
       const actual = evaluateUntilDone(`'"hello world"`)
-      const expected: EVString = makeString('hello world')
-      expect(actual).toEqual(expected)
+      const expected: SString = makeString('hello world')
+      expect(actual).toHaveMatchingValue(expected)
     })
 
     test('quote bool', () => {
       const actual = evaluateUntilDone("'#t")
-      const expected: EVBool = makeBool(true)
-      expect(actual).toEqual(expected)
+      const expected: SBool = makeBool(true)
+      expect(actual).toHaveMatchingValue(expected)
     })
 
     test('quote identifier', () => {
       const actual = evaluateUntilDone("'my-pair")
-      const expected: EVSymbol = makeSymbol('my-pair')
-      expect(actual).toEqual(expected)
+      const expected: SSymbol = makeSymbol('my-pair', true)
+      expect(actual).toHaveMatchingValue(expected)
     })
 
     test('quote quoted', () => {
       const actual = evaluateUntilDone(`''a`)
-      const expected = makeList(makeSymbol('quote'), makeSymbol('a'))
-      expect(actual).toEqual(expected)
+      const expected = makeList([makeSymbol('quote', true), makeSymbol('a', true)])
+      expect(actual).toHaveMatchingValue(expected)
     })
 
     test('quote simple list', () => {
       const actual = evaluateUntilDone(`'(1 2 "my-string" #f my-symbol)`)
-      const expected = makeList(
+      const expected = makeList([
         makeNumber(1),
         makeNumber(2),
         makeString('my-string'),
         makeBool(false),
-        makeSymbol('my-symbol')
-      )
-      expect(actual).toEqual(expected)
+        makeSymbol('my-symbol', true)
+      ])
+      expect(actual).toHaveMatchingValue(expected)
     })
 
     test('quote empty list', () => {
       const actual = evaluateUntilDone(`'()`)
-      const expected = makeList()
-      expect(actual).toEqual(expected)
+      const expected = makeList([])
+      expect(actual).toHaveMatchingValue(expected)
     })
 
     test('quote nested list', () => {
       const actual = evaluateUntilDone(`'(1 2 '(3 4 '(5 6)))`)
-      const expected = makeList(
+      const expected = makeList([
         makeNumber(1),
         makeNumber(2),
-        makeList(
-          makeSymbol('quote'),
-          makeList(
+        makeList([
+          makeSymbol('quote', true),
+          makeList([
             makeNumber(3),
             makeNumber(4),
-            makeList(makeSymbol('quote'), makeList(makeNumber(5), makeNumber(6)))
-          )
-        )
-      )
-      expect(actual).toEqual(expected)
+            makeList([makeSymbol('quote', true), makeList([makeNumber(5), makeNumber(6)])])
+          ])
+        ])
+      ])
+      expect(actual).toHaveMatchingValue(expected)
     })
 
     test('quote using list special form', () => {
       const actual = evaluateUntilDone(`(quote (+ 1 2))`)
-      const expected = makeList(makeSymbol('+'), makeNumber(1), makeNumber(2))
-      expect(actual).toEqual(expected)
+      const expected = makeList([makeSymbol('+', true), makeNumber(1), makeNumber(2)])
+      expect(actual).toHaveMatchingValue(expected)
     })
 
     test('quote with mixed shorthand and special form', () => {
       const actual = evaluateUntilDone(`'(quote (+ 1 2))`)
-      const expected = makeList(
-        makeSymbol('quote'),
-        makeList(makeSymbol('+'), makeNumber(1), makeNumber(2))
-      )
-      expect(actual).toEqual(expected)
+      const expected = makeList([
+        makeSymbol('quote', true),
+        makeList([makeSymbol('+', true), makeNumber(1), makeNumber(2)])
+      ])
+      expect(actual).toHaveMatchingValue(expected)
     })
 
     test('quote with quasiquote and unquote inside quoted expression', () => {
@@ -168,55 +166,58 @@ describe.each<Variant>(['base', 'no-tco', 'macro'])('quotation', variant => {
       '(1 2 . 3)
     `)
       const expected = makePair(makeNumber(1), makePair(makeNumber(2), makeNumber(3)))
-      expect(actual).toEqual(expected)
+      expect(actual).toHaveMatchingValue(expected)
     })
   })
 
   describe('quasiquote', () => {
     test('no unquote', () => {
       const actual = evaluateUntilDone('`(1 2 "my-string" #f my-symbol)')
-      const expected = makeList(
+      const expected = makeList([
         makeNumber(1),
         makeNumber(2),
         makeString('my-string'),
         makeBool(false),
-        makeSymbol('my-symbol')
-      )
-      expect(actual).toEqual(expected)
+        makeSymbol('my-symbol', true)
+      ])
+      expect(actual).toHaveMatchingValue(expected)
     })
 
     test('simple unquote', () => {
       const actual = evaluateUntilDone('`(list ,(+ 1 2) 4)')
-      const expected = makeList(makeSymbol('list'), makeNumber(3), makeNumber(4))
-      expect(actual).toEqual(expected)
+      const expected = makeList([makeSymbol('list', true), makeNumber(3), makeNumber(4)])
+      expect(actual).toHaveMatchingValue(expected)
     })
 
     test('unquote expanding identifier', () => {
       const actual = evaluateUntilDone("(define name 'a) `(list ,name ',name)")
-      const expected = makeList(
-        makeSymbol('list'),
-        makeSymbol('a'),
-        makeList(makeSymbol('quote'), makeSymbol('a'))
-      )
-      expect(actual).toEqual(expected)
+      const expected = makeList([
+        makeSymbol('list', true),
+        makeSymbol('a', true),
+        makeList([makeSymbol('quote', true), makeSymbol('a', true)])
+      ])
+      expect(actual).toHaveMatchingValue(expected)
     })
 
     test('unquote-splicing', () => {
       const actual = evaluateUntilDone("`(a ,(+ 1 2) ,@(cons 3 (cons 4 '())) b)")
-      const expected = makeList(
-        makeSymbol('a'),
+      const expected = makeList([
+        makeSymbol('a', true),
         makeNumber(3),
         makeNumber(3),
         makeNumber(4),
-        makeSymbol('b')
-      )
-      expect(actual).toEqual(expected)
+        makeSymbol('b', true)
+      ])
+      expect(actual).toHaveMatchingValue(expected)
     })
 
     test('unquote & unquote-splicing', () => {
       const actual = evaluateUntilDone("`(( foo ,(- 10 3)) ,@(cdr '(c)) ,(car '(cons)))")
-      const expected = makeList(makeList(makeSymbol('foo'), makeNumber(7)), makeSymbol('cons'))
-      expect(actual).toEqual(expected)
+      const expected = makeList([
+        makeList([makeSymbol('foo', true), makeNumber(7)]),
+        makeSymbol('cons', true)
+      ])
+      expect(actual).toHaveMatchingValue(expected)
     })
 
     test('multilevel unquote', () => {
@@ -255,7 +256,7 @@ describe.each<Variant>(['base', 'no-tco', 'macro'])('quotation', variant => {
     test('quasiquote dotted list', () => {
       const actual = evaluateUntilDone('`(1 2 . 3)')
       const expected = makePair(makeNumber(1), makePair(makeNumber(2), makeNumber(3)))
-      expect(actual).toEqual(expected)
+      expect(actual).toHaveMatchingValue(expected)
     })
   })
 })

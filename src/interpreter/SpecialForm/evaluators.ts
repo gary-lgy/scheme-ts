@@ -2,10 +2,11 @@
 
 import * as errors from '../../errors/errors'
 import { Context, Frame } from '../../types'
-import { EVMacro, ExpressibleValue, makeBool, makeEmptyList } from '../ExpressibleValue'
+import { ExpressibleValue, Macro } from '../ExpressibleValue'
 import { evaluate, evaluateSequence, ValueGenerator } from '../interpreter'
 import { apply, isParentInTailContext, tryEnterTailContext } from '../procedure'
 import { quasiquoteExpression, quoteExpression } from '../quote'
+import { makeBool, makeEmptyList } from '../SExpression'
 import {
   extendCurrentEnvironment,
   handleRuntimeError,
@@ -74,9 +75,9 @@ function* evaluateDefineForm(defineForm: DefineForm, context: Context): ValueGen
     value = yield* evaluate(defineForm.value, context)
   } else {
     value = {
-      type: 'EVProcedure',
+      type: 'procedure',
       callSignature: defineForm.callSignature,
-      name: defineForm.name.name,
+      name: defineForm.name.value,
       variant: 'CompoundProcedure',
       body: defineForm.body,
       environment: context.runtime.environments[0]
@@ -84,13 +85,13 @@ function* evaluateDefineForm(defineForm: DefineForm, context: Context): ValueGen
   }
 
   const frame = context.runtime.environments[0].head
-  introduceBinding(context, frame, defineForm.name.isFromSource, defineForm.name.name, value)
+  introduceBinding(context, frame, defineForm.name.isFromSource, defineForm.name.value, value)
   return makeEmptyList()
 }
 
 function* evaluateLambdaForm(lambdaForm: LambdaForm, context: Context): ValueGenerator {
   return {
-    type: 'EVProcedure',
+    type: 'procedure',
     callSignature: lambdaForm.callSignature,
     name: '[anonymous procedure]',
     variant: 'CompoundProcedure',
@@ -101,7 +102,7 @@ function* evaluateLambdaForm(lambdaForm: LambdaForm, context: Context): ValueGen
 
 function* evaluateSetBangForm(setBangForm: SetBangForm, context: Context): ValueGenerator {
   const value = yield* evaluate(setBangForm.value, context)
-  setVariable(context, setBangForm.name.name, value)
+  setVariable(context, setBangForm.name.value, value)
   return makeEmptyList()
 }
 
@@ -129,7 +130,7 @@ function* evaluateCondForm(condForm: CondForm, context: Context): ValueGenerator
     } else {
       const procedure = yield* evaluate(clause.body, context)
 
-      if (procedure.type !== 'EVProcedure') {
+      if (procedure.type !== 'procedure') {
         return handleRuntimeError(
           context,
           new errors.CondProcedureClauseError(context.runtime.nodes[0])
@@ -161,7 +162,7 @@ function* evaluateLetForm(letForm: LetForm, context: Context): ValueGenerator {
   const frame: Frame = {}
   for (const binding of letForm.bindings) {
     const value = yield* evaluate(binding.value, context)
-    introduceBinding(context, frame, binding.name.isFromSource, binding.name.name, value)
+    introduceBinding(context, frame, binding.name.isFromSource, binding.name.value, value)
   }
   const newEnvironment = extendCurrentEnvironment(context, 'letEnvironment', frame)
 
@@ -177,7 +178,7 @@ function* evaluateLetStarForm(letStarForm: LetStarForm, context: Context): Value
   for (const binding of letStarForm.bindings) {
     const frame: Frame = {}
     const value = yield* evaluate(binding.value, context)
-    introduceBinding(context, frame, binding.name.isFromSource, binding.name.name, value)
+    introduceBinding(context, frame, binding.name.isFromSource, binding.name.value, value)
 
     const newEnvironment = extendCurrentEnvironment(context, 'let*Environment', frame)
     pushEnvironment(context, newEnvironment)
@@ -196,13 +197,13 @@ function* evaluateLetStarForm(letStarForm: LetStarForm, context: Context): Value
 function* evaluateLetRecForm(letRecForm: LetRecForm, context: Context): ValueGenerator {
   const frame: Frame = {}
   for (const binding of letRecForm.bindings) {
-    introduceBinding(context, frame, binding.name.isFromSource, binding.name.name, makeEmptyList())
+    introduceBinding(context, frame, binding.name.isFromSource, binding.name.value, makeEmptyList())
   }
   const newEnvironment = extendCurrentEnvironment(context, 'letrecEnvironment', frame)
   pushEnvironment(context, newEnvironment)
 
   for (const binding of letRecForm.bindings) {
-    frame[binding.name.name] = yield* evaluate(binding.value, context)
+    frame[binding.name.value] = yield* evaluate(binding.value, context)
   }
 
   const result = yield* evaluateSequence(letRecForm.body, context, true)
@@ -254,14 +255,14 @@ function* evaluateOrForm(orForm: OrForm, context: Context): ValueGenerator {
 }
 
 function* evaluateDefMacroForm(defMacroForm: DefMacroForm, context: Context): ValueGenerator {
-  const macro: EVMacro = {
-    type: 'EVMacro',
-    name: defMacroForm.name.name,
+  const macro: Macro = {
+    type: 'macro',
+    name: defMacroForm.name.value,
     environment: context.runtime.environments[0],
     body: defMacroForm.body,
     callSignature: defMacroForm.callSignature
   }
   const frame = context.runtime.environments[0].head
-  introduceBinding(context, frame, defMacroForm.name.isFromSource, defMacroForm.name.name, macro)
+  introduceBinding(context, frame, defMacroForm.name.isFromSource, defMacroForm.name.value, macro)
   return makeEmptyList()
 }

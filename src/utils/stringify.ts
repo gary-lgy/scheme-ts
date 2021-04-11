@@ -1,5 +1,6 @@
 import { MAX_LIST_DISPLAY_LENGTH } from '../constants'
-import { EVPair, ExpressibleValue } from '../interpreter/ExpressibleValue'
+import { ExpressibleValue, Pair } from '../interpreter/ExpressibleValue'
+import { CallSignature, NamedCallSignature } from '../interpreter/procedure'
 import { flattenPairToList, ImproperList, List } from './listHelpers'
 
 function makeIndent(indent: number | string): string {
@@ -45,7 +46,7 @@ export const stringify = (
   // Stringify functions
   // The real one is stringifyValue
 
-  const stringifyPair = (pair: EVPair, indentLevel: number) => {
+  const stringifyPair = (pair: Pair, indentLevel: number) => {
     const list = flattenPairToList(pair)
     if (list.type === 'List') {
       return stringifyList(list.value, indentLevel)
@@ -115,25 +116,23 @@ export const stringify = (
     }
 
     switch (v.type) {
-      case 'EVBool':
+      case 'boolean':
         return v.value ? '#t' : '#f'
-      case 'EVNumber':
+      case 'number':
         return `${v.value}`
-      case 'EVEmptyList':
+      case 'empty list':
         return '()'
-      case 'EVString':
+      case 'string':
         return `"${v.value}"`
-      case 'EVSymbol':
+      case 'symbol':
         return v.value
-      case 'EVPair':
+      case 'pair':
         return stringifyPair(v, indentLevel)
-      case 'EVProcedure':
-        if (v.variant === 'BuiltInProcedure') {
-          return `[built-in procedure '${v.name}']`
-        } else {
-          return `[compound procedure '${v.name}']`
-        }
-      case 'EVMacro':
+      case 'procedure':
+        const procedureVariant =
+          v.variant === 'CompoundProcedure' ? 'compound procedure' : 'built-in procedure'
+        return `[${procedureVariant} ${stringifyCallSignature(v.name, v.callSignature)}]`
+      case 'macro':
         return `[macro '${v.name}']`
       case 'TailCall':
         throw new Error('stringify should not see a TailCall value')
@@ -141,4 +140,30 @@ export const stringify = (
   }
 
   return stringifyValue(value, 0)
+}
+
+export const stringifyCallSignature = (
+  name: string,
+  callSignature: CallSignature | NamedCallSignature
+): string => {
+  let argNames: string[] = []
+  if (callSignature.style === 'fixed-args') {
+    if ('parameters' in callSignature) {
+      argNames = callSignature.parameters.map(param => param.value)
+    } else {
+      argNames = Array.from({ length: callSignature.numParams }).map((_, index) => `arg${index}`)
+    }
+  } else {
+    if ('compulsoryParameters' in callSignature) {
+      argNames = callSignature.compulsoryParameters
+        .map(param => param.value)
+        .concat(['.', callSignature.restParameters.value])
+    } else {
+      argNames = Array.from({ length: callSignature.numCompulsoryParameters })
+        .map((_, index) => `arg${index}`)
+        .concat(['.', 'rest-args'])
+    }
+  }
+
+  return `(${[name, ...argNames].join(' ')})`
 }

@@ -79,7 +79,7 @@ export const isDefined = (context: Context, name: string): boolean => {
 
 // ======================= Evaluation ===========================
 
-export const isTruthy = (value: ExpressibleValue) => value.type !== 'EVBool' || value.value
+export const isTruthy = (value: ExpressibleValue) => value.type !== 'boolean' || value.value
 
 export const handleRuntimeError = (context: Context, error: RuntimeSourceError): never => {
   context.errors.push(error)

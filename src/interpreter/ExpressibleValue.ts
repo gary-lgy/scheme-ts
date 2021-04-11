@@ -1,76 +1,35 @@
-import { SyntaxNode } from '../lang/SchemeSyntax'
 import { Context, Environment } from '../types'
 import { ValueGenerator } from './interpreter'
 import { CallSignature, NamedCallSignature } from './procedure'
+import { SyntaxNode } from './SchemeSyntax'
+import {
+  makeEmptyList,
+  SBool,
+  SEmptyList,
+  SNumber,
+  SourceLocation,
+  SString,
+  SSymbol
+} from './SExpression'
 
 // An expressible value is a value that can be the result of an evaluation
 export type ExpressibleValue = NonTailCallExpressibleValue | TailCall
 
 export type NonTailCallExpressibleValue =
-  | EVNumber
-  | EVString
-  | EVSymbol
-  | EVBool
-  | EVProcedure
-  | EVMacro
-  | EVPair
-  | EVEmptyList
+  | SNumber
+  | SString
+  | SSymbol
+  | SBool
+  | Pair
+  | SEmptyList
+  | Procedure
+  | Macro
 
-export type EVNumber = {
-  type: 'EVNumber'
-  value: number
-}
+export type Procedure = {
+  type: 'procedure'
+} & (CompoundProcedure | BuiltInProcedure)
 
-export const makeNumber = (value: number): EVNumber => {
-  return {
-    type: 'EVNumber',
-    value
-  }
-}
-
-export type EVString = {
-  type: 'EVString'
-  value: string
-}
-
-export const makeString = (value: string): EVString => {
-  return {
-    type: 'EVString',
-    value
-  }
-}
-
-export type EVSymbol = {
-  type: 'EVSymbol'
-  value: string
-  isFromSource: boolean
-}
-
-export const makeSymbol = (value: string, isFromSource: boolean = true): EVSymbol => {
-  return {
-    type: 'EVSymbol',
-    value,
-    isFromSource
-  }
-}
-
-export type EVBool = {
-  type: 'EVBool'
-  value: boolean
-}
-
-export const makeBool = (value: boolean): EVBool => {
-  return {
-    type: 'EVBool',
-    value
-  }
-}
-
-export type EVProcedure = {
-  type: 'EVProcedure'
-} & (EVCompoundProcedure | EVBuiltInProcedure)
-
-export type EVCompoundProcedure = {
+export type CompoundProcedure = {
   variant: 'CompoundProcedure'
   callSignature: NamedCallSignature
   body: SyntaxNode[]
@@ -78,7 +37,7 @@ export type EVCompoundProcedure = {
   name: string
 }
 
-export type EVBuiltInProcedure = {
+export type BuiltInProcedure = {
   variant: 'BuiltInProcedure'
   callSignature: CallSignature
   name: string
@@ -87,60 +46,62 @@ export type EVBuiltInProcedure = {
     | ((args: ExpressibleValue[], context: Context) => ValueGenerator)
 }
 
-export type EVMacro = {
-  type: 'EVMacro'
+export type Macro = {
+  type: 'macro'
   name: string
   callSignature: NamedCallSignature
   body: SyntaxNode[]
   environment: Environment
 }
 
-export type EVEmptyList = {
-  type: 'EVEmptyList'
-}
-
-export const makeEmptyList = (): EVEmptyList => {
-  return { type: 'EVEmptyList' }
-}
-
-export type EVPair = {
-  type: 'EVPair'
+export type Pair = {
+  type: 'pair'
   head: ExpressibleValue
   tail: ExpressibleValue
+  loc?: SourceLocation
 }
 
-export const makePair = (head: ExpressibleValue, tail: ExpressibleValue): EVPair => {
-  return { type: 'EVPair', head, tail }
+export const makePair = (
+  head: ExpressibleValue,
+  tail: ExpressibleValue,
+  loc?: SourceLocation
+): Pair => {
+  const location =
+    loc ?? ('loc' in head && head.loc ? head.loc : 'loc' in tail && tail.loc ? tail.loc : undefined)
+  return { type: 'pair', head, tail, loc: location }
 }
 
-export const makeList = (...values: ExpressibleValue[]): EVPair | EVEmptyList => {
-  const sentinel: { tail: EVPair | EVEmptyList } = { tail: makeEmptyList() }
-  let prev: typeof sentinel | EVPair = sentinel
+export const makeList = (values: ExpressibleValue[], loc?: SourceLocation): Pair | SEmptyList => {
+  const sentinel: { tail: Pair | SEmptyList } = { tail: makeEmptyList() }
+  let prev: typeof sentinel | Pair = sentinel
   for (const value of values) {
     const newTail = makePair(value, makeEmptyList())
     prev.tail = newTail
     prev = newTail
   }
+  sentinel.tail.loc = loc
   return sentinel.tail
 }
 
 /** Create an improper list where the values before the dot are `beforeDot` and the value after the dot is `afterDot`. */
 export const makeImproperList = (
   beforeDot: ExpressibleValue[],
-  afterDot: ExpressibleValue
-): EVPair => {
-  const preList = makeList(...beforeDot) as EVPair
+  afterDot: ExpressibleValue,
+  loc?: SourceLocation
+): Pair => {
+  const preList = makeList(beforeDot) as Pair
   let curr = preList
-  while (curr.tail.type !== 'EVEmptyList') {
-    curr = curr.tail as EVPair
+  while (curr.tail.type !== 'empty list') {
+    curr = curr.tail as Pair
   }
   curr.tail = afterDot
+  preList.loc = loc
   return preList
 }
 
 export type TailCall = {
   type: 'TailCall'
-  procedure: EVProcedure
+  procedure: Procedure
   args: ExpressibleValue[]
   node: SyntaxNode
 }

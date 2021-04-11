@@ -1,9 +1,10 @@
-import { EVNumber, EVProcedure, ExpressibleValue, makeNumber } from '../ExpressibleValue'
+import { ExpressibleValue, Procedure } from '../ExpressibleValue'
+import { makeNumber, SNumber } from '../SExpression'
 
 const mustMapToNumbers = (opName: string, args: ExpressibleValue[]): number[] => {
   const mapped: number[] = []
   for (const arg of args) {
-    if (arg.type !== 'EVNumber') {
+    if (arg.type !== 'number') {
       throw new Error(opName + ' expects numbers as arguments, but encountered ' + arg.type)
     }
     mapped.push(arg.value)
@@ -15,12 +16,12 @@ const reduceNumericalArgs = (
   op: (accumulate: number, next: number) => number,
   init: number,
   args: number[]
-): EVNumber => {
+): SNumber => {
   return makeNumber(args.reduce(op, init))
 }
 
-export const add: EVProcedure = {
-  type: 'EVProcedure',
+export const add: Procedure = {
+  type: 'procedure',
   variant: 'BuiltInProcedure',
   name: '+',
   callSignature: {
@@ -31,8 +32,8 @@ export const add: EVProcedure = {
     reduceNumericalArgs((acc, next) => acc + next, 0, mustMapToNumbers('+', args))
 }
 
-export const subtract: EVProcedure = {
-  type: 'EVProcedure',
+export const subtract: Procedure = {
+  type: 'procedure',
   variant: 'BuiltInProcedure',
   name: '-',
   callSignature: {
@@ -48,8 +49,8 @@ export const subtract: EVProcedure = {
   }
 }
 
-export const multiply: EVProcedure = {
-  type: 'EVProcedure',
+export const multiply: Procedure = {
+  type: 'procedure',
   variant: 'BuiltInProcedure',
   name: '*',
   callSignature: {
@@ -60,8 +61,8 @@ export const multiply: EVProcedure = {
     reduceNumericalArgs((acc, next) => acc * next, 1, mustMapToNumbers('*', args))
 }
 
-export const divide: EVProcedure = {
-  type: 'EVProcedure',
+export const divide: Procedure = {
+  type: 'procedure',
   variant: 'BuiltInProcedure',
   name: '/',
   callSignature: {
@@ -89,8 +90,8 @@ export const divide: EVProcedure = {
   }
 }
 
-export const quotient: EVProcedure = {
-  type: 'EVProcedure',
+export const quotient: Procedure = {
+  type: 'procedure',
   variant: 'BuiltInProcedure',
   name: 'quotient',
   callSignature: {
@@ -106,8 +107,8 @@ export const quotient: EVProcedure = {
   }
 }
 
-export const remainder: EVProcedure = {
-  type: 'EVProcedure',
+export const remainder: Procedure = {
+  type: 'procedure',
   variant: 'BuiltInProcedure',
   name: 'remainder',
   callSignature: {
@@ -123,8 +124,8 @@ export const remainder: EVProcedure = {
   }
 }
 
-export const modulo: EVProcedure = {
-  type: 'EVProcedure',
+export const modulo: Procedure = {
+  type: 'procedure',
   variant: 'BuiltInProcedure',
   name: 'modulo',
   callSignature: {
@@ -140,8 +141,8 @@ export const modulo: EVProcedure = {
   }
 }
 
-export const numberEqual: EVProcedure = {
-  type: 'EVProcedure',
+export const numberEqual: Procedure = {
+  type: 'procedure',
   variant: 'BuiltInProcedure',
   name: '=',
   callSignature: {
@@ -151,14 +152,14 @@ export const numberEqual: EVProcedure = {
   body: (args: ExpressibleValue[]) => {
     const mappedArgs = mustMapToNumbers('=', args)
     return {
-      type: 'EVBool',
+      type: 'boolean',
       value: mappedArgs[0] === mappedArgs[1]
     }
   }
 }
 
-export const lessThan: EVProcedure = {
-  type: 'EVProcedure',
+export const lessThan: Procedure = {
+  type: 'procedure',
   variant: 'BuiltInProcedure',
   name: '<',
   callSignature: {
@@ -168,14 +169,14 @@ export const lessThan: EVProcedure = {
   body: (args: ExpressibleValue[]) => {
     const mappedArgs = mustMapToNumbers('<', args)
     return {
-      type: 'EVBool',
+      type: 'boolean',
       value: mappedArgs[0] < mappedArgs[1]
     }
   }
 }
 
-export const lessThanOrEqual: EVProcedure = {
-  type: 'EVProcedure',
+export const lessThanOrEqual: Procedure = {
+  type: 'procedure',
   variant: 'BuiltInProcedure',
   name: '<=',
   callSignature: {
@@ -185,14 +186,14 @@ export const lessThanOrEqual: EVProcedure = {
   body: (args: ExpressibleValue[]) => {
     const mappedArgs = mustMapToNumbers('<=', args)
     return {
-      type: 'EVBool',
+      type: 'boolean',
       value: mappedArgs[0] <= mappedArgs[1]
     }
   }
 }
 
-export const greaterThan: EVProcedure = {
-  type: 'EVProcedure',
+export const greaterThan: Procedure = {
+  type: 'procedure',
   variant: 'BuiltInProcedure',
   name: '>',
   callSignature: {
@@ -202,14 +203,14 @@ export const greaterThan: EVProcedure = {
   body: (args: ExpressibleValue[]) => {
     const mappedArgs = mustMapToNumbers('>', args)
     return {
-      type: 'EVBool',
+      type: 'boolean',
       value: mappedArgs[0] > mappedArgs[1]
     }
   }
 }
 
-export const greaterThanOrEqual: EVProcedure = {
-  type: 'EVProcedure',
+export const greaterThanOrEqual: Procedure = {
+  type: 'procedure',
   variant: 'BuiltInProcedure',
   name: '>=',
   callSignature: {
@@ -219,7 +220,7 @@ export const greaterThanOrEqual: EVProcedure = {
   body: (args: ExpressibleValue[]) => {
     const mappedArgs = mustMapToNumbers('>=', args)
     return {
-      type: 'EVBool',
+      type: 'boolean',
       value: mappedArgs[0] >= mappedArgs[1]
     }
   }

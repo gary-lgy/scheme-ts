@@ -1,5 +1,6 @@
 import { DisallowedIdentifier, UndefinedVariable } from '../errors/errors'
-import { ExpressibleValue, makeNumber } from '../interpreter/ExpressibleValue'
+import { ExpressibleValue } from '../interpreter/ExpressibleValue'
+import { makeNumber } from '../interpreter/SExpression'
 import { prepareContext, runUntilDone } from '../testHelpers'
 import { Variant } from '../types'
 
@@ -23,7 +24,7 @@ describe.each<Variant>(['base', 'no-tco', 'macro'])('names', variant => {
       (define x 10)
       ((lambda (x) x) 20)
     `)
-      ).toEqual(makeNumber(20))
+      ).toHaveMatchingValue(makeNumber(20))
     })
   })
 

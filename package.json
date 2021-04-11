@@ -98,6 +98,9 @@
           "includeConsoleLog": true
         }
       ]
+    ],
+    "setupFilesAfterEnv": [
+      "<rootDir>/src/jest.setup.ts"
     ]
   },
   "husky": {

@@ -1,6 +1,6 @@
 import { defaultVariant } from './constants'
 import { importNativeBuiltins } from './interpreter/BuiltIns'
-import { EVProcedure, ExpressibleValue } from './interpreter/ExpressibleValue'
+import { ExpressibleValue, Procedure } from './interpreter/ExpressibleValue'
 import { stdlibMacros } from './stdlib/macros.prelude'
 import * as misc from './stdlib/misc'
 import { stdlibProcedures } from './stdlib/procedures.prelude'
@@ -68,8 +68,8 @@ const importExternalBuiltins = (context: Context, externalBuiltIns: CustomBuiltI
       context.externalContext
     )
 
-  const displayProcedure: EVProcedure = {
-    type: 'EVProcedure',
+  const displayProcedure: Procedure = {
+    type: 'procedure',
     name: 'display',
     callSignature: {
       style: 'fixed-args',

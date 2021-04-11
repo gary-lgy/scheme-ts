@@ -1,12 +1,6 @@
 import { DefineSyntaxError } from '../errors/errors'
-import {
-  ExpressibleValue,
-  makeBool,
-  makeList,
-  makeNumber,
-  makeString,
-  makeSymbol
-} from '../interpreter/ExpressibleValue'
+import { ExpressibleValue, makeList } from '../interpreter/ExpressibleValue'
+import { makeBool, makeNumber, makeString, makeSymbol } from '../interpreter/SExpression'
 import { prepareContext, runUntilDone } from '../testHelpers'
 import { Variant } from '../types'
 
@@ -39,7 +33,7 @@ describe.each<Variant>(['base', 'no-tco', 'macro'])('special forms', variant => 
         (define x (+ 5 5))
         (+ x 10)
       `)
-        expect(actual).toEqual(makeNumber(20))
+        expect(actual).toHaveMatchingValue(makeNumber(20))
       })
 
       describe('procedure variant', () => {
@@ -49,7 +43,7 @@ describe.each<Variant>(['base', 'no-tco', 'macro'])('special forms', variant => 
           (+ x y))
         (fn 1 2)
       `)
-          expect(actual).toEqual(makeNumber(3))
+          expect(actual).toHaveMatchingValue(makeNumber(3))
         })
 
         test('var args with one compulsory argument', () => {
@@ -58,7 +52,9 @@ describe.each<Variant>(['base', 'no-tco', 'macro'])('special forms', variant => 
           (cons x y))
         (fn 1 2 3)
       `)
-          expect(actual).toEqual(makeList(makeNumber(1), makeNumber(2), makeNumber(3)))
+          expect(actual).toHaveMatchingValue(
+            makeList([makeNumber(1), makeNumber(2), makeNumber(3)])
+          )
         })
 
         test('var args with no compulsory arguments', () => {
@@ -67,7 +63,9 @@ describe.each<Variant>(['base', 'no-tco', 'macro'])('special forms', variant => 
           y)
         (fn 1 2 3)
       `)
-          expect(actual).toEqual(makeList(makeNumber(1), makeNumber(2), makeNumber(3)))
+          expect(actual).toHaveMatchingValue(
+            makeList([makeNumber(1), makeNumber(2), makeNumber(3)])
+          )
         })
       })
     })
@@ -78,7 +76,7 @@ describe.each<Variant>(['base', 'no-tco', 'macro'])('special forms', variant => 
         (let ((x 2) (y 3))
           (* x y))
       `)
-        expect(actual).toEqual(makeNumber(6))
+        expect(actual).toHaveMatchingValue(makeNumber(6))
       })
 
       test('with shadowing binding', () => {
@@ -88,7 +86,7 @@ describe.each<Variant>(['base', 'no-tco', 'macro'])('special forms', variant => 
                 (z (+ x y)))
             (* z x)))
       `)
-        expect(actual).toEqual(makeNumber(35))
+        expect(actual).toHaveMatchingValue(makeNumber(35))
       })
 
       test('no body', () => {
@@ -96,7 +94,7 @@ describe.each<Variant>(['base', 'no-tco', 'macro'])('special forms', variant => 
       })
 
       test('no bindings', () => {
-        expect(evaluateUntilDone(`(let () (+ 1 2))`)).toEqual(makeNumber(3))
+        expect(evaluateUntilDone(`(let () (+ 1 2))`)).toHaveMatchingValue(makeNumber(3))
       })
     })
 
@@ -108,7 +106,7 @@ describe.each<Variant>(['base', 'no-tco', 'macro'])('special forms', variant => 
                 (z (+ x y)))
             (* z x)))
       `)
-        expect(actual).toEqual(makeNumber(70))
+        expect(actual).toHaveMatchingValue(makeNumber(70))
       })
 
       test('no body', () => {
@@ -116,7 +114,7 @@ describe.each<Variant>(['base', 'no-tco', 'macro'])('special forms', variant => 
       })
 
       test('no bindings', () => {
-        expect(evaluateUntilDone(`(let* () (+ 1 2))`)).toEqual(makeNumber(3))
+        expect(evaluateUntilDone(`(let* () (+ 1 2))`)).toHaveMatchingValue(makeNumber(3))
       })
     })
 
@@ -135,7 +133,7 @@ describe.each<Variant>(['base', 'no-tco', 'macro'])('special forms', variant => 
                         (even? (- n 1))))))
           (even? 88))
       `)
-        expect(actual).toEqual(makeBool(true))
+        expect(actual).toHaveMatchingValue(makeBool(true))
       })
 
       test('no body', () => {
@@ -143,7 +141,7 @@ describe.each<Variant>(['base', 'no-tco', 'macro'])('special forms', variant => 
       })
 
       test('no bindings', () => {
-        expect(evaluateUntilDone(`(letrec () (+ 1 2))`)).toEqual(makeNumber(3))
+        expect(evaluateUntilDone(`(letrec () (+ 1 2))`)).toHaveMatchingValue(makeNumber(3))
       })
     })
   })
@@ -171,21 +169,21 @@ describe.each<Variant>(['base', 'no-tco', 'macro'])('special forms', variant => 
         const actual = evaluateUntilDone(`
       (cond ((+ 1 2)))
     `)
-        expect(actual).toEqual(makeNumber(3))
+        expect(actual).toHaveMatchingValue(makeNumber(3))
       })
 
       test('basic clause with one body expression', () => {
         const actual = evaluateUntilDone(`
       (cond ((> 3 2) 'greater))
     `)
-        expect(actual).toEqual(makeSymbol('greater'))
+        expect(actual).toHaveMatchingValue(makeSymbol('greater', true))
       })
 
       test('basic clause with more than one body expression', () => {
         const actual = evaluateUntilDone(`
       (cond ((> 3 2) (+ 1 2) - (*) 'greater))
     `)
-        expect(actual).toEqual(makeSymbol('greater'))
+        expect(actual).toHaveMatchingValue(makeSymbol('greater', true))
       })
     })
 
@@ -194,7 +192,7 @@ describe.each<Variant>(['base', 'no-tco', 'macro'])('special forms', variant => 
         const actual = evaluateUntilDone(`
       (cond ((cons 1 2) => car))
     `)
-        expect(actual).toEqual(makeNumber(1))
+        expect(actual).toHaveMatchingValue(makeNumber(1))
       })
     })
 
@@ -205,7 +203,7 @@ describe.each<Variant>(['base', 'no-tco', 'macro'])('special forms', variant => 
             ((< 3 3) 'less)
             (else 'equal))
     `)
-        expect(actual).toEqual(makeSymbol('equal'))
+        expect(actual).toHaveMatchingValue(makeSymbol('equal', true))
       })
 
       test('else clause not reached', () => {
@@ -214,7 +212,7 @@ describe.each<Variant>(['base', 'no-tco', 'macro'])('special forms', variant => 
             ((< 3 4) 'less)
             (else 'equal))
     `)
-        expect(actual).toEqual(makeSymbol('less'))
+        expect(actual).toHaveMatchingValue(makeSymbol('less', true))
       })
 
       test('else clause with more than one expresions', () => {
@@ -223,7 +221,7 @@ describe.each<Variant>(['base', 'no-tco', 'macro'])('special forms', variant => 
             ((< 3 3) 'less)
             (else 'equal 'for-real 'equal!))
     `)
-        expect(actual).toEqual(makeSymbol('equal!'))
+        expect(actual).toHaveMatchingValue(makeSymbol('equal!', true))
       })
     })
 
@@ -237,7 +235,7 @@ describe.each<Variant>(['base', 'no-tco', 'macro'])('special forms', variant => 
               (#f (set! x (+ x 1))))
         x
       `)
-        expect(actual).toEqual(makeNumber(11))
+        expect(actual).toHaveMatchingValue(makeNumber(11))
       })
 
       test('evaluates exactly one truthy clause', () => {
@@ -251,7 +249,7 @@ describe.each<Variant>(['base', 'no-tco', 'macro'])('special forms', variant => 
               (#f (set! x (+ x 1))))
         x
       `)
-        expect(actual).toEqual(makeNumber(11))
+        expect(actual).toHaveMatchingValue(makeNumber(11))
       })
     })
   })
@@ -268,7 +266,7 @@ describe.each<Variant>(['base', 'no-tco', 'macro'])('special forms', variant => 
       (begin (set! x 5)
             (+ x 1))
     `)
-      ).toEqual(makeNumber(6))
+      ).toHaveMatchingValue(makeNumber(6))
     })
   })
 
@@ -276,27 +274,27 @@ describe.each<Variant>(['base', 'no-tco', 'macro'])('special forms', variant => 
     describe('and', () => {
       describe('no argument', () => {
         test('return true', () => {
-          expect(evaluateUntilDone('(and)')).toEqual(makeBool(true))
+          expect(evaluateUntilDone('(and)')).toHaveMatchingValue(makeBool(true))
         })
       })
 
       describe('one argument', () => {
         test('returns argument', () => {
-          expect(evaluateUntilDone('(and 1)')).toEqual(makeNumber(1))
-          expect(evaluateUntilDone('(and "str")')).toEqual(makeString('str'))
+          expect(evaluateUntilDone('(and 1)')).toHaveMatchingValue(makeNumber(1))
+          expect(evaluateUntilDone('(and "str")')).toHaveMatchingValue(makeString('str'))
         })
       })
 
       describe('more than one arguments', () => {
         describe('all arguments are truthy', () => {
           test('returns last argument', () => {
-            expect(evaluateUntilDone(`(and "1" 'two '(3) 4)`)).toEqual(makeNumber(4))
+            expect(evaluateUntilDone(`(and "1" 'two '(3) 4)`)).toHaveMatchingValue(makeNumber(4))
           })
         })
 
         describe('at least one argument is false', () => {
           test('returns false', () => {
-            expect(evaluateUntilDone(`(and "1" #f '(3) 4)`)).toEqual(makeBool(false))
+            expect(evaluateUntilDone(`(and "1" #f '(3) 4)`)).toHaveMatchingValue(makeBool(false))
           })
         })
       })
@@ -305,27 +303,27 @@ describe.each<Variant>(['base', 'no-tco', 'macro'])('special forms', variant => 
     describe('or', () => {
       describe('no argument', () => {
         test('returns false', () => {
-          expect(evaluateUntilDone('(or)')).toEqual(makeBool(false))
+          expect(evaluateUntilDone('(or)')).toHaveMatchingValue(makeBool(false))
         })
       })
 
       describe('one argument', () => {
         test('returns argument', () => {
-          expect(evaluateUntilDone('(or 1)')).toEqual(makeNumber(1))
-          expect(evaluateUntilDone('(or "str")')).toEqual(makeString('str'))
+          expect(evaluateUntilDone('(or 1)')).toHaveMatchingValue(makeNumber(1))
+          expect(evaluateUntilDone('(or "str")')).toHaveMatchingValue(makeString('str'))
         })
       })
 
       describe('more than one arguments', () => {
         describe('all arguments are false', () => {
           test('returns false', () => {
-            expect(evaluateUntilDone(`(or #f #f #f #f)`)).toEqual(makeBool(false))
+            expect(evaluateUntilDone(`(or #f #f #f #f)`)).toHaveMatchingValue(makeBool(false))
           })
         })
 
         describe('at least one argument is truthy', () => {
           test('returns first truthy argument', () => {
-            expect(evaluateUntilDone(`(or #f #f 1 #f 2)`)).toEqual(makeNumber(1))
+            expect(evaluateUntilDone(`(or #f #f 1 #f 2)`)).toHaveMatchingValue(makeNumber(1))
           })
         })
       })

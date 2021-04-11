@@ -1,7 +1,7 @@
 /* tslint:disable: max-classes-per-file */
 import { ExpressibleValue } from '../interpreter/ExpressibleValue'
+import { SyntaxNode } from '../interpreter/SchemeSyntax'
 import { syntheticIdentifierPrefix } from '../interpreter/util'
-import { SyntaxNode } from '../lang/SchemeSyntax'
 import { stringify } from '../utils/stringify'
 import { RuntimeSourceError } from './runtimeSourceError'
 
@@ -266,7 +266,7 @@ export class UnassignedVariable extends RuntimeSourceError {
 export class InvalidNumberOfArguments extends RuntimeSourceError {
   constructor(
     node: SyntaxNode,
-    private procedureName: string,
+    private signatureString: string,
     private expected: number,
     private got: number
   ) {
@@ -274,19 +274,19 @@ export class InvalidNumberOfArguments extends RuntimeSourceError {
   }
 
   public explain() {
-    return `${this.procedureName} expected ${this.expected} arguments, but got ${this.got}.`
+    return `${this.signatureString} expected ${this.expected} arguments, but got ${this.got}.`
   }
 
   public elaborate() {
     const pluralS = this.expected === 1 ? '' : 's'
-    return `Try calling procedure ${this.procedureName} again, but with ${this.expected} argument${pluralS} instead.`
+    return `Try calling procedure ${this.signatureString} again, but with ${this.expected} argument${pluralS} instead.`
   }
 }
 
 export class NotEnoughArguments extends RuntimeSourceError {
   constructor(
     node: SyntaxNode,
-    private procedureName: string,
+    private signatureString: string,
     private expected: number,
     private got: number
   ) {
@@ -294,12 +294,12 @@ export class NotEnoughArguments extends RuntimeSourceError {
   }
 
   public explain() {
-    return `${this.procedureName} expected at least ${this.expected} arguments, but got ${this.got}.`
+    return `${this.signatureString} expected at least ${this.expected} arguments, but got ${this.got}.`
   }
 
   public elaborate() {
     const pluralS = this.expected === 1 ? '' : 's'
-    return `Try calling procedure ${this.procedureName} again, but with at least ${this.expected} argument${pluralS} instead.`
+    return `Try calling procedure ${this.signatureString} again, but with at least ${this.expected} argument${pluralS} instead.`
   }
 }
 

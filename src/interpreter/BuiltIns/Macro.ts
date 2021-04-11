@@ -1,12 +1,13 @@
 import { Context } from '../../types'
 import { flattenPairToList } from '../../utils/listHelpers'
-import { EVProcedure, EVSymbol, ExpressibleValue, makeSymbol } from '../ExpressibleValue'
+import { ExpressibleValue, Procedure } from '../ExpressibleValue'
 import { ValueGenerator } from '../interpreter'
 import { expandMacro } from '../macro'
+import { makeSymbol, SSymbol } from '../SExpression'
 import { getVariable, syntheticIdentifierPrefix } from '../util'
 
-export const macroexpand: EVProcedure = {
-  type: 'EVProcedure',
+export const macroexpand: Procedure = {
+  type: 'procedure',
   variant: 'BuiltInProcedure',
   name: 'macroexpand',
   callSignature: {
@@ -15,7 +16,7 @@ export const macroexpand: EVProcedure = {
   },
   body: function* (args: ExpressibleValue[], context: Context): ValueGenerator {
     const form = args[0]
-    if (form.type !== 'EVPair') {
+    if (form.type !== 'pair') {
       throw new Error(`macroexpand expected a list as the only argument, but got ${form.type}`)
     }
 
@@ -31,12 +32,12 @@ export const macroexpand: EVProcedure = {
     }
 
     const macroName = list.value[0].value
-    if (macroName.type !== 'EVSymbol') {
+    if (macroName.type !== 'symbol') {
       throw new Error(`first element in the argument list must be a macro name`)
     }
 
     const macro = getVariable(context, macroName.value)
-    if (!macro || macro.type !== 'EVMacro') {
+    if (!macro || macro.type !== 'macro') {
       throw new Error(`no macro named ${macroName.value}`)
     }
 
@@ -49,15 +50,15 @@ export const macroexpand: EVProcedure = {
   }
 }
 
-export const genSym: EVProcedure = {
-  type: 'EVProcedure',
+export const genSym: Procedure = {
+  type: 'procedure',
   variant: 'BuiltInProcedure',
   name: 'gensym',
   callSignature: {
     style: 'fixed-args',
     numParams: 0
   },
-  body: (_args: ExpressibleValue[], context: Context): EVSymbol => {
+  body: (_args: ExpressibleValue[], context: Context): SSymbol => {
     const seqNumber: number = context.runtime.nextUniqueSymbolNumber++
     const symbolName: string = syntheticIdentifierPrefix + seqNumber
     return makeSymbol(symbolName, false)

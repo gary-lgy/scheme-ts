@@ -1,7 +1,8 @@
 import * as errors from '../../errors/errors'
-import { SyntaxIdentifier, SyntaxList, SyntaxNode } from '../../lang/SchemeSyntax'
 import { Context } from '../../types'
 import { NamedCallSignature } from '../procedure'
+import { SyntaxList, SyntaxNode } from '../SchemeSyntax'
+import { SSymbol } from '../SExpression'
 import { handleRuntimeError, isDefined } from '../util'
 import {
   AndForm,
@@ -84,13 +85,13 @@ const listToDefine = (list: SyntaxList, context: Context): DefineForm => {
     return handleRuntimeError(context, new errors.DefineSyntaxError(list))
   }
 
-  if (list.elements[1].type === 'List') {
+  if (list.elements[1].type === 'list') {
     if (list.elements[1].elements.length < 1) {
       return handleRuntimeError(context, new errors.DefineSyntaxError(list))
     }
 
-    const argsList: SyntaxIdentifier[] = list.elements[1].elements.map(element => {
-      if (element.type !== 'Identifier') {
+    const argsList: SSymbol[] = list.elements[1].elements.map(element => {
+      if (element.type !== 'symbol') {
         return handleRuntimeError(context, new errors.DefineSyntaxError(list))
       }
       return element
@@ -107,7 +108,7 @@ const listToDefine = (list: SyntaxList, context: Context): DefineForm => {
       },
       body: list.elements.slice(2)
     }
-  } else if (list.elements[1].type === 'Identifier') {
+  } else if (list.elements[1].type === 'symbol') {
     if (list.elements.length !== 3) {
       return handleRuntimeError(context, new errors.DefineSyntaxError(list))
     }
@@ -118,17 +119,17 @@ const listToDefine = (list: SyntaxList, context: Context): DefineForm => {
       name: identifier,
       value: list.elements[2]
     }
-  } else if (list.elements[1].type === 'DottedList') {
-    const beforeDot: SyntaxIdentifier[] = list.elements[1].pre.map(expr => {
-      if (expr.type !== 'Identifier') {
+  } else if (list.elements[1].type === 'dotted list') {
+    const beforeDot: SSymbol[] = list.elements[1].pre.map(expr => {
+      if (expr.type !== 'symbol') {
         return handleRuntimeError(context, new errors.DefineSyntaxError(list))
       }
       return expr
     })
-    if (list.elements[1].post.type !== 'Identifier') {
+    if (list.elements[1].post.type !== 'symbol') {
       return handleRuntimeError(context, new errors.DefineSyntaxError(list))
     }
-    const afterDot: SyntaxIdentifier = list.elements[1].post
+    const afterDot: SSymbol = list.elements[1].post
 
     return {
       tag: 'define',
@@ -165,11 +166,11 @@ const listToLambda = (list: SyntaxList, context: Context): LambdaForm => {
 }
 
 const parseParameters = (list: SyntaxNode): NamedCallSignature | null => {
-  if (list.type === 'List') {
+  if (list.type === 'list') {
     // Fixed number of arguments
-    const parameters: SyntaxIdentifier[] = []
+    const parameters: SSymbol[] = []
     for (const element of list.elements) {
-      if (element.type === 'Identifier') {
+      if (element.type === 'symbol') {
         parameters.push(element)
       } else {
         return null
@@ -180,20 +181,20 @@ const parseParameters = (list: SyntaxNode): NamedCallSignature | null => {
       numParams: parameters.length,
       parameters
     }
-  } else if (list.type === 'DottedList') {
+  } else if (list.type === 'dotted list') {
     // variable number of arguments with compulsory arguments
-    const compulsoryParameters: SyntaxIdentifier[] = []
+    const compulsoryParameters: SSymbol[] = []
     for (const element of list.pre) {
-      if (element.type === 'Identifier') {
+      if (element.type === 'symbol') {
         compulsoryParameters.push(element)
       } else {
         return null
       }
     }
-    if (list.post.type !== 'Identifier') {
+    if (list.post.type !== 'symbol') {
       return null
     }
-    const restParameters: SyntaxIdentifier = list.post
+    const restParameters: SSymbol = list.post
 
     return {
       style: 'var-args',
@@ -201,7 +202,7 @@ const parseParameters = (list: SyntaxNode): NamedCallSignature | null => {
       compulsoryParameters,
       restParameters
     }
-  } else if (list.type === 'Identifier') {
+  } else if (list.type === 'symbol') {
     // variable number of arguments without compulsory arguments
     return {
       style: 'var-args',
@@ -215,7 +216,7 @@ const parseParameters = (list: SyntaxNode): NamedCallSignature | null => {
 }
 
 const listToSetBang = (list: SyntaxList, context: Context): SetBangForm => {
-  if (list.elements.length !== 3 || list.elements[1].type !== 'Identifier') {
+  if (list.elements.length !== 3 || list.elements[1].type !== 'symbol') {
     return handleRuntimeError(context, new errors.SetSyntaxError(list))
   }
   return {
@@ -242,15 +243,11 @@ const listToLet = (
   list: SyntaxList,
   context: Context
 ): LetForm | LetStarForm | LetRecForm => {
-  if (list.elements.length < 3 || list.elements[1].type !== 'List') {
+  if (list.elements.length < 3 || list.elements[1].type !== 'list') {
     return handleRuntimeError(context, new errors.LetSyntaxError(list))
   }
   const bindings: LetBinding[] = list.elements[1].elements.map(pair => {
-    if (
-      pair.type !== 'List' ||
-      pair.elements.length !== 2 ||
-      pair.elements[0].type !== 'Identifier'
-    ) {
+    if (pair.type !== 'list' || pair.elements.length !== 2 || pair.elements[0].type !== 'symbol') {
       return handleRuntimeError(context, new errors.LetSyntaxError(list))
     }
 
@@ -297,12 +294,12 @@ const parseCondClause = (
   context: Context,
   throwSyntaxError: () => never
 ): CondClause | CondElseClause => {
-  if (clause.type !== 'List' || clause.elements.length < 1) {
+  if (clause.type !== 'list' || clause.elements.length < 1) {
     throwSyntaxError()
   }
 
   const test = clause.elements[0]
-  if (test.type === 'Identifier' && test.name === 'else' && !isDefined(context, 'else')) {
+  if (test.type === 'symbol' && test.value === 'else' && !isDefined(context, 'else')) {
     // else clause
     if (clause.elements.length === 1) {
       throwSyntaxError()
@@ -319,8 +316,8 @@ const parseCondClause = (
   } else {
     const secondElement = clause.elements[1]
     if (
-      secondElement.type === 'Identifier' &&
-      secondElement.name === '=>' &&
+      secondElement.type === 'symbol' &&
+      secondElement.value === '=>' &&
       !isDefined(context, '=>')
     ) {
       // procedure clause
@@ -384,7 +381,7 @@ const listToDefMacro = (list: SyntaxList, context: Context): DefMacroForm => {
   }
 
   const name = list.elements[1]
-  if (name.type !== 'Identifier') {
+  if (name.type !== 'symbol') {
     return handleRuntimeError(context, new errors.DefMacroSyntaxError(list))
   }
 
