@@ -157,11 +157,11 @@ export const stringifyCallSignature = (
     if ('compulsoryParameters' in callSignature) {
       argNames = callSignature.compulsoryParameters
         .map(param => param.value)
-        .concat(['.', callSignature.restParameters.value])
+        .concat(['...' + callSignature.restParameters.value])
     } else {
       argNames = Array.from({ length: callSignature.numCompulsoryParameters })
         .map((_, index) => `arg${index}`)
-        .concat(['.', 'rest-args'])
+        .concat(['...rest-args'])
     }
   }
 
