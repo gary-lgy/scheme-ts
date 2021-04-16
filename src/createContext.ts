@@ -1,10 +1,10 @@
 import { defaultVariant } from './constants'
 import { importNativeBuiltins } from './interpreter/BuiltIns'
-import { ExpressibleValue, Procedure } from './interpreter/ExpressibleValue'
+import { Procedure, Value } from './interpreter/Value'
 import { stdlibMacros } from './stdlib/macros.prelude'
 import * as misc from './stdlib/misc'
 import { stdlibProcedures } from './stdlib/procedures.prelude'
-import { Context, CustomBuiltIns, Value, Variant } from './types'
+import { Context, CustomBuiltIns, Variant } from './types'
 import { stringify } from './utils/stringify'
 
 const createEmptyRuntime = () => ({
@@ -55,15 +55,15 @@ export const ensureGlobalEnvironmentExist = (context: Context) => {
   }
 }
 
-const defineSymbol = (context: Context, name: string, value: ExpressibleValue) => {
+const defineSymbol = (context: Context, name: string, value: Value) => {
   const globalEnvironment = context.runtime.environments[0]
   globalEnvironment.head[name] = value
 }
 
 const importExternalBuiltins = (context: Context, externalBuiltIns: CustomBuiltIns) => {
-  const rawDisplay = (v: Value) =>
+  const externalDisplay = (v: Value) =>
     externalBuiltIns.rawDisplay(
-      v,
+      stringify(v),
       undefined as any, // Workaround for rawDisplay hack on frontend
       context.externalContext
     )
@@ -76,8 +76,8 @@ const importExternalBuiltins = (context: Context, externalBuiltIns: CustomBuiltI
       numParams: 1
     },
     variant: 'BuiltInProcedure',
-    body: (args: ExpressibleValue[]): ExpressibleValue => {
-      rawDisplay(stringify(args[0]))
+    body: (args: Value[]): Value => {
+      externalDisplay(args[0])
       return args[0]
     }
   }
@@ -90,14 +90,7 @@ const importExternalBuiltins = (context: Context, externalBuiltIns: CustomBuiltI
  */
 
 const defaultBuiltIns: CustomBuiltIns = {
-  rawDisplay: misc.rawDisplay,
-  // See issue #5
-  prompt: misc.rawDisplay,
-  // See issue #11
-  alert: misc.rawDisplay,
-  visualiseList: () => {
-    throw new Error('List visualizer is not enabled')
-  }
+  rawDisplay: misc.rawDisplay
 }
 
 const importPrelude = (context: Context) => {

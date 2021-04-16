@@ -5,20 +5,16 @@
 
 /* tslint:disable:max-classes-per-file */
 
-import { ExpressibleValue } from './interpreter/ExpressibleValue'
 import { SyntaxNode } from './interpreter/SchemeSyntax'
 import { SourceLocation } from './interpreter/SExpression'
+import { Value } from './interpreter/Value'
 
 /**
  * Defines functions that act as built-ins, but might rely on
  * different implementations. e.g display() in a web application.
  */
 export interface CustomBuiltIns {
-  rawDisplay: (value: Value, str: string, externalContext: any) => Value
-  prompt: (value: Value, str: string, externalContext: any) => string | null
-  alert: (value: Value, str: string, externalContext: any) => void
-  /* Used for list visualisation. See #12 */
-  visualiseList: (list: any, externalContext: any) => void
+  rawDisplay: (str: string, prepend: string, externalContext: any) => void
 }
 
 export enum ErrorType {
@@ -93,12 +89,8 @@ export interface Context<T = any> {
   variant: Variant
 }
 
-// tslint:disable:no-any
-export type Value = any
-// tslint:enable:no-any
-
 export interface Frame {
-  [name: string]: ExpressibleValue
+  [name: string]: Value
 }
 
 export interface Environment {
@@ -120,7 +112,7 @@ export interface Finished {
 
 export interface Suspended {
   status: 'suspended'
-  it: IterableIterator<Value>
+  it: Iterator<Context, Value>
   scheduler: Scheduler
   context: Context
 }
@@ -132,5 +124,5 @@ export type SuspendedNonDet = Omit<Suspended, 'status'> & { status: 'suspended-n
 export type Result = Suspended | SuspendedNonDet | Finished | Error
 
 export interface Scheduler {
-  run(it: IterableIterator<Value>, context: Context): Promise<Result>
+  run(it: Iterator<Context, Value>, context: Context): Promise<Result>
 }

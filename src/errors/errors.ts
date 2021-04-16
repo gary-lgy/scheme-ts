@@ -1,7 +1,7 @@
 /* tslint:disable: max-classes-per-file */
-import { ExpressibleValue } from '../interpreter/ExpressibleValue'
 import { SyntaxNode } from '../interpreter/SchemeSyntax'
 import { syntheticIdentifierPrefix } from '../interpreter/util'
+import { Value } from '../interpreter/Value'
 import { stringify } from '../utils/stringify'
 import { RuntimeSourceError } from './runtimeSourceError'
 
@@ -135,7 +135,7 @@ export class DefMacroSyntaxError extends RuntimeSourceError {
 }
 
 export class MacroExpansionError extends RuntimeSourceError {
-  constructor(private expandedResult: ExpressibleValue, node: SyntaxNode) {
+  constructor(private expandedResult: Value, node: SyntaxNode) {
     super(node)
   }
 
@@ -174,7 +174,7 @@ export class UnquoteInWrongContext extends RuntimeSourceError {
 }
 
 export class UnquoteSplicingEvaluatedToNonList extends RuntimeSourceError {
-  constructor(public result: ExpressibleValue, node: SyntaxNode) {
+  constructor(public result: Value, node: SyntaxNode) {
     super(node)
   }
 
@@ -226,7 +226,7 @@ export class MaximumStackLimitExceeded extends RuntimeSourceError {
 }
 
 export class CallingNonFunctionValue extends RuntimeSourceError {
-  constructor(private callee: ExpressibleValue, public node: SyntaxNode) {
+  constructor(private callee: Value, public node: SyntaxNode) {
     super(node)
   }
 

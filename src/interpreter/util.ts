@@ -2,7 +2,7 @@ import { Context } from 'vm'
 import * as errors from '../errors/errors'
 import { RuntimeSourceError } from '../errors/runtimeSourceError'
 import { Environment, Frame } from '../types'
-import { ExpressibleValue } from './ExpressibleValue'
+import { Value } from './Value'
 
 // ======================= Environment ===========================
 
@@ -25,7 +25,7 @@ export const extendCurrentEnvironment = (
   }
 }
 
-export const getVariable = (context: Context, name: string): ExpressibleValue | null => {
+export const getVariable = (context: Context, name: string): Value | null => {
   let environment: Environment | null = context.runtime.environments[0]
   while (environment) {
     if (environment.head.hasOwnProperty(name)) {
@@ -37,7 +37,7 @@ export const getVariable = (context: Context, name: string): ExpressibleValue | 
   return null
 }
 
-export const setVariable = (context: Context, name: string, value: ExpressibleValue): void => {
+export const setVariable = (context: Context, name: string, value: Value): void => {
   let environment: Environment | null = context.runtime.environments[0]
   while (environment) {
     if (environment.head.hasOwnProperty(name)) {
@@ -61,7 +61,7 @@ export const introduceBinding = (
   frame: Frame,
   isUserIdentifier: boolean,
   name: string,
-  value: ExpressibleValue
+  value: Value
 ): void => {
   if (isUserIdentifier && !isAllowedAsUserIdentifier(name)) {
     return handleRuntimeError(
@@ -79,7 +79,7 @@ export const isDefined = (context: Context, name: string): boolean => {
 
 // ======================= Evaluation ===========================
 
-export const isTruthy = (value: ExpressibleValue) => value.type !== 'boolean' || value.value
+export const isTruthy = (value: Value) => value.type !== 'boolean' || value.value
 
 export const handleRuntimeError = (context: Context, error: RuntimeSourceError): never => {
   context.errors.push(error)

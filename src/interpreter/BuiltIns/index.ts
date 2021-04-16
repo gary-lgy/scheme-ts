@@ -1,5 +1,5 @@
 import { Context, Frame } from '../../types'
-import { ExpressibleValue } from '../ExpressibleValue'
+import { Value } from '../Value'
 import {
   add,
   divide,
@@ -20,7 +20,7 @@ import { genSym, macroexpand } from './Macro'
 import { car, cdr, cons, list, setCar, setCdr } from './Pair'
 import { isBool, isNull, isNumber, isPair, isProcedure, isString, isSymbol } from './TypePredicates'
 
-export const defineBuiltin = (frame: Frame, name: string, value: ExpressibleValue) => {
+export const defineBuiltin = (frame: Frame, name: string, value: Value) => {
   frame[name] = value
 }
 

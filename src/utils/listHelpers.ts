@@ -1,8 +1,8 @@
-import { ExpressibleValue, Pair } from '../interpreter/ExpressibleValue'
+import { Pair, Value } from '../interpreter/Value'
 
 // For flattening pairs into list
 export type ListElement = {
-  value: ExpressibleValue
+  value: Value
   pair: Pair
 }
 export type List = ListElement[]

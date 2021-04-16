@@ -4,7 +4,6 @@ import {
   UnquoteSplicingEvaluatedToNonList,
   UnquoteSplicingInNonListContext
 } from '../errors/errors'
-import { ExpressibleValue, makeList, makePair } from '../interpreter/ExpressibleValue'
 import {
   makeBool,
   makeNumber,
@@ -15,12 +14,13 @@ import {
   SString,
   SSymbol
 } from '../interpreter/SExpression'
+import { makeList, makePair, Value } from '../interpreter/Value'
 import { prepareContext, runUntilDone } from '../testHelpers'
 import { Variant } from '../types'
 import { stringify } from '../utils/stringify'
 
 describe.each<Variant>(['base', 'no-tco', 'macro'])('quotation', variant => {
-  const evaluateUntilDone: (code: string) => ExpressibleValue = code => {
+  const evaluateUntilDone: (code: string) => Value = code => {
     const context = prepareContext(variant)
     return runUntilDone(code, context).value
   }

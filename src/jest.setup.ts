@@ -1,8 +1,8 @@
 import { areValuesEqual } from './interpreter/BuiltIns/Equal'
-import { ExpressibleValue } from './interpreter/ExpressibleValue'
+import { Value } from './interpreter/Value'
 
 expect.extend({
-  toHaveMatchingValue(received: ExpressibleValue, expected: ExpressibleValue) {
+  toHaveMatchingValue(received: Value, expected: Value) {
     const pass = areValuesEqual(received, expected)
     if (pass) {
       return {
@@ -23,7 +23,7 @@ declare global {
   namespace jest {
     interface Matchers<R> {
       /** Expect an expressible value to be equal to another */
-      toHaveMatchingValue(expected: ExpressibleValue): R
+      toHaveMatchingValue(expected: Value): R
     }
   }
 }

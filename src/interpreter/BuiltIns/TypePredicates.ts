@@ -1,5 +1,5 @@
-import { ExpressibleValue, Procedure } from '../ExpressibleValue'
 import { makeBool } from '../SExpression'
+import { Procedure, Value } from '../Value'
 
 export const isNumber: Procedure = {
   type: 'procedure',
@@ -9,7 +9,7 @@ export const isNumber: Procedure = {
     style: 'fixed-args',
     numParams: 1
   },
-  body: (args: ExpressibleValue[]) => makeBool(args[0].type === 'number')
+  body: (args: Value[]) => makeBool(args[0].type === 'number')
 }
 
 export const isBool: Procedure = {
@@ -20,7 +20,7 @@ export const isBool: Procedure = {
     style: 'fixed-args',
     numParams: 1
   },
-  body: (args: ExpressibleValue[]) => makeBool(args[0].type === 'boolean')
+  body: (args: Value[]) => makeBool(args[0].type === 'boolean')
 }
 
 export const isString: Procedure = {
@@ -31,7 +31,7 @@ export const isString: Procedure = {
     style: 'fixed-args',
     numParams: 1
   },
-  body: (args: ExpressibleValue[]) => makeBool(args[0].type === 'string')
+  body: (args: Value[]) => makeBool(args[0].type === 'string')
 }
 
 export const isSymbol: Procedure = {
@@ -42,7 +42,7 @@ export const isSymbol: Procedure = {
     style: 'fixed-args',
     numParams: 1
   },
-  body: (args: ExpressibleValue[]) => makeBool(args[0].type === 'symbol')
+  body: (args: Value[]) => makeBool(args[0].type === 'symbol')
 }
 
 export const isProcedure: Procedure = {
@@ -53,7 +53,7 @@ export const isProcedure: Procedure = {
     style: 'fixed-args',
     numParams: 1
   },
-  body: (args: ExpressibleValue[]) => makeBool(args[0].type === 'procedure')
+  body: (args: Value[]) => makeBool(args[0].type === 'procedure')
 }
 
 export const isPair: Procedure = {
@@ -64,7 +64,7 @@ export const isPair: Procedure = {
     style: 'fixed-args',
     numParams: 1
   },
-  body: (args: ExpressibleValue[]) => makeBool(args[0].type === 'pair')
+  body: (args: Value[]) => makeBool(args[0].type === 'pair')
 }
 
 export const isNull: Procedure = {
@@ -75,5 +75,5 @@ export const isNull: Procedure = {
     style: 'fixed-args',
     numParams: 1
   },
-  body: (args: ExpressibleValue[]) => makeBool(args[0].type === 'empty list')
+  body: (args: Value[]) => makeBool(args[0].type === 'empty list')
 }

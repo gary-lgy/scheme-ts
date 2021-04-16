@@ -1,10 +1,10 @@
 import { Context } from '../../types'
 import { flattenPairToList } from '../../utils/listHelpers'
-import { ExpressibleValue, Procedure } from '../ExpressibleValue'
 import { ValueGenerator } from '../interpreter'
 import { expandMacro } from '../macro'
 import { makeSymbol, SSymbol } from '../SExpression'
 import { getVariable, syntheticIdentifierPrefix } from '../util'
+import { Procedure, Value } from '../Value'
 
 export const macroexpand: Procedure = {
   type: 'procedure',
@@ -14,7 +14,7 @@ export const macroexpand: Procedure = {
     style: 'fixed-args',
     numParams: 1
   },
-  body: function* (args: ExpressibleValue[], context: Context): ValueGenerator {
+  body: function* (args: Value[], context: Context): ValueGenerator {
     const form = args[0]
     if (form.type !== 'pair') {
       throw new Error(`macroexpand expected a list as the only argument, but got ${form.type}`)
@@ -58,7 +58,7 @@ export const genSym: Procedure = {
     style: 'fixed-args',
     numParams: 0
   },
-  body: (_args: ExpressibleValue[], context: Context): SSymbol => {
+  body: (_args: Value[], context: Context): SSymbol => {
     const seqNumber: number = context.runtime.nextUniqueSymbolNumber++
     const symbolName: string = syntheticIdentifierPrefix + seqNumber
     return makeSymbol(symbolName, false)

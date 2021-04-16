@@ -1,10 +1,10 @@
-import { ExpressibleValue, Macro, makeList, Pair } from '../interpreter/ExpressibleValue'
 import { FixedArgsWithParameterNames, VarArgsWithParameterNames } from '../interpreter/procedure'
 import { makeNumber, makeSymbol, SSymbol } from '../interpreter/SExpression'
+import { Macro, makeList, Pair, Value } from '../interpreter/Value'
 import { prepareContext, runUntilDone } from '../testHelpers'
 import { flattenPairToList, List } from '../utils/listHelpers'
 
-function evaluateUntilDone(code: string): ExpressibleValue {
+function evaluateUntilDone(code: string): Value {
   const context = prepareContext('macro')
   return runUntilDone(code, context).value
 }

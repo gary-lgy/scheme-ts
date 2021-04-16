@@ -2,7 +2,6 @@
 
 import * as errors from '../../errors/errors'
 import { Context, Frame } from '../../types'
-import { ExpressibleValue, Macro } from '../ExpressibleValue'
 import { evaluate, evaluateSequence, ValueGenerator } from '../interpreter'
 import { apply, isParentInTailContext, tryEnterTailContext } from '../procedure'
 import { quasiquoteExpression, quoteExpression } from '../quote'
@@ -16,6 +15,7 @@ import {
   pushEnvironment,
   setVariable
 } from '../util'
+import { Macro, Value } from '../Value'
 import {
   AndForm,
   BeginForm,
@@ -70,7 +70,7 @@ export function* evaluateSpecialForm(form: SpecialForm, context: Context): Value
 
 function* evaluateDefineForm(defineForm: DefineForm, context: Context): ValueGenerator {
   // TODO: disallow mixing of definitions and expressions?
-  let value: ExpressibleValue
+  let value: Value
   if (defineForm.variant === 'basic') {
     value = yield* evaluate(defineForm.value, context)
   } else {

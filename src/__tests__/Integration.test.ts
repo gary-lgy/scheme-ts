@@ -1,11 +1,11 @@
-import { ExpressibleValue, makeList } from '../interpreter/ExpressibleValue'
 import { makeBool, makeSymbol } from '../interpreter/SExpression'
+import { makeList, Value } from '../interpreter/Value'
 import { prepareContext, runUntilDone } from '../testHelpers'
 import { Variant } from '../types'
 import { stringify } from '../utils/stringify'
 
 describe.each<Variant>(['base', 'no-tco', 'macro'])('integration tests', variant => {
-  function evaluateUntilDone(code: string): ExpressibleValue {
+  function evaluateUntilDone(code: string): Value {
     const context = prepareContext(variant)
     return runUntilDone(code, context).value
   }

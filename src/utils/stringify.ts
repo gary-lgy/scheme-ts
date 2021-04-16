@@ -1,6 +1,6 @@
 import { MAX_LIST_DISPLAY_LENGTH } from '../constants'
-import { ExpressibleValue, Pair } from '../interpreter/ExpressibleValue'
 import { CallSignature, NamedCallSignature } from '../interpreter/procedure'
+import { Pair, Value } from '../interpreter/Value'
 import { flattenPairToList, ImproperList, List } from './listHelpers'
 
 function makeIndent(indent: number | string): string {
@@ -25,12 +25,12 @@ function indentify(indent: string, s: string): string {
 }
 
 export const stringify = (
-  value: ExpressibleValue,
+  value: Value,
   indent: number | string = 2,
   splitlineThreshold = 80
 ): string => {
   // Used to check if there are any cyclic structures
-  const ancestors = new Set<ExpressibleValue>()
+  const ancestors = new Set<Value>()
 
   // Precompute useful strings
   const indentString = makeIndent(indent)
@@ -108,7 +108,7 @@ export const stringify = (
     }
   }
 
-  const stringifyValue = (v: ExpressibleValue, indentLevel: number = 0): string => {
+  const stringifyValue = (v: Value, indentLevel: number = 0): string => {
     if (ancestors.has(v)) {
       return '...<circular>'
     } else if (ancestors.size > MAX_LIST_DISPLAY_LENGTH) {

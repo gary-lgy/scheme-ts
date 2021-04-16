@@ -4,13 +4,13 @@ import {
   InvalidNumberOfArguments,
   NotEnoughArguments
 } from '../../errors/errors'
-import { ExpressibleValue, makeList, makePair } from '../../interpreter/ExpressibleValue'
 import { makeBool, makeEmptyList, makeNumber, makeString } from '../../interpreter/SExpression'
+import { makeList, makePair, Value } from '../../interpreter/Value'
 import { prepareContext, runUntilDone } from '../../testHelpers'
 import { stringify } from '../../utils/stringify'
 
 describe.each<Variant>(['base', 'no-tco', 'macro'])('miscellaneous library features', variant => {
-  function evaluateUntilDone(code: string): ExpressibleValue {
+  function evaluateUntilDone(code: string): Value {
     const context = prepareContext(variant)
     return runUntilDone(code, context).value
   }

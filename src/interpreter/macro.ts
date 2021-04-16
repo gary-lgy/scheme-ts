@@ -2,7 +2,6 @@ import { UNKNOWN_LOCATION } from '../constants'
 import { MacroExpansionError } from '../errors/errors'
 import { Context } from '../types'
 import { flattenPairToList } from '../utils/listHelpers'
-import { ExpressibleValue, Macro, makeImproperList, makeList } from './ExpressibleValue'
 import { evaluate, ValueGenerator } from './interpreter'
 import {
   checkNumberOfArguments,
@@ -12,11 +11,12 @@ import {
 } from './procedure'
 import { SyntaxNode } from './SchemeSyntax'
 import { handleRuntimeError, popEnvironment, pushEnvironment } from './util'
+import { Macro, makeImproperList, makeList, Value } from './Value'
 
 export function* expandMacro(
   context: Context,
   macro: Macro,
-  suppliedArgs: ExpressibleValue[],
+  suppliedArgs: Value[],
   node: SyntaxNode
 ): ValueGenerator {
   checkNumberOfArguments(context, macro.name, macro.callSignature, suppliedArgs.length, node)
@@ -28,7 +28,7 @@ export function* expandMacro(
   )
   pushEnvironment(context, environment)
 
-  let result!: ExpressibleValue
+  let result!: Value
   for (let i = 0; i < macro.body.length; i++) {
     const expression = macro.body[i]
     result = yield* evaluate(expression, context)
@@ -65,7 +65,7 @@ export function* useMacro(
   return yield* evaluate(expandedSyntax, context)
 }
 
-const syntaxToExpressibleValue = (syntax: SyntaxNode): ExpressibleValue => {
+const syntaxToExpressibleValue = (syntax: SyntaxNode): Value => {
   switch (syntax.type) {
     case 'boolean':
     case 'number':
@@ -83,7 +83,7 @@ const syntaxToExpressibleValue = (syntax: SyntaxNode): ExpressibleValue => {
   }
 }
 
-const expressibleValueToSyntax = (value: ExpressibleValue): SyntaxNode => {
+const expressibleValueToSyntax = (value: Value): SyntaxNode => {
   switch (value.type) {
     case 'boolean':
     case 'number':

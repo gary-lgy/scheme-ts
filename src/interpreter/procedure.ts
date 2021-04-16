@@ -2,18 +2,11 @@ import { Context } from '..'
 import * as errors from '../errors/errors'
 import { Environment } from '../types'
 import { stringify, stringifyCallSignature } from '../utils/stringify'
-import {
-  BuiltInProcedure,
-  CompoundProcedure,
-  ExpressibleValue,
-  makeList,
-  NonTailCallExpressibleValue,
-  Procedure
-} from './ExpressibleValue'
 import { evaluate, ValueGenerator } from './interpreter'
 import { SyntaxNode } from './SchemeSyntax'
 import { SSymbol } from './SExpression'
 import { handleRuntimeError, introduceBinding, popEnvironment, pushEnvironment } from './util'
+import { BuiltInProcedure, CompoundProcedure, makeList, Procedure, Value } from './Value'
 
 // For BuiltIn procedures, we only need to check the number of arguments
 // The parameter names are meaningless and unnecessary
@@ -32,7 +25,7 @@ export type VarArgsWithParameterNames = VarArgs & {
   restParameters: SSymbol
 }
 
-export type ParameterArgumentPair = { parameter: SSymbol; argument: ExpressibleValue }
+export type ParameterArgumentPair = { parameter: SSymbol; argument: Value }
 
 export const checkNumberOfArguments = (
   context: Context,
@@ -70,8 +63,8 @@ export const checkNumberOfArguments = (
 export function* listOfArguments(
   expressions: SyntaxNode[],
   context: Context
-): Generator<Context, ExpressibleValue[]> {
-  const values: ExpressibleValue[] = []
+): Generator<Context, Value[]> {
+  const values: Value[] = []
   for (const expression of expressions) {
     values.push(yield* evaluate(expression, context))
   }
@@ -107,9 +100,9 @@ export const extendEnvironmentWithNewBindings = (
 export function* apply(
   context: Context,
   procedure: Procedure,
-  suppliedArgs: ExpressibleValue[],
+  suppliedArgs: Value[],
   node: SyntaxNode
-): Generator<Context, NonTailCallExpressibleValue> {
+): Generator<Context, Value> {
   while (true) {
     checkNumberOfArguments(
       context,
@@ -119,7 +112,7 @@ export function* apply(
       node
     )
 
-    let result: ExpressibleValue
+    let result: Value
     if (procedure.variant === 'CompoundProcedure') {
       result = yield* applyCompoundProcedure(context, procedure, suppliedArgs)
     } else {
@@ -139,7 +132,7 @@ export function* apply(
 function* applyCompoundProcedure(
   context: Context,
   procedure: CompoundProcedure,
-  suppliedArgs: ExpressibleValue[]
+  suppliedArgs: Value[]
 ): ValueGenerator {
   const environment = extendEnvironmentWithNewBindings(
     context,
@@ -176,7 +169,7 @@ function* applyCompoundProcedure(
 function* applyBuiltInProcedure(
   context: Context,
   procedure: BuiltInProcedure,
-  suppliedArgs: ExpressibleValue[],
+  suppliedArgs: Value[],
   node: SyntaxNode
 ): ValueGenerator {
   try {
@@ -194,7 +187,7 @@ function* applyBuiltInProcedure(
 /** Match the arguments with parameters according to the call signature. */
 export const matchArgumentsToParameters = (
   callSignature: NamedCallSignature,
-  args: ExpressibleValue[]
+  args: Value[]
 ): ParameterArgumentPair[] => {
   if (callSignature.style === 'fixed-args') {
     return callSignature.parameters.map((parameter, index) => ({
