@@ -13,9 +13,9 @@ import {
 } from './SExpression'
 
 // An expressible value is a value that can be the result of an evaluation
-export type ExpressibleValue = NonTailCallExpressibleValue | TailCall
+export type Value = NonTailCallValue | TailCall
 
-export type NonTailCallExpressibleValue =
+export type NonTailCallValue =
   | SNumber
   | SString
   | SSymbol
@@ -42,8 +42,8 @@ export type BuiltInProcedure = {
   callSignature: CallSignature
   name: string
   body:
-    | ((args: ExpressibleValue[], context: Context) => ExpressibleValue)
-    | ((args: ExpressibleValue[], context: Context) => ValueGenerator)
+    | ((args: Value[], context: Context) => Value)
+    | ((args: Value[], context: Context) => ValueGenerator)
 }
 
 export type Macro = {
@@ -56,22 +56,18 @@ export type Macro = {
 
 export type Pair = {
   type: 'pair'
-  head: ExpressibleValue
-  tail: ExpressibleValue
+  head: Value
+  tail: Value
   loc?: SourceLocation
 }
 
-export const makePair = (
-  head: ExpressibleValue,
-  tail: ExpressibleValue,
-  loc?: SourceLocation
-): Pair => {
+export const makePair = (head: Value, tail: Value, loc?: SourceLocation): Pair => {
   const location =
     loc ?? ('loc' in head && head.loc ? head.loc : 'loc' in tail && tail.loc ? tail.loc : undefined)
   return { type: 'pair', head, tail, loc: location }
 }
 
-export const makeList = (values: ExpressibleValue[], loc?: SourceLocation): Pair | SEmptyList => {
+export const makeList = (values: Value[], loc?: SourceLocation): Pair | SEmptyList => {
   const sentinel: { tail: Pair | SEmptyList } = { tail: makeEmptyList() }
   let prev: typeof sentinel | Pair = sentinel
   for (const value of values) {
@@ -85,8 +81,8 @@ export const makeList = (values: ExpressibleValue[], loc?: SourceLocation): Pair
 
 /** Create an improper list where the values before the dot are `beforeDot` and the value after the dot is `afterDot`. */
 export const makeImproperList = (
-  beforeDot: ExpressibleValue[],
-  afterDot: ExpressibleValue,
+  beforeDot: Value[],
+  afterDot: Value,
   loc?: SourceLocation
 ): Pair => {
   const preList = makeList(beforeDot) as Pair
@@ -102,6 +98,6 @@ export const makeImproperList = (
 export type TailCall = {
   type: 'TailCall'
   procedure: Procedure
-  args: ExpressibleValue[]
+  args: Value[]
   node: SyntaxNode
 }

@@ -1,6 +1,5 @@
 import * as errors from '../errors/errors'
 import { Context } from '../types'
-import { ExpressibleValue, TailCall } from './ExpressibleValue'
 import { useMacro } from './macro'
 import { apply, isParentInTailContext, listOfArguments, tryEnterTailContext } from './procedure'
 import {
@@ -23,6 +22,7 @@ import {
 import { listToSpecialForm } from './SpecialForm/converters'
 import { evaluateSpecialForm } from './SpecialForm/evaluators'
 import { extendCurrentEnvironment, getVariable, handleRuntimeError, pushEnvironment } from './util'
+import { TailCall, Value } from './Value'
 
 function* visit(context: Context, node: SyntaxNode) {
   context.runtime.nodes.unshift(node)
@@ -38,7 +38,7 @@ function* leave(context: Context) {
   yield context
 }
 
-export type ValueGenerator = Generator<Context, ExpressibleValue | TailCall>
+export type ValueGenerator = Generator<Context, Value | TailCall>
 export type Evaluator<T extends SyntaxNode> = (node: T, context: Context) => ValueGenerator
 
 export const evaluators: { [key in SyntaxNodeType]: Evaluator<SyntaxNode> } = {
@@ -117,7 +117,7 @@ export function* evaluateProgram(program: SchemeProgram, context: Context): Valu
   const environment = extendCurrentEnvironment(context, 'programEnvironment')
   pushEnvironment(context, environment)
 
-  let result!: ExpressibleValue
+  let result!: Value
   for (const expression of program.body) {
     result = yield* evaluate(expression, context)
   }
@@ -144,7 +144,7 @@ export function* evaluateSequence(
   expressions: SyntaxNode[],
   context: Context,
   isTailSequence: boolean,
-  defaultResult?: ExpressibleValue
+  defaultResult?: Value
 ): ValueGenerator {
   if (expressions.length === 0) {
     if (defaultResult !== undefined) {

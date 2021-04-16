@@ -1,10 +1,10 @@
-import { ExpressibleValue } from '../../interpreter/ExpressibleValue'
 import { makeBool, makeNumber } from '../../interpreter/SExpression'
+import { Value } from '../../interpreter/Value'
 import { prepareContext, runUntilDone } from '../../testHelpers'
 import { Variant } from '../../types'
 
 describe.each<Variant>(['base', 'no-tco', 'macro'])('miscellaneous library features', variant => {
-  function evaluateUntilDone(code: string): ExpressibleValue {
+  function evaluateUntilDone(code: string): Value {
     const context = prepareContext(variant)
     return runUntilDone(code, context).value
   }

@@ -1,9 +1,9 @@
 import { Context } from '../../types'
 import { flattenPairToList } from '../../utils/listHelpers'
 import { stringify } from '../../utils/stringify'
-import { ExpressibleValue, Procedure } from '../ExpressibleValue'
 import { ValueGenerator } from '../interpreter'
 import { apply as applyProcedure, isParentInTailContext } from '../procedure'
+import { Procedure, Value } from '../Value'
 
 export const apply: Procedure = {
   type: 'procedure',
@@ -13,13 +13,13 @@ export const apply: Procedure = {
     style: 'var-args',
     numCompulsoryParameters: 1
   },
-  body: function* (args: ExpressibleValue[], context: Context): ValueGenerator {
+  body: function* (args: Value[], context: Context): ValueGenerator {
     const proc = args[0]
     if (proc.type !== 'procedure') {
       throw new Error(`\`apply' expected a procedure as the first argument, got ${proc.type}`)
     }
 
-    let actualArguments: ExpressibleValue[]
+    let actualArguments: Value[]
     if (args.length === 1) {
       // no arguments provided
       actualArguments = []
@@ -31,7 +31,7 @@ export const apply: Procedure = {
         )
       }
 
-      let tailArgList: ExpressibleValue[]
+      let tailArgList: Value[]
       if (lastSuppliedArgument.type === 'empty list') {
         tailArgList = []
       } else {
@@ -67,7 +67,7 @@ export const error: Procedure = {
     numCompulsoryParameters: 1
   },
   variant: 'BuiltInProcedure',
-  body: (args: ExpressibleValue[]): never => {
+  body: (args: Value[]): never => {
     const output = args.map(value => stringify(value)).join(' ')
     throw new Error(output)
   }

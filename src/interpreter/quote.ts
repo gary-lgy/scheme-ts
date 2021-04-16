@@ -1,17 +1,17 @@
 import * as errors from '../errors/errors'
 import { Context } from '../types'
 import { flattenPairToList } from '../utils/listHelpers'
-import { ExpressibleValue, makeImproperList, makeList } from './ExpressibleValue'
 import { evaluate, ValueGenerator } from './interpreter'
 import { SyntaxList, SyntaxNode } from './SchemeSyntax'
 import { makeSymbol, SBool, SNumber, SString, SSymbol } from './SExpression'
 import { handleRuntimeError, isDefined } from './util'
+import { makeImproperList, makeList, Value } from './Value'
 
-const quoteLiteral = (literal: SBool | SNumber | SString | SSymbol): ExpressibleValue => {
+const quoteLiteral = (literal: SBool | SNumber | SString | SSymbol): Value => {
   return { ...literal }
 }
 
-export const quoteExpression = (expression: SyntaxNode, context: Context): ExpressibleValue => {
+export const quoteExpression = (expression: SyntaxNode, context: Context): Value => {
   switch (expression.type) {
     case 'boolean':
     case 'number':
@@ -35,7 +35,7 @@ function* handleSpecialQuotationForm(
   quoteLevel: number,
   unquoteLevel: number,
   isUnquoteSplicingAllowed: boolean
-): Generator<Context, ExpressibleValue[] | null> {
+): Generator<Context, Value[] | null> {
   if (
     !(
       expression.elements.length > 1 &&
@@ -162,7 +162,7 @@ function* quasiquoteExpressionInner(
   quoteLevel: number,
   unquoteLevel: number,
   isUnquoteSplicingAllowed: boolean
-): Generator<Context, ExpressibleValue[]> {
+): Generator<Context, Value[]> {
   switch (expression.type) {
     case 'boolean':
     case 'number':
@@ -171,9 +171,7 @@ function* quasiquoteExpressionInner(
       return [quoteLiteral(expression)]
     case 'list': {
       // Handle special forms, i.e., (quasiquote expr), (unquote expr), and (unquote-splicing expr)
-      const maybeHandledAsSpecialForm:
-        | ExpressibleValue[]
-        | null = yield* handleSpecialQuotationForm(
+      const maybeHandledAsSpecialForm: Value[] | null = yield* handleSpecialQuotationForm(
         expression,
         context,
         quoteLevel,
@@ -185,7 +183,7 @@ function* quasiquoteExpressionInner(
       }
 
       // Handle as a normal list
-      const quoted: ExpressibleValue[] = []
+      const quoted: Value[] = []
       for (const element of expression.elements) {
         // Allow unquote-splicing and spread each result
         quoted.push(
@@ -195,7 +193,7 @@ function* quasiquoteExpressionInner(
       return [makeList(quoted)]
     }
     case 'dotted list': {
-      const beforeDot: ExpressibleValue[] = []
+      const beforeDot: Value[] = []
       for (const element of expression.pre) {
         // Allow unquote-splicing and spread each result
         beforeDot.push(

@@ -1,12 +1,12 @@
-import { ExpressibleValue, makePair } from '../../interpreter/ExpressibleValue'
 import { makeEmptyList, makeNumber } from '../../interpreter/SExpression'
+import { makePair, Value } from '../../interpreter/Value'
 import { prepareContext, runUntilDone } from '../../testHelpers'
 import { Variant } from '../../types'
 
 const list = "'((((1 2) 3 4) (5 6) 7 8) ((9 10) 11 12) (13) 14 15)"
 
 describe.each<Variant>(['base', 'no-tco', 'macro'])('miscellaneous library features', variant => {
-  function evaluateUntilDone(code: string): ExpressibleValue {
+  function evaluateUntilDone(code: string): Value {
     const context = prepareContext(variant)
     return runUntilDone(code, context).value
   }

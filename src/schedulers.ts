@@ -1,11 +1,12 @@
 /* tslint:disable:max-classes-per-file */
 import { MaximumStackLimitExceeded } from './errors/errors'
-import { Context, Result, Scheduler, Value } from './types'
+import { Value } from './interpreter/Value'
+import { Context, Result, Scheduler } from './types'
 
 export class PreemptiveScheduler implements Scheduler {
   constructor(public steps: number) {}
 
-  public run(it: IterableIterator<Value>, context: Context): Promise<Result> {
+  public run(it: Iterator<Context, Value>, context: Context): Promise<Result> {
     return new Promise(resolve => {
       context.runtime.isRunning = true
       // This is used in the evaluation of the REPL during a paused state.

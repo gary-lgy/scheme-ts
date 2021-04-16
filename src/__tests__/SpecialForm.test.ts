@@ -1,11 +1,11 @@
 import { DefineSyntaxError } from '../errors/errors'
-import { ExpressibleValue, makeList } from '../interpreter/ExpressibleValue'
 import { makeBool, makeNumber, makeString, makeSymbol } from '../interpreter/SExpression'
+import { makeList, Value } from '../interpreter/Value'
 import { prepareContext, runUntilDone } from '../testHelpers'
 import { Variant } from '../types'
 
 describe.each<Variant>(['base', 'no-tco', 'macro'])('special forms', variant => {
-  const evaluateUntilDone: (code: string) => ExpressibleValue = code => {
+  const evaluateUntilDone: (code: string) => Value = code => {
     const context = prepareContext(variant)
     return runUntilDone(code, context).value
   }

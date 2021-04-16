@@ -1,5 +1,5 @@
-import { ExpressibleValue, Procedure } from '../ExpressibleValue'
 import { makeBool, SBool } from '../SExpression'
+import { Procedure, Value } from '../Value'
 
 export const eq: Procedure = {
   type: 'procedure',
@@ -9,7 +9,7 @@ export const eq: Procedure = {
     style: 'fixed-args',
     numParams: 2
   },
-  body: (args: ExpressibleValue[]): SBool => {
+  body: (args: Value[]): SBool => {
     const lhs = args[0]
     const rhs = args[1]
     if (
@@ -37,7 +37,7 @@ export const eqv: Procedure = {
   name: 'eqv?'
 }
 
-export const areValuesEqual = (lhs: ExpressibleValue, rhs: ExpressibleValue): boolean => {
+export const areValuesEqual = (lhs: Value, rhs: Value): boolean => {
   if (
     (lhs.type === 'number' && rhs.type === 'number') ||
     (lhs.type === 'boolean' && rhs.type === 'boolean') ||
@@ -64,5 +64,5 @@ export const equal: Procedure = {
     style: 'fixed-args',
     numParams: 2
   },
-  body: (args: ExpressibleValue[]): SBool => makeBool(areValuesEqual(args[0], args[1]))
+  body: (args: Value[]): SBool => makeBool(areValuesEqual(args[0], args[1]))
 }

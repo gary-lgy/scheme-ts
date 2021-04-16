@@ -1,5 +1,5 @@
-import { ExpressibleValue, makeList, makePair, Pair, Procedure } from '../ExpressibleValue'
 import { makeEmptyList, SEmptyList } from '../SExpression'
+import { makeList, makePair, Pair, Procedure, Value } from '../Value'
 
 export const cons: Procedure = {
   type: 'procedure',
@@ -9,14 +9,10 @@ export const cons: Procedure = {
     style: 'fixed-args',
     numParams: 2
   },
-  body: (args: ExpressibleValue[]) => makePair(args[0], args[1])
+  body: (args: Value[]) => makePair(args[0], args[1])
 }
 
-export const mustDoOnPair = <T>(
-  opName: string,
-  pair: ExpressibleValue,
-  op: (pair: Pair) => T
-): T => {
+export const mustDoOnPair = <T>(opName: string, pair: Value, op: (pair: Pair) => T): T => {
   if (pair.type !== 'pair') {
     throw new Error(opName + ' expects a pair as the only argument, but encountered ' + pair.type)
   }
@@ -31,8 +27,7 @@ export const car: Procedure = {
     style: 'fixed-args',
     numParams: 1
   },
-  body: (args: ExpressibleValue[]) =>
-    mustDoOnPair('car', args[0], (pair: Pair): ExpressibleValue => pair.head)
+  body: (args: Value[]) => mustDoOnPair('car', args[0], (pair: Pair): Value => pair.head)
 }
 
 export const cdr: Procedure = {
@@ -43,8 +38,7 @@ export const cdr: Procedure = {
     style: 'fixed-args',
     numParams: 1
   },
-  body: (args: ExpressibleValue[]) =>
-    mustDoOnPair('cdr', args[0], (pair: Pair): ExpressibleValue => pair.tail)
+  body: (args: Value[]) => mustDoOnPair('cdr', args[0], (pair: Pair): Value => pair.tail)
 }
 
 export const setCar: Procedure = {
@@ -55,7 +49,7 @@ export const setCar: Procedure = {
     style: 'fixed-args',
     numParams: 2
   },
-  body: (args: ExpressibleValue[]) =>
+  body: (args: Value[]) =>
     mustDoOnPair(
       'set-car!',
       args[0],
@@ -74,7 +68,7 @@ export const setCdr: Procedure = {
     style: 'fixed-args',
     numParams: 2
   },
-  body: (args: ExpressibleValue[]) =>
+  body: (args: Value[]) =>
     mustDoOnPair(
       'set-cdr!',
       args[0],
@@ -93,5 +87,5 @@ export const list: Procedure = {
     style: 'var-args',
     numCompulsoryParameters: 0
   },
-  body: (args: ExpressibleValue[]) => makeList(args)
+  body: (args: Value[]) => makeList(args)
 }

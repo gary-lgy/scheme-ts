@@ -1,4 +1,3 @@
-import { ExpressibleValue, makeList, makePair } from '../interpreter/ExpressibleValue'
 import {
   makeBool,
   makeEmptyList,
@@ -6,12 +5,13 @@ import {
   makeString,
   makeSymbol
 } from '../interpreter/SExpression'
+import { makeList, makePair, Value } from '../interpreter/Value'
 import { sicpMce } from '../stdlib/sicp-mce'
 import { prepareContext, runUntilDone } from '../testHelpers'
 import { Variant } from '../types'
 
 describe.each<Variant>(['base', 'no-tco', 'macro'])('MCE', variant => {
-  function evaluateInMce(code: string): ExpressibleValue {
+  function evaluateInMce(code: string): Value {
     const context = prepareContext(variant, sicpMce)
     return runUntilDone(`(eval '(begin ${code}) the-global-environment)`, context).value
   }

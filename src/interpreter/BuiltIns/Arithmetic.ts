@@ -1,7 +1,7 @@
-import { ExpressibleValue, Procedure } from '../ExpressibleValue'
 import { makeNumber, SNumber } from '../SExpression'
+import { Procedure, Value } from '../Value'
 
-const mustMapToNumbers = (opName: string, args: ExpressibleValue[]): number[] => {
+const mustMapToNumbers = (opName: string, args: Value[]): number[] => {
   const mapped: number[] = []
   for (const arg of args) {
     if (arg.type !== 'number') {
@@ -28,7 +28,7 @@ export const add: Procedure = {
     style: 'var-args',
     numCompulsoryParameters: 0
   },
-  body: (args: ExpressibleValue[]) =>
+  body: (args: Value[]) =>
     reduceNumericalArgs((acc, next) => acc + next, 0, mustMapToNumbers('+', args))
 }
 
@@ -40,7 +40,7 @@ export const subtract: Procedure = {
     style: 'var-args',
     numCompulsoryParameters: 1
   },
-  body: (args: ExpressibleValue[]) => {
+  body: (args: Value[]) => {
     const mappedArgs = mustMapToNumbers('-', args)
     if (mappedArgs.length === 1) {
       return makeNumber(-mappedArgs[0])
@@ -57,7 +57,7 @@ export const multiply: Procedure = {
     style: 'var-args',
     numCompulsoryParameters: 0
   },
-  body: (args: ExpressibleValue[]) =>
+  body: (args: Value[]) =>
     reduceNumericalArgs((acc, next) => acc * next, 1, mustMapToNumbers('*', args))
 }
 
@@ -69,7 +69,7 @@ export const divide: Procedure = {
     style: 'var-args',
     numCompulsoryParameters: 1
   },
-  body: (args: ExpressibleValue[]) => {
+  body: (args: Value[]) => {
     const mappedArgs = mustMapToNumbers('/', args)
     if (mappedArgs.length === 1) {
       if (mappedArgs[0] === 0) {
@@ -98,7 +98,7 @@ export const quotient: Procedure = {
     style: 'fixed-args',
     numParams: 2
   },
-  body: (args: ExpressibleValue[]) => {
+  body: (args: Value[]) => {
     const mappedArgs = mustMapToNumbers('quotient', args)
     if (mappedArgs[1] === 0) {
       throw new Error('division by zero')
@@ -115,7 +115,7 @@ export const remainder: Procedure = {
     style: 'fixed-args',
     numParams: 2
   },
-  body: (args: ExpressibleValue[]) => {
+  body: (args: Value[]) => {
     const mappedArgs = mustMapToNumbers('remainder', args)
     if (mappedArgs[1] === 0) {
       throw new Error('division by zero')
@@ -132,7 +132,7 @@ export const modulo: Procedure = {
     style: 'fixed-args',
     numParams: 2
   },
-  body: (args: ExpressibleValue[]) => {
+  body: (args: Value[]) => {
     const mappedArgs = mustMapToNumbers('modulo', args)
     if (mappedArgs[1] === 0) {
       throw new Error('division by zero')
@@ -149,7 +149,7 @@ export const numberEqual: Procedure = {
     style: 'fixed-args',
     numParams: 2
   },
-  body: (args: ExpressibleValue[]) => {
+  body: (args: Value[]) => {
     const mappedArgs = mustMapToNumbers('=', args)
     return {
       type: 'boolean',
@@ -166,7 +166,7 @@ export const lessThan: Procedure = {
     style: 'fixed-args',
     numParams: 2
   },
-  body: (args: ExpressibleValue[]) => {
+  body: (args: Value[]) => {
     const mappedArgs = mustMapToNumbers('<', args)
     return {
       type: 'boolean',
@@ -183,7 +183,7 @@ export const lessThanOrEqual: Procedure = {
     style: 'fixed-args',
     numParams: 2
   },
-  body: (args: ExpressibleValue[]) => {
+  body: (args: Value[]) => {
     const mappedArgs = mustMapToNumbers('<=', args)
     return {
       type: 'boolean',
@@ -200,7 +200,7 @@ export const greaterThan: Procedure = {
     style: 'fixed-args',
     numParams: 2
   },
-  body: (args: ExpressibleValue[]) => {
+  body: (args: Value[]) => {
     const mappedArgs = mustMapToNumbers('>', args)
     return {
       type: 'boolean',
@@ -217,7 +217,7 @@ export const greaterThanOrEqual: Procedure = {
     style: 'fixed-args',
     numParams: 2
   },
-  body: (args: ExpressibleValue[]) => {
+  body: (args: Value[]) => {
     const mappedArgs = mustMapToNumbers('>=', args)
     return {
       type: 'boolean',

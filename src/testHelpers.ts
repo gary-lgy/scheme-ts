@@ -1,12 +1,12 @@
 import { Context, createContext, Variant } from '.'
-import { ExpressibleValue } from './interpreter/ExpressibleValue'
 import { evaluateProgram } from './interpreter/interpreter'
+import { Value } from './interpreter/Value'
 import { parse } from './parser/parser'
 
 export const runUntilDone = (
   code: string,
   context: Context
-): { value: ExpressibleValue; maxNumEnvironment: number } => {
+): { value: Value; maxNumEnvironment: number } => {
   const program = parse(code, context)
   if (!program || context.errors.length > 0) {
     throw new Error('parse unsuccessful')
@@ -15,7 +15,7 @@ export const runUntilDone = (
   const it = evaluateProgram(program, context)
   let maxNumEnvironment = 0
   context.runtime.isRunning = true
-  let itValue: IteratorResult<Context, ExpressibleValue>
+  let itValue: IteratorResult<Context, Value>
   try {
     while (true) {
       itValue = it.next()
