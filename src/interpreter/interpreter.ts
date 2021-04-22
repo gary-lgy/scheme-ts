@@ -12,8 +12,8 @@ import {
   SString,
   SSymbol
 } from './sExpression'
-import { listToSpecialForm } from './SpecialForm/converters'
-import { evaluateSpecialForm } from './SpecialForm/evaluators'
+import { listToSpecialForm } from './specialForm/converters'
+import { evaluateSpecialForm } from './specialForm/evaluators'
 import { SchemeProgram, SyntaxDottedList, SyntaxList, SyntaxNode, SyntaxNodeType } from './syntax'
 import { extendCurrentEnvironment, getVariable, handleRuntimeError, pushEnvironment } from './util'
 import { TailCall, Value } from './value'
