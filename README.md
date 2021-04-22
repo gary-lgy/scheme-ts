@@ -2,7 +2,10 @@
 
 Implementation of the programming language *Scheme* largely based on the [Revised<sup>5</sup> Report on the Algorithmic Language Scheme (R5RS)](https://schemers.org/Documents/Standards/R5RS/).
 
+## Documentation
+
 User documentation and specifications: **TODO**
+
 Developer documentation: [DEVELOPER.md](./DEVELOPER.md)
 
 ## Usage
