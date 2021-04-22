@@ -1,6 +1,6 @@
 import { CallingNonFunctionValue, UnexpectedDottedList } from '../errors/errors'
-import { makeEmptyList } from '../interpreter/SExpression'
-import { Value } from '../interpreter/Value'
+import { makeEmptyList } from '../interpreter/sExpression'
+import { Value } from '../interpreter/value'
 import { prepareContext, runUntilDone } from '../testHelpers'
 import { Variant } from '../types'
 

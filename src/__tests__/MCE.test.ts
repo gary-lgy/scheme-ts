@@ -4,9 +4,9 @@ import {
   makeNumber,
   makeString,
   makeSymbol
-} from '../interpreter/SExpression'
-import { makeList, makePair, Value } from '../interpreter/Value'
-import { sicpMce } from '../stdlib/sicp-mce'
+} from '../interpreter/sExpression'
+import { makeList, makePair, Value } from '../interpreter/value'
+import { sicpMce } from '../stdlib/sicpMce'
 import { prepareContext, runUntilDone } from '../testHelpers'
 import { Variant } from '../types'
 

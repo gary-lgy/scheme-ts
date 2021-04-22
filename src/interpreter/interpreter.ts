@@ -3,13 +3,6 @@ import { Context } from '../types'
 import { useMacro } from './macro'
 import { apply, isParentInTailContext, listOfArguments, tryEnterTailContext } from './procedure'
 import {
-  SchemeProgram,
-  SyntaxDottedList,
-  SyntaxList,
-  SyntaxNode,
-  SyntaxNodeType
-} from './SchemeSyntax'
-import {
   makeBool,
   makeEmptyList,
   makeNumber,
@@ -18,11 +11,12 @@ import {
   SNumber,
   SString,
   SSymbol
-} from './SExpression'
+} from './sExpression'
 import { listToSpecialForm } from './SpecialForm/converters'
 import { evaluateSpecialForm } from './SpecialForm/evaluators'
+import { SchemeProgram, SyntaxDottedList, SyntaxList, SyntaxNode, SyntaxNodeType } from './syntax'
 import { extendCurrentEnvironment, getVariable, handleRuntimeError, pushEnvironment } from './util'
-import { TailCall, Value } from './Value'
+import { TailCall, Value } from './value'
 
 function* visit(context: Context, node: SyntaxNode) {
   context.runtime.nodes.unshift(node)

@@ -1,6 +1,6 @@
 import { defaultVariant } from './constants'
 import { importNativeBuiltins } from './interpreter/BuiltIns'
-import { Procedure, Value } from './interpreter/Value'
+import { Procedure, Value } from './interpreter/value'
 import { stdlibMacros } from './stdlib/macros.prelude'
 import * as misc from './stdlib/misc'
 import { stdlibProcedures } from './stdlib/procedures.prelude'

@@ -1,5 +1,5 @@
-import { makeNumber, SNumber } from '../SExpression'
-import { Procedure, Value } from '../Value'
+import { makeNumber, SNumber } from '../sExpression'
+import { Procedure, Value } from '../value'
 
 const mustMapToNumbers = (opName: string, args: Value[]): number[] => {
   const mapped: number[] = []

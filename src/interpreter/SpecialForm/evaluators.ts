@@ -5,7 +5,7 @@ import { Context, Frame } from '../../types'
 import { evaluate, evaluateSequence, ValueGenerator } from '../interpreter'
 import { apply, isParentInTailContext, tryEnterTailContext } from '../procedure'
 import { quasiquoteExpression, quoteExpression } from '../quote'
-import { makeBool, makeEmptyList } from '../SExpression'
+import { makeBool, makeEmptyList } from '../sExpression'
 import {
   extendCurrentEnvironment,
   handleRuntimeError,
@@ -15,7 +15,7 @@ import {
   pushEnvironment,
   setVariable
 } from '../util'
-import { Macro, Value } from '../Value'
+import { Macro, Value } from '../value'
 import {
   AndForm,
   BeginForm,

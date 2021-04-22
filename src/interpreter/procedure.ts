@@ -3,10 +3,10 @@ import * as errors from '../errors/errors'
 import { Environment } from '../types'
 import { stringify, stringifyCallSignature } from '../utils/stringify'
 import { evaluate, ValueGenerator } from './interpreter'
-import { SyntaxNode } from './SchemeSyntax'
-import { SSymbol } from './SExpression'
+import { SSymbol } from './sExpression'
+import { SyntaxNode } from './syntax'
 import { handleRuntimeError, introduceBinding, popEnvironment, pushEnvironment } from './util'
-import { BuiltInProcedure, CompoundProcedure, makeList, Procedure, Value } from './Value'
+import { BuiltInProcedure, CompoundProcedure, makeList, Procedure, Value } from './value'
 
 // For BuiltIn procedures, we only need to check the number of arguments
 // The parameter names are meaningless and unnecessary

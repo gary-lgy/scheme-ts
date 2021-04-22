@@ -1,7 +1,7 @@
 /* tslint:disable: max-classes-per-file */
-import { SyntaxNode } from '../interpreter/SchemeSyntax'
+import { SyntaxNode } from '../interpreter/syntax'
 import { syntheticIdentifierPrefix } from '../interpreter/util'
-import { Value } from '../interpreter/Value'
+import { Value } from '../interpreter/value'
 import { stringify } from '../utils/stringify'
 import { RuntimeSourceError } from './runtimeSourceError'
 

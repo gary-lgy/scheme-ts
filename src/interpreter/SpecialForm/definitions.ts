@@ -1,6 +1,6 @@
 import { NamedCallSignature } from '../procedure'
-import { SyntaxList, SyntaxNode } from '../SchemeSyntax'
-import { SSymbol } from '../SExpression'
+import { SSymbol } from '../sExpression'
+import { SyntaxList, SyntaxNode } from '../syntax'
 
 export type SpecialForm =
   | DefineForm

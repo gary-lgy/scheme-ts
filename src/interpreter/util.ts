@@ -2,7 +2,7 @@ import { Context } from 'vm'
 import * as errors from '../errors/errors'
 import { RuntimeSourceError } from '../errors/runtimeSourceError'
 import { Environment, Frame } from '../types'
-import { Value } from './Value'
+import { Value } from './value'
 
 // ======================= Environment ===========================
 

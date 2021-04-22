@@ -1,6 +1,6 @@
 import { MAX_LIST_DISPLAY_LENGTH } from '../constants'
 import { CallSignature, NamedCallSignature } from '../interpreter/procedure'
-import { Pair, Value } from '../interpreter/Value'
+import { Pair, Value } from '../interpreter/value'
 import { flattenPairToList, ImproperList, List } from './listHelpers'
 
 function makeIndent(indent: number | string): string {

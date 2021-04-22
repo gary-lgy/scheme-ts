@@ -1,6 +1,6 @@
 import { FixedArgsWithParameterNames, VarArgsWithParameterNames } from '../interpreter/procedure'
-import { makeNumber, makeSymbol, SSymbol } from '../interpreter/SExpression'
-import { Macro, makeList, Pair, Value } from '../interpreter/Value'
+import { makeNumber, makeSymbol, SSymbol } from '../interpreter/sExpression'
+import { Macro, makeList, Pair, Value } from '../interpreter/value'
 import { prepareContext, runUntilDone } from '../testHelpers'
 import { flattenPairToList, List } from '../utils/listHelpers'
 

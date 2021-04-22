@@ -1,6 +1,6 @@
 /* tslint:disable:max-classes-per-file */
 import { MaximumStackLimitExceeded } from './errors/errors'
-import { Value } from './interpreter/Value'
+import { Value } from './interpreter/value'
 import { Context, Result, Scheduler } from './types'
 
 export class PreemptiveScheduler implements Scheduler {

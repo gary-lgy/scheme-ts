@@ -1,5 +1,5 @@
-import { makeEmptyList, SEmptyList } from '../SExpression'
-import { makeList, makePair, Pair, Procedure, Value } from '../Value'
+import { makeEmptyList, SEmptyList } from '../sExpression'
+import { makeList, makePair, Pair, Procedure, Value } from '../value'
 
 export const cons: Procedure = {
   type: 'procedure',

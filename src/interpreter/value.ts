@@ -1,7 +1,6 @@
 import { Context, Environment } from '../types'
 import { ValueGenerator } from './interpreter'
 import { CallSignature, NamedCallSignature } from './procedure'
-import { SyntaxNode } from './SchemeSyntax'
 import {
   makeEmptyList,
   SBool,
@@ -10,7 +9,8 @@ import {
   SourceLocation,
   SString,
   SSymbol
-} from './SExpression'
+} from './sExpression'
+import { SyntaxNode } from './syntax'
 
 // An expressible value is a value that can be the result of an evaluation
 export type Value = NonTailCallValue | TailCall

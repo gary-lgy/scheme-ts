@@ -1,6 +1,6 @@
 import { DisallowedIdentifier, UndefinedVariable } from '../errors/errors'
-import { makeNumber } from '../interpreter/SExpression'
-import { Value } from '../interpreter/Value'
+import { makeNumber } from '../interpreter/sExpression'
+import { Value } from '../interpreter/value'
 import { prepareContext, runUntilDone } from '../testHelpers'
 import { Variant } from '../types'
 

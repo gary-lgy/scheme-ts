@@ -1,6 +1,6 @@
 import { Variant } from '../..'
-import { makeBool, makeNumber, makeSymbol } from '../../interpreter/SExpression'
-import { makeList, Value } from '../../interpreter/Value'
+import { makeBool, makeNumber, makeSymbol } from '../../interpreter/sExpression'
+import { makeList, Value } from '../../interpreter/value'
 import { prepareContext, runUntilDone } from '../../testHelpers'
 
 describe.each<Variant>(['base', 'no-tco', 'macro'])('miscellaneous library features', variant => {

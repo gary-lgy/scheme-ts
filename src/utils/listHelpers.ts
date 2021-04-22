@@ -1,4 +1,4 @@
-import { Pair, Value } from '../interpreter/Value'
+import { Pair, Value } from '../interpreter/value'
 
 // For flattening pairs into list
 export type ListElement = {
