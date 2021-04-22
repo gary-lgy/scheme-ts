@@ -1,11 +1,5 @@
-import {
-  makeBool,
-  makeEmptyList,
-  makeNumber,
-  makeString,
-  makeSymbol
-} from '../interpreter/sExpression'
 import { makeList, makePair, Value } from '../interpreter/value'
+import { makeBool, makeEmptyList, makeNumber, makeString, makeSymbol } from '../sExpression'
 import { sicpMce } from '../stdlib/sicpMce'
 import { prepareContext, runUntilDone } from '../testHelpers'
 import { Variant } from '../types'

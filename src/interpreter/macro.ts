@@ -1,5 +1,6 @@
 import { UNKNOWN_LOCATION } from '../constants'
 import { MacroExpansionError } from '../errors/errors'
+import { SyntaxNode } from '../lang/syntax'
 import { Context } from '../types'
 import { flattenPairToList } from '../utils/listHelpers'
 import { evaluate, ValueGenerator } from './interpreter'
@@ -9,7 +10,6 @@ import {
   matchArgumentsToParameters,
   tryEnterTailContext
 } from './procedure'
-import { SyntaxNode } from './syntax'
 import { handleRuntimeError, popEnvironment, pushEnvironment } from './util'
 import { Macro, makeImproperList, makeList, Value } from './value'
 

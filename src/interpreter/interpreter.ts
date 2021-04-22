@@ -1,7 +1,11 @@
 import * as errors from '../errors/errors'
-import { Context } from '../types'
-import { useMacro } from './macro'
-import { apply, isParentInTailContext, listOfArguments, tryEnterTailContext } from './procedure'
+import {
+  SchemeProgram,
+  SyntaxDottedList,
+  SyntaxList,
+  SyntaxNode,
+  SyntaxNodeType
+} from '../lang/syntax'
 import {
   makeBool,
   makeEmptyList,
@@ -11,10 +15,12 @@ import {
   SNumber,
   SString,
   SSymbol
-} from './sExpression'
+} from '../sExpression'
+import { Context } from '../types'
+import { useMacro } from './macro'
+import { apply, isParentInTailContext, listOfArguments, tryEnterTailContext } from './procedure'
 import { listToSpecialForm } from './specialForm/converters'
 import { evaluateSpecialForm } from './specialForm/evaluators'
-import { SchemeProgram, SyntaxDottedList, SyntaxList, SyntaxNode, SyntaxNodeType } from './syntax'
 import { extendCurrentEnvironment, getVariable, handleRuntimeError, pushEnvironment } from './util'
 import { TailCall, Value } from './value'
 

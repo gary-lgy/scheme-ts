@@ -1,10 +1,10 @@
-import { Context } from '../../types'
-import { flattenPairToList } from '../../utils/listHelpers'
-import { ValueGenerator } from '../interpreter'
-import { expandMacro } from '../macro'
+import { ValueGenerator } from '../interpreter/interpreter'
+import { expandMacro } from '../interpreter/macro'
+import { getVariable, syntheticIdentifierPrefix } from '../interpreter/util'
+import { Procedure, Value } from '../interpreter/value'
 import { makeSymbol, SSymbol } from '../sExpression'
-import { getVariable, syntheticIdentifierPrefix } from '../util'
-import { Procedure, Value } from '../value'
+import { Context } from '../types'
+import { flattenPairToList } from '../utils/listHelpers'
 
 export const macroexpand: Procedure = {
   type: 'procedure',

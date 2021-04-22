@@ -1,11 +1,11 @@
 // Evaluation of special forms
 
 import * as errors from '../../errors/errors'
+import { makeBool, makeEmptyList } from '../../sExpression'
 import { Context, Frame } from '../../types'
 import { evaluate, evaluateSequence, ValueGenerator } from '../interpreter'
 import { apply, isParentInTailContext, tryEnterTailContext } from '../procedure'
 import { quasiquoteExpression, quoteExpression } from '../quote'
-import { makeBool, makeEmptyList } from '../sExpression'
 import {
   extendCurrentEnvironment,
   handleRuntimeError,
