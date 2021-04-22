@@ -2,10 +2,10 @@ import * as errors from '../errors/errors'
 import { Context } from '../types'
 import { flattenPairToList } from '../utils/listHelpers'
 import { evaluate, ValueGenerator } from './interpreter'
-import { SyntaxList, SyntaxNode } from './SchemeSyntax'
-import { makeSymbol, SBool, SNumber, SString, SSymbol } from './SExpression'
+import { makeSymbol, SBool, SNumber, SString, SSymbol } from './sExpression'
+import { SyntaxList, SyntaxNode } from './syntax'
 import { handleRuntimeError, isDefined } from './util'
-import { makeImproperList, makeList, Value } from './Value'
+import { makeImproperList, makeList, Value } from './value'
 
 const quoteLiteral = (literal: SBool | SNumber | SString | SSymbol): Value => {
   return { ...literal }

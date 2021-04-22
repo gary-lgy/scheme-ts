@@ -1,4 +1,4 @@
-import { SBool, SNumber, SourceLocation, SString, SSymbol } from './SExpression'
+import { SBool, SNumber, SourceLocation, SString, SSymbol } from './sExpression'
 
 export type SyntaxNodeType = SyntaxNode['type']
 

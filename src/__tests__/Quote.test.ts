@@ -13,8 +13,8 @@ import {
   SNumber,
   SString,
   SSymbol
-} from '../interpreter/SExpression'
-import { makeList, makePair, Value } from '../interpreter/Value'
+} from '../interpreter/sExpression'
+import { makeList, makePair, Value } from '../interpreter/value'
 import { prepareContext, runUntilDone } from '../testHelpers'
 import { Variant } from '../types'
 import { stringify } from '../utils/stringify'

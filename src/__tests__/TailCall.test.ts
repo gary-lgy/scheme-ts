@@ -1,4 +1,4 @@
-import { makeNumber } from '../interpreter/SExpression'
+import { makeNumber } from '../interpreter/sExpression'
 import { prepareContext, runUntilDone } from '../testHelpers'
 import { Variant } from '../types'
 

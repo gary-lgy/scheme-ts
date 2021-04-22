@@ -9,9 +9,9 @@ import {
   matchArgumentsToParameters,
   tryEnterTailContext
 } from './procedure'
-import { SyntaxNode } from './SchemeSyntax'
+import { SyntaxNode } from './syntax'
 import { handleRuntimeError, popEnvironment, pushEnvironment } from './util'
-import { Macro, makeImproperList, makeList, Value } from './Value'
+import { Macro, makeImproperList, makeList, Value } from './value'
 
 export function* expandMacro(
   context: Context,

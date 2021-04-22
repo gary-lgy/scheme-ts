@@ -1,5 +1,5 @@
 import { Context, Frame } from '../../types'
-import { Value } from '../Value'
+import { Value } from '../value'
 import {
   add,
   divide,
@@ -13,12 +13,12 @@ import {
   quotient,
   remainder,
   subtract
-} from './Arithmetic'
-import { apply, error } from './Control'
-import { eq, equal, eqv } from './Equal'
-import { genSym, macroexpand } from './Macro'
-import { car, cdr, cons, list, setCar, setCdr } from './Pair'
-import { isBool, isNull, isNumber, isPair, isProcedure, isString, isSymbol } from './TypePredicates'
+} from './arithmetic'
+import { apply, error } from './control'
+import { eq, equal, eqv } from './equal'
+import { genSym, macroexpand } from './macro'
+import { car, cdr, cons, list, setCar, setCdr } from './pair'
+import { isBool, isNull, isNumber, isPair, isProcedure, isString, isSymbol } from './typePredicates'
 
 export const defineBuiltin = (frame: Frame, name: string, value: Value) => {
   frame[name] = value

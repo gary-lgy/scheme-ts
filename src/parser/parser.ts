@@ -12,19 +12,14 @@ import { RuleNode } from 'antlr4ts/tree/RuleNode'
 import { TerminalNode } from 'antlr4ts/tree/TerminalNode'
 import { UNKNOWN_LOCATION } from '../constants'
 import {
-  SchemeProgram,
-  SyntaxDottedList,
-  SyntaxList,
-  SyntaxNode
-} from '../interpreter/SchemeSyntax'
-import {
   makeSymbol,
   SBool,
   SNumber,
   SourceLocation,
   SString,
   SSymbol
-} from '../interpreter/SExpression'
+} from '../interpreter/sExpression'
+import { SchemeProgram, SyntaxDottedList, SyntaxList, SyntaxNode } from '../interpreter/syntax'
 import { SchemeLexer } from '../lang/SchemeLexer'
 import {
   BoolContext,

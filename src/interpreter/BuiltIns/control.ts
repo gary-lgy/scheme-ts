@@ -3,7 +3,7 @@ import { flattenPairToList } from '../../utils/listHelpers'
 import { stringify } from '../../utils/stringify'
 import { ValueGenerator } from '../interpreter'
 import { apply as applyProcedure, isParentInTailContext } from '../procedure'
-import { Procedure, Value } from '../Value'
+import { Procedure, Value } from '../value'
 
 export const apply: Procedure = {
   type: 'procedure',

@@ -1,6 +1,6 @@
 import { DefineSyntaxError } from '../errors/errors'
-import { makeBool, makeNumber, makeString, makeSymbol } from '../interpreter/SExpression'
-import { makeList, Value } from '../interpreter/Value'
+import { makeBool, makeNumber, makeString, makeSymbol } from '../interpreter/sExpression'
+import { makeList, Value } from '../interpreter/value'
 import { prepareContext, runUntilDone } from '../testHelpers'
 import { Variant } from '../types'
 

@@ -1,6 +1,6 @@
 import { Context, createContext, Variant } from '.'
 import { evaluateProgram } from './interpreter/interpreter'
-import { Value } from './interpreter/Value'
+import { Value } from './interpreter/value'
 import { parse } from './parser/parser'
 
 export const runUntilDone = (
