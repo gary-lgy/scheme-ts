@@ -5,9 +5,9 @@
 
 /* tslint:disable:max-classes-per-file */
 
-import { SourceLocation } from './interpreter/sExpression'
-import { SyntaxNode } from './interpreter/syntax'
 import { Value } from './interpreter/value'
+import { SyntaxNode } from './lang/syntax'
+import { SourceLocation } from './sExpression'
 
 /**
  * Defines functions that act as built-ins, but might rely on

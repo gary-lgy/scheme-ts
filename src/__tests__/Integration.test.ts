@@ -1,5 +1,5 @@
-import { makeBool, makeSymbol } from '../interpreter/sExpression'
 import { makeList, Value } from '../interpreter/value'
+import { makeBool, makeSymbol } from '../sExpression'
 import { prepareContext, runUntilDone } from '../testHelpers'
 import { Variant } from '../types'
 import { stringify } from '../utils/stringify'

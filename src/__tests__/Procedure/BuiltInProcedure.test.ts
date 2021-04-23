@@ -4,8 +4,8 @@ import {
   InvalidNumberOfArguments,
   NotEnoughArguments
 } from '../../errors/errors'
-import { makeBool, makeEmptyList, makeNumber, makeString } from '../../interpreter/sExpression'
 import { makeList, makePair, Value } from '../../interpreter/value'
+import { makeBool, makeEmptyList, makeNumber, makeString } from '../../sExpression'
 import { prepareContext, runUntilDone } from '../../testHelpers'
 import { stringify } from '../../utils/stringify'
 

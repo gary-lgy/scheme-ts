@@ -1,5 +1,5 @@
-import { makeEmptyList, makeNumber } from '../../interpreter/sExpression'
 import { makePair, Value } from '../../interpreter/value'
+import { makeEmptyList, makeNumber } from '../../sExpression'
 import { prepareContext, runUntilDone } from '../../testHelpers'
 import { Variant } from '../../types'
 

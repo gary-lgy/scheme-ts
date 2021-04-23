@@ -1,4 +1,4 @@
-import { areValuesEqual } from './interpreter/BuiltIns/equal'
+import { areValuesEqual } from './builtIns/equal'
 import { Value } from './interpreter/value'
 
 expect.extend({

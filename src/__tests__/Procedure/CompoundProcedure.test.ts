@@ -1,7 +1,7 @@
 import { Variant } from '../..'
 import { InvalidNumberOfArguments, NotEnoughArguments } from '../../errors/errors'
-import { makeNumber } from '../../interpreter/sExpression'
 import { makeList, Value } from '../../interpreter/value'
+import { makeNumber } from '../../sExpression'
 import { prepareContext, runUntilDone } from '../../testHelpers'
 
 describe.each<Variant>(['base', 'no-tco', 'macro'])('miscellaneous library features', variant => {

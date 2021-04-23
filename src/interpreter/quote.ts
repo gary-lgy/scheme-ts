@@ -1,9 +1,9 @@
 import * as errors from '../errors/errors'
+import { SyntaxList, SyntaxNode } from '../lang/syntax'
+import { makeSymbol, SBool, SNumber, SString, SSymbol } from '../sExpression'
 import { Context } from '../types'
 import { flattenPairToList } from '../utils/listHelpers'
 import { evaluate, ValueGenerator } from './interpreter'
-import { makeSymbol, SBool, SNumber, SString, SSymbol } from './sExpression'
-import { SyntaxList, SyntaxNode } from './syntax'
 import { handleRuntimeError, isDefined } from './util'
 import { makeImproperList, makeList, Value } from './value'
 

@@ -1,8 +1,8 @@
 import * as errors from '../../errors/errors'
+import { SyntaxList, SyntaxNode } from '../../lang/syntax'
+import { SSymbol } from '../../sExpression'
 import { Context } from '../../types'
 import { NamedCallSignature } from '../procedure'
-import { SSymbol } from '../sExpression'
-import { SyntaxList, SyntaxNode } from '../syntax'
 import { handleRuntimeError, isDefined } from '../util'
 import {
   AndForm,

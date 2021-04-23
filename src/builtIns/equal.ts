@@ -1,5 +1,5 @@
+import { Procedure, Value } from '../interpreter/value'
 import { makeBool, SBool } from '../sExpression'
-import { Procedure, Value } from '../value'
 
 export const eq: Procedure = {
   type: 'procedure',

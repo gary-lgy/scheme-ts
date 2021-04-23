@@ -1,5 +1,5 @@
+import { Procedure, Value } from '../interpreter/value'
 import { makeBool } from '../sExpression'
-import { Procedure, Value } from '../value'
 
 export const isNumber: Procedure = {
   type: 'procedure',

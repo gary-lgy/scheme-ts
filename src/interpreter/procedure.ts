@@ -1,10 +1,10 @@
 import { Context } from '..'
+import { SSymbol } from '..//sExpression'
 import * as errors from '../errors/errors'
+import { SyntaxNode } from '../lang/syntax'
 import { Environment } from '../types'
 import { stringify, stringifyCallSignature } from '../utils/stringify'
 import { evaluate, ValueGenerator } from './interpreter'
-import { SSymbol } from './sExpression'
-import { SyntaxNode } from './syntax'
 import { handleRuntimeError, introduceBinding, popEnvironment, pushEnvironment } from './util'
 import { BuiltInProcedure, CompoundProcedure, makeList, Procedure, Value } from './value'
 

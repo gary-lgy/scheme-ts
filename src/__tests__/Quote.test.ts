@@ -4,6 +4,7 @@ import {
   UnquoteSplicingEvaluatedToNonList,
   UnquoteSplicingInNonListContext
 } from '../errors/errors'
+import { makeList, makePair, Value } from '../interpreter/value'
 import {
   makeBool,
   makeNumber,
@@ -13,8 +14,7 @@ import {
   SNumber,
   SString,
   SSymbol
-} from '../interpreter/sExpression'
-import { makeList, makePair, Value } from '../interpreter/value'
+} from '../sExpression'
 import { prepareContext, runUntilDone } from '../testHelpers'
 import { Variant } from '../types'
 import { stringify } from '../utils/stringify'

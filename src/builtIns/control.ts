@@ -1,9 +1,9 @@
-import { Context } from '../../types'
-import { flattenPairToList } from '../../utils/listHelpers'
-import { stringify } from '../../utils/stringify'
-import { ValueGenerator } from '../interpreter'
-import { apply as applyProcedure, isParentInTailContext } from '../procedure'
-import { Procedure, Value } from '../value'
+import { ValueGenerator } from '../interpreter/interpreter'
+import { apply as applyProcedure, isParentInTailContext } from '../interpreter/procedure'
+import { Procedure, Value } from '../interpreter/value'
+import { Context } from '../types'
+import { flattenPairToList } from '../utils/listHelpers'
+import { stringify } from '../utils/stringify'
 
 export const apply: Procedure = {
   type: 'procedure',

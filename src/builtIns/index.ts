@@ -1,5 +1,5 @@
-import { Context, Frame } from '../../types'
-import { Value } from '../value'
+import { Value } from '../interpreter/value'
+import { Context, Frame } from '../types'
 import {
   add,
   divide,

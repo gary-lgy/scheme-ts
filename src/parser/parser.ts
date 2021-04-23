@@ -11,15 +11,6 @@ import { ParseTree } from 'antlr4ts/tree/ParseTree'
 import { RuleNode } from 'antlr4ts/tree/RuleNode'
 import { TerminalNode } from 'antlr4ts/tree/TerminalNode'
 import { UNKNOWN_LOCATION } from '../constants'
-import {
-  makeSymbol,
-  SBool,
-  SNumber,
-  SourceLocation,
-  SString,
-  SSymbol
-} from '../interpreter/sExpression'
-import { SchemeProgram, SyntaxDottedList, SyntaxList, SyntaxNode } from '../interpreter/syntax'
 import { SchemeLexer } from '../lang/SchemeLexer'
 import {
   BoolContext,
@@ -37,6 +28,8 @@ import {
   UnquoteSplicingContext
 } from '../lang/SchemeParser'
 import { SchemeVisitor } from '../lang/SchemeVisitor'
+import { SchemeProgram, SyntaxDottedList, SyntaxList, SyntaxNode } from '../lang/syntax'
+import { makeSymbol, SBool, SNumber, SourceLocation, SString, SSymbol } from '../sExpression'
 import { Context, ErrorSeverity, ErrorType, SourceError } from '../types'
 
 export class FatalSyntaxError implements SourceError {
