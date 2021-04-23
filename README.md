@@ -4,7 +4,7 @@ Implementation of the programming language *Scheme* largely based on the [Revise
 
 ## Documentation
 
-User documentation and specifications: **TODO**
+User documentation and specifications: [Documentation.pdf](./Documentation.pdf)
 
 Developer documentation: [DEVELOPER.md](./DEVELOPER.md)
 
