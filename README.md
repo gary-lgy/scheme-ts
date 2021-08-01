@@ -2,6 +2,8 @@
 
 Implementation of the programming language *Scheme* largely based on the [Revised<sup>5</sup> Report on the Algorithmic Language Scheme (R5RS)](https://schemers.org/Documents/Standards/R5RS/).
 
+[Try out Scheme in the browser](https://scheme.garyliu.dev) (in a modified [Source Academy](https://github.com/source-academy/) frontend)
+
 ## Documentation
 
 User documentation and specifications: [Documentation.pdf](./docs/Documentation.pdf)
