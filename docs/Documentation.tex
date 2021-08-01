@@ -1,0 +1,860 @@
+\documentclass{article}
+\usepackage[usenames,dvipsnames,svgnames,table]{xcolor}
+\usepackage{graphicx,bookman}
+\usepackage{graphics}
+\usepackage{CJKutf8}
+\usepackage{latexsym}
+\usepackage{mathtools}
+\usepackage{amsmath,amssymb}
+\usepackage{enumitem}
+\usepackage{bm}
+\usepackage[T1]{fontenc}
+\usepackage{listings}
+\lstset{basicstyle=\ttfamily}
+\setlength{\parindent}{0em}
+\setlength{\parskip}{1em}
+\usepackage[paper=210mm:297mm]{typearea}
+\usepackage[utf8]{inputenc}
+\usepackage{hyperref}
+\usepackage{appendix}
+\title{\textbf{Specification of Scheme}}
+\author{Liu Guangyuan (Gary), An Jingyi}
+\date{April 2021}
+
+\usepackage{natbib}
+\usepackage{graphicx}
+
+\begin{document}
+\maketitle
+Scheme is a statically scoped and properly tail-recursive dialect of the Lisp family of programming languages. Our implementation of Scheme is largely based on the \emph{Revised\textsuperscript{5} Report on the Algorithmic Language Scheme} (R5RS), with certain omissions and a different macro system.
+
+\section{Syntax}
+The syntax of Scheme is defined using extended Backus–Naur form.
+
+All spaces in the grammar are for legibility. Case is insignificant. \emph{<empty>} stands for the empty string.
+
+The following extensions to BNF are used to make the description more concise: \emph{<thing>\textsuperscript{*}} means zero or more occurrences one \emph{<thing>}; and\emph{<thing>\textsuperscript{+}} means at least one \emph{<thing>}.
+
+A Scheme program is a \emph{program}, as defined below:
+
+\begin{alignat*}{7}
+\texttt{<program>}    && \quad ::= &\quad && \texttt{<expression>+} \\
+\texttt{<expression>} && \quad ::= &\quad && \texttt{<atom>} \\
+                      && \quad |   &\quad && \texttt{<list>} \\
+                      && \quad |   &\quad && \texttt{<improper list>} \\
+                      && \quad |   &\quad && \texttt{<quotation shorthands>} \\
+\texttt{<atom>} && \quad ::= &\quad && \texttt{number} \\
+                      && \quad |   &\quad && \texttt{string} \\
+                      && \quad |   &\quad && \texttt{\#t} \quad | \quad \texttt{\#f} \\
+                      && \quad |   &\quad && \texttt{identifier} \\
+\texttt{<list>}     && \quad ::= &\quad && \texttt{(expression*)} \\
+\texttt{<improper>} && \quad ::= &\quad && \texttt{(expression+ . expression)} \\
+\texttt{<quotation shorthands>} && \quad |   &\quad && \texttt{'expression} \\
+                      && \quad |   &\quad && \texttt{`expression} \\
+                      && \quad |   &\quad && \texttt{,expression} \\
+                      && \quad |   &\quad && \texttt{,@expression} \\
+\end{alignat*}
+
+Additionally, anything following a \texttt{;} and before the line ending will be treated as comments and ignored.
+
+Notice that if we do not consider \emph{<quotation shorthands>}\footnote{We'll see later that they are in fact equivalent to some list representation}, an expression can either be an atom, or zero or more expressions surrounded in parentheses, possible with a dot before the last expression. These expressions are commonly known as symbolic expressions, or S-expressions.
+
+The above definition is simple, but it only focuses on the structure and does not capture enough information about the special syntactic constructs in the Scheme language. We provide an alternative and more rigorous definition that captures almost all the syntactic information as follows.
+
+\begin{alignat*}{7}
+&& \texttt{<program>}    &&\quad ::= &\quad && \texttt{<expression>$^+$}\\[1mm]
+&& \texttt{<expression>}    &&::= &\quad && \texttt{<literal>}\\
+&&                       && |   &\quad && \texttt{<variable>}  \\[1mm]
+&&                       && |   &\quad && \texttt{<procedure call>}  \\[1mm]
+&&                       && |   &\quad && \texttt{<macro use>}  \\[1mm]
+&&                       && |   &\quad && \texttt{<lambda expression>}  \\[1mm]
+&&                       && |   &\quad && \texttt{<conditional>}  \\[1mm]
+&&                       && |   &\quad && \texttt{<definition>} \\[1mm]
+&&                       && |   &\quad && \texttt{<assignment>}  \\[1mm]
+&&                       && |   &\quad && \texttt{<syntax definition>} \\[1mm]
+&&                       && |   &\quad && \texttt{<derived expression>}  \\[1mm]
+&& \texttt{<literal>}  &&\quad ::= &\quad && \texttt{<self-evaluating>}\ | \ \texttt{<quotation>}\ |\ \texttt{<quasiquotation>}\\[1mm]
+&& \texttt{<self-evaluating>}  && ::= &\quad && \texttt{<boolean>}\ | \ \texttt{<number>}\ |\ \texttt{<string>}\\[1mm]
+&& \texttt{<boolean>} && ::= &\quad && \texttt{\#t}\ |\ \texttt{\#f}\\[1mm]
+&& \texttt{<variable>} && ::= &\quad && \texttt{<identifier>}\\[1mm]
+&& \texttt{<procedure call>}  && ::= &\quad && \texttt{(<operator> <operand>$^*$)}\\[1mm]
+&& \texttt{<operator>}  && ::= &\quad && \texttt{<expression>}\\[1mm]
+&& \texttt{<operand>}  && ::= &\quad && \texttt{<expression>}\\[1mm]
+&& \texttt{<macro use>}  && ::= &\quad && \texttt{(<keyword> <datum>$^*$)}  \\[1mm]
+&& \texttt{<keyword>}  && ::= &\quad && \texttt{<identifier>}  \\[1mm]
+&& \texttt{<lambda expression>}  && ::= &\quad && \texttt{(lambda <formals> <body>)}\\[1mm]
+&& \texttt{<formals>}    &&::= &\quad && \texttt{(<variable>$^*$)}\\
+&&                       && |   &\quad && \texttt{<variable>}  \\[1mm]
+&&                       && |   &\quad && \texttt{(<variable>$^+$ \bm{$.$} <variable>)}  \\[1mm]
+&& \texttt{<body>}  && ::= &\quad && \texttt{<expression>$^*$}\\[1mm]
+&& \texttt{<conditional>}  && ::= &\quad && \texttt{(if <test> <consequent> <alternate>)}\\[1mm]
+&& \texttt{<test>}  && ::= &\quad && \texttt{<expression>}\\[1mm]
+&& \texttt{<consequent>}  && ::= &\quad && \texttt{<expression>}\\[1mm]
+&& \texttt{<alternate>}  && ::= &\quad && \texttt{<expression>}\ | \ \texttt{<empty>}\\[1mm]
+\end{alignat*}
+
+\newpage
+\begin{alignat*}{7}
+&& \texttt{<definition>}    &&\quad ::= &\quad && \texttt{(define <variable> <expression>}\\
+&&                       && |   &\quad && \texttt{(define (<variable> <def formals>) <body>)}  \\[1mm]
+&& \texttt{<def formals>}    &&\quad ::= &\quad && \texttt{<variable>$^*$}\\
+&&                       && |   &\quad && \texttt{<variable>$^*$ \bm{$.$} <variable>}\\[1mm]
+&& \texttt{<assignment>}  && ::= &\quad && \texttt{(set! <variable> <expression>)} \\[1mm]
+&& \texttt{<syntax definition>}  && ::= &\quad && \texttt{(defmacro <keyword> (<formals>) <body>)}\\[1mm]
+&& \texttt{<derived expression>}    &&::= &\quad && \texttt{(cond <cond clause>$^+$)}\\
+&&                       && |   &\quad && \texttt{(cond <cond clause>$^*$ (else <expression>*))}  \\[1mm]
+&&                       && |   &\quad && \texttt{(and <test>$^*$)}  \\[1mm]
+&&                       && |   &\quad && \texttt{(or <test>$^*$)}  \\[1mm]
+&&                       && |   &\quad && \texttt{(let (<binding spec>$^*$) <body>)}  \\[1mm]
+&&                       && |   &\quad && \texttt{(let$^*$ (<binding spec>$^*$) <body>)}  \\[1mm]
+&&                       && |   &\quad && \texttt{(lectrec (<binding spec>$^*$) <body>)} \\[1mm]
+&&                       && |   &\quad && \texttt{(begin <expression>$^*$)}  \\[1mm]
+&& \texttt{<cond clause>} && \quad ::= &\quad && \texttt{((<test>) <expression>*)} \\
+&&                       && | &\quad && \texttt{((<test>) => <expression>)} \\[1mm]
+&& \texttt{<binding spec>}  && ::= &\quad && \texttt{(<variable> <expression>)}  \\[1mm]
+\end{alignat*}
+
+\newpage
+\begin{alignat*}{7}
+&& \texttt{<quotation>}  && \quad ::= &\quad && \texttt{'<datum>}\ | \ \texttt{(quote <datum>)}\\[1mm]
+&& \texttt{<datum>}  && \quad ::=  &\quad && \texttt{<simple datum>}\\[1mm]
+&&                      && \quad | &\quad && \texttt{<compound datum>}\\[1mm]
+&& \texttt{<simple datum>}  && \quad ::=  &\quad && \texttt{<boolean>}\\[1mm]
+&&                      && | &\quad && \texttt{<number>}\\[1mm]
+&&                      && | &\quad && \texttt{<string>}\\[1mm]
+&&                      && | &\quad && \texttt{<identifier>}\\[1mm]
+&& \texttt{<compound datum>}  && ::=  &\quad && \texttt{<list>}\\[1mm]
+&&                      && | &\quad && \texttt{<improper list>}\\[1mm]
+&& \texttt{<list>} && ::= &\quad && \texttt{(<datum>*)}\\[1mm]
+&& \texttt{<improper list>} && ::= &\quad && \texttt{(<datum>+ . <datum>)}\\[1mm]
+&& \texttt{<quasiquotation>}  && ::= &\quad && \texttt{`<qq template>}\ | \ \texttt{(quasiquote <qq template>)}\\[1mm]
+&& \texttt{<qq template>} && ::= &\quad && \texttt{<simple datum>}\\[1mm]
+&&                      && | &\quad && \texttt{<list qq template>}\\[1mm]
+&&                      && | &\quad && \texttt{<unquotation>}\\[1mm]
+&& \texttt{<list qq template>} && ::= &\quad && \texttt{(<qq template or splice>*)}\\[1mm]
+&&                      && | &\quad && \texttt{(<qq template or splice>+ . <qq template>)}\\[1mm]
+&&                      && | &\quad && \texttt{'<qq template>}\\[1mm]
+&&                      && | &\quad && \texttt{<quasiquotation>}\\[1mm]
+&& \texttt{<qq template or splice>} && ::= &\quad && \texttt{<qq template>}\\[1mm]
+&&                      && | &\quad && \texttt{,@<qq template>}\\[1mm]
+&&                      && | &\quad && \texttt{(unquote-splicing <qq template>)}\\[1mm]
+&& \texttt{<unquotation>} && ::= &\quad && \texttt{,<qq template>}\\[1mm]
+&&                      && | &\quad && \texttt{(unquote <qq template>)}\\[1mm]
+\end{alignat*}
+
+\newpage
+
+\section{Evaluation rules}
+
+\subsection*{Self-evaluating values}
+Numbers, booleans, and strings evaluate to themselves.
+
+\subsection*{Identifiers}
+The definition for identifiers is as follows:
+
+\begin{alignat*}{7}
+&& \texttt{<identifier>}    &&::= &\quad && \texttt{<initial> <subsequent>*}\\
+&&                       && |   &\quad && \texttt{<peculiar identifiers>}  \\[1mm]
+%&& \texttt{<initial>}    && ::= &\quad && \texttt{a} | \texttt{b} | \texttt{...} | \texttt{z} | \texttt{!} | \texttt{\$} | \texttt{\%} | \texttt{\&} | \texttt{*} | \texttt{/} | \texttt{:} | \texttt{<} | \texttt{=} | \texttt{>} | \texttt{?} | \texttt{?} | \texttt{\^} | \texttt{\_} | \texttt{@}\\[1mm]
+\end{alignat*}
+
+An \emph{<initial>} is either an English letter (case-insensitive), or one of !, \$, \%, \&, *, /, :, <, =, >, ?, \^{}, \_ and @.
+An \emph{<peculiar identifier>} is one of \texttt{+}, \texttt{-}, or \texttt{...}.
+
+Identifiers have two use cases in Scheme:
+
+\begin{itemize}
+\item An identifier may be used as variable or as a syntactic keyword.
+\item When an identifier appears as literal or within a literal, it is used to denote a symbol.
+\end{itemize}
+
+\subsection*{Variables}
+An identifier may name a type of syntax, or it may name a location where a value can be stored. An identifier that names a type of syntax is called a \texttt{syntactic keyword} to and is said to be bound to that syntax.\\
+An identifier that names a location is called a \texttt{variable} and is said to be bound that location.
+
+An expression consisting of a variable is a variable reference. The value of a variable references is the value stored in the location to which the variable is bound.
+
+We can use \emph{define} to introduce a new location, bind an identifier to that location, and store a value in that location. We can also use \emph{set!} to mutate the value stored in the location to which the variable is bound. It is an error to reference an unbound variable. The following are some examples about variables:
+
+\begin{lstlisting}
+x                                ===> error - undefined variable x
+
+(define x 10)
+x                                ===>10
+
+(set! x 30)
+x                                ===> 30
+\end{lstlisting}
+
+\subsection*{Pairs}
+A pair is a primitive data structure in Scheme. It is a record structure with two fields called the \texttt{car} and \texttt{cdr} (for historical reasons). Pairs are created by the procedure \text{cons}.The \texttt{car} and \texttt{cdr} fields are accessed by the procedures \textit{car} and \texttt{cdr}. The \texttt{car} and \texttt{cdr} fields are assigned by the procedures \texttt{set-car!} and \texttt{set-cdr!}.
+
+Here are some examples about the pairs:
+\begin{lstlisting}
+(define my-pair (cons 1 2))
+ my-pair                          ===> (1 . 2)
+
+(car my-pair)                     ===> 1
+
+(cdr my-pair)                     ===> 2
+
+
+(set-car! my-pair 10)
+(set-cdr! my-pair 20)
+ my-pair                          ===> (10 . 20)
+\end{lstlisting}
+
+
+\subsection*{Lists}
+A list is defined as either the empty list, or a pair whose tail is a list.
+
+Here are some examples about the lists:
+\begin{lstlisting}
+(define my-list (list 1 2 3))
+ my-list                          ===> (1 2 3)
+
+(cadr my-list)                    ===> 2
+
+(caddr my-list)                   ===> 3
+
+
+(map (lambda (x) (+ x 1)) my-list) ===> (2 3 4)
+\end{lstlisting}
+
+A pair that is not a list is an improper list.
+
+\begin{lstlisting}
+(define my-improper-list (cons 1 (cons 2 3)))
+my-improper-list                  ===> (1 2 . 3)
+
+(cadr my-improper-list)           ===> 2
+
+(cddr my-improper-list)                   ===> 3
+\end{lstlisting}
+
+\subsection*{Procedures}
+A procedure is like a function in other languages like C and Python.
+
+A lambda expression evaluates to a procedure. Recall that Scheme has lexical scoping. The environment in effect when the \texttt{lambda} expression was evaluated is remembered as part of the procedure. When the procedure is later called with some actual argument, the environment in  which the lambda expression was evaluated will be extended by binding the variables in the formal argument list to the fresh locations, the corresponding actual argument will be stored in these locations, and the expression in the body of the lambda expression will be evaluated sequentially in the extended environment.\\
+
+Scheme provides a number of built-in procedures that the user can call without defining them. See later sections for a full list of such procedures. Procedures that are defined using \texttt{lambda} expressions are called compound procedures.
+
+\textbf{Ex1}\\
+Here are some examples of built-in procedures:
+\begin{lstlisting}
+(+ 10 20)                  ===> 30
+(- 20 5)                   ===> 15
+(* 2 3)                    ===> 6
+(/ 10 4)                   ===> 2.5
+(+ 1 2 3 4 5)              ===> 15
+(- 100 10 10)              ===> 80
+\end{lstlisting}
+
+\textbf{Ex2}\\
+This example demonstrates how to define and call a compound procedure.
+\begin{lstlisting}
+(define fn (lambda (x) (+ x 10)))
+(fn 5)                                   ===> 15
+
+; alternatively, apply the procedure without giving it a name
+((lambda (x) (+ x 10)) 5)                ===> 15
+\end{lstlisting}
+
+There is also a shorthand syntax to define procedures using \texttt{define}.
+
+\textbf{Ex3}\\
+This example represents shorthand procedure definition syntax.
+\begin{lstlisting}
+(define (fn x)
+    (+ x 10))
+\end{lstlisting}
+
+The procedures defined above take in a fixed number of arguments equal to the number of parameters.
+Calling the procedures with the wrong number of arguments results in an error.
+
+\textbf{Ex4}\\
+\begin{lstlisting}
+(fn 10 10)      ===> error - fn expected exactly 1 argument,
+                     but encountered 2
+\end{lstlisting}
+
+We can also define procedures that take in variable number of arguments. Such procedures can specify a number of compulsory arguments. Any additional arguments supplied will be lumped into a list and assigned to the name of the last parameter.
+
+\textbf{Ex5}\\
+This example demonstrates how to define and call a procedure with var-args.
+\begin{lstlisting}
+(define (fn x y . rest-args)
+    (display x)
+    (display y)
+    (display rest-args))
+(fn 1 2 3 4)                    ===> displays 1 2 (3 4)
+\end{lstlisting}
+
+Besides applying the procedure directly, we can use the \texttt{apply} built-in procedure, which is useful when the arguments are in a list and need to be 'spread'.
+
+\textbf{Ex6}\\
+\begin{lstlisting}
+(apply + (list (1 2 3)))              ===> 6
+\end{lstlisting}
+
+
+\subsection*{Conditionals}
+Conditional enable conditional evaluation. As a recap, the syntax for conditionals is as follows:
+
+\begin{lstlisting}
+            (if <test> <consequent> <alternate>)
+\end{lstlisting}
+or
+\begin{lstlisting}
+            (if <test> <consequent>)
+\end{lstlisting}
+
+A conditional expression is evaluated as follows: first, \texttt{<test>} is evaluated. If it yields a true value, then \texttt{<consequent>} is evaluated and its value is returned. Otherwise \texttt{<alternate>} is evaluated and its value is returned.
+
+A value is false if it is \texttt{\#f}. Otherwise, the value is true.
+
+If \texttt{<test>} evaluates to false and \texttt{<consequent>} is missing, then the return value of the conditional expression is unspecified.
+
+\subsection*{Quotation}
+The syntax for quotation is:
+\begin{lstlisting}
+                            (quote <datum>)
+\end{lstlisting}
+which can be abbreviated as:
+\begin{lstlisting}
+                                '<datum>
+\end{lstlisting}
+The two notation are equivalent is all aspects.
+
+Quotation is used to introduce literals in Scheme.
+
+Quotation is evaluated as follows:
+
+\begin{itemize}
+\item Quotation of a self-evaluating value returns the value itself.
+\item Quotation of an identifier returns a symbol.
+\item Quotation of a pair returns a pair whole \texttt{car} and \texttt{cdr} are the result of quoting the \texttt{car} and \texttt{cdr} of the original pair.
+\end{itemize}
+
+The followings gives some examples:\\
+
+\textbf{Ex1}
+\begin{lstlisting}
+(quote 1)                               ===> 1
+(quote "string")                        ===> "string"
+(quote symbol)                          ===> symbol
+(quote (+ 1 2))                         ===> (+ 1 2)
+(quote (this is a list))                ===> (this is a list)
+\end{lstlisting}
+
+The result of a quotation has no semantic difference from an equivalent value produced through other means. Therefore, we can manipulate quoted values exactly like all other values.
+
+\textbf{Ex2}
+\begin{lstlisting}
+(define my-list
+    (quote (1 2 (list 3 4))))
+my-list                                 ===> (1 2 (list 3 4))
+(caddr my-list)                         ===> (list 3 4)
+\end{lstlisting}
+
+\subsection*{Quasiquotation}
+Syntax:
+\begin{lstlisting}
+                            (quasiquote <qq template>)
+\end{lstlisting}
+which can be abbreviated as:
+\begin{lstlisting}
+                                `<qq template>
+\end{lstlisting}
+The two notation are equivalent is all aspects.
+
+Backquote or quasiquote expressions are useful for constructing a list when most but not all of the desired structure is known in advance. If no commas appear within the \texttt{<qq template>}, the result of evaluating \texttt{`<qq template>} is equivalent to the result of evaluating \texttt{'<qq template>}. If a comma appears within the \text{<qq template>}, however, the expression following the comma is evaluated (unquoted) and its result is inserted into the list instead of the comma and the expression. If a comma appears followed immediately by an at-sign (@), then the following expression must evaluate to a list; the opening and closing parentheses of the list are then stripped away and the elements of the list are inserted in place of the comma at-sign expression sequence. A comma at-sign should only appear within a list \texttt{<qq template>}.
+
+The following are some examples:\\
+\textbf{Ex1}
+\begin{lstlisting}
+(quasiquote (this is a list))          ===> (this is a list)
+\end{lstlisting}
+
+\textbf{Ex2}
+\begin{lstlisting}
+(quasiquote (1 2 (unquote (list 3 4))))     ===> (1 2 (3 4))
+\end{lstlisting}
+
+\textbf{Ex3}
+\begin{lstlisting}
+(quasiquote (1 2 (unquote-splicing (list 3 4))))
+                     ===> (1 2 3 4)
+\end{lstlisting}
+
+\texttt{,<expression>} is identical to \texttt{(unquote <expression>)}, and \texttt{,@<expression>} is identical to \texttt{(unquote-splicing <expression>)} in all aspects.
+
+Quasiquote forms may be nested. Substitutions are made only for unquoted components appearing at the same nesting level as the outermost backquote. The nesting level increases by one inside each successive quasiquotation, and decreases by one inside each unquotation.
+
+\textbf{Ex4}
+\begin{lstlisting}
+`(a `(b ,(+ 1 2) ,(foo ,(+ 1 3) d) e) f)
+                              ===> (a `(b ,(+ 1 2) ,(foo 4 d) e) f)
+\end{lstlisting}
+
+\subsection*{Macros}
+
+Scheme has a special property: homoiconicity. As we have seen, Scheme syntax consists of S-expressions, and S-expressions also happen to be the a native data structure supported by Scheme. More formally, the syntactic domain of scheme is a subset of its semantic domain. As a result, we can manipulate syntax as data in Scheme. For example, the programmer can define new expressions types by converting new syntax into syntax that Scheme natively understands. This is done using a mechanism called Macros.
+
+A macro definition binds an identifier to a macro body, which transforms input syntaxes into output syntaxes.
+
+For example, we can define a new syntax called \texttt{swap!} that swaps the value of two variable. Note that this cannot be done with a procedure.
+
+\begin{lstlisting}
+(defmacro swap! (lhs rhs)
+    `(let ((temp ,lhs))
+        (set! ,lhs ,rhs)
+        (set! ,rhs temp)))
+
+(define x 1)
+(define y 2)
+(swap! x y)
+
+x    ===> 2
+y    ===> 1
+\end{lstlisting}
+
+Here, the macro we defined takes in two arguments \texttt{lhs} and \texttt{rhs}. When we use this macro, these parameters will be bound to the syntax that we supply at the use site. In this case, \texttt{lhs} is bound to the symbol \texttt{x} and \texttt{rhs} is bound to the symbol \texttt{y}.
+
+The macro body can manipulate the values bound to these names. In this case, we use quasiquotation to produce a list that contains the values bound to \texttt{lhs} and \texttt{rhs}. We say that this macro has expanded into this list.
+
+We can use the \texttt{macroexpand} built-in procedure to view what a macro use expands into.
+
+\begin{lstlisting}
+(macroexpand '(swap! x y))
+                     ===> (let ((temp x)) (set! x y) (set! y temp))
+\end{lstlisting}
+
+Note that this list is valid Scheme syntax - it introduces a temporary variable and uses it to swap the values between the variables whose names are stored in \texttt{lhs} and \texttt{rhs}.
+
+The final step in a macro use is that the expanded value will be evaluated. In this case, the expanded \texttt{let} form it does exactly what we want - to swap the value of two variables.
+
+As a result, we have introduced a new syntax \texttt{swap!} that swaps the value of two variales. We achieve this by defining a macro which breaks down our new syntax into primitive syntax that Scheme already understands. This allows us to extend the language by introducing new syntax that suits our needs.
+
+As a more complex example, let's look at how the \texttt{let} special form is defined using a macro is our standard library. The definition is as follows:
+
+\begin{lstlisting}
+(defmacro let (bindings . bodies)
+  `((lambda (,@(map car bindings)) ,@bodies) ,@(map cadr bindings)))
+
+(macroexpand '(let ((x 1) (y 2)) (+ x y)))
+                          ===> ((lambda (x y) (+ x y)) 1 2)
+\end{lstlisting}
+
+The macro takes in a compulsory parameter \texttt{bindings}, and a variable number of expressions as \texttt{bodies}. Within the macro body, it decomposes the \texttt{bindings} and \texttt{bodies} into an immediately applied lambda expression, whose parameters are the names in \texttt{bindings} (represented as the first element of each sub-list in \texttt{bindings}). We supply the values in \texttt{bindings} (represented as the second element of each sub-list in \texttt{bindings}) to this procedure. The \texttt{bodies} constitute the procedure's body, which will be evaluated in an environment where all bindings are in effect.
+
+Note that we used \texttt{map} to manipulate \texttt{bindings}. In fact, we have the full power of Scheme within the macro body. Since Scheme understands its full syntax, the macro body can do any arbitrary computation on the input syntax. This would not have been possible if not for homoiconicity.
+
+In some other macro systems, (e.g., C's macro system), syntax is represented as plain strings. In such cases, the macro body can only do limited operations like concatenation and template substitution on the syntax (unless we encode a parser into the macro expansion system).
+
+\subsubsection*{Macro hygiene}
+Macros can introduce unwanted name captures. Recall the example about \texttt{swap!}. What if one of the variables that we want to swap has the name \texttt{temp}?
+
+\begin{lstlisting}
+(macroexpand '(swap! x temp))
+               ===> (let ((temp x)) (set! x temp) (set! temp temp))
+\end{lstlisting}
+
+This does not look right. In fact, it will not swap the two variables. When we evaluate the \texttt{let} in the expanded syntax, we introduce a new environment where \texttt{temp} is bound to the value of \texttt{x}. When we try to \texttt{set!} the value of \texttt{temp}, it sets the value in this inner environment, instead of the environment where the macro is used!
+
+This macro fails because the expanded syntax introduced a name conflict between a variable defined by the expanded syntax and user code. Such macros are called unhygienic macros.
+
+As a workaround, there exists a built-in procedure \texttt{gensym} which returns a symbol that is guaranteed to not to be used anywhere else and will not be used anywhere else. With \texttt{gensym}, we can give the temporary variable a unique name so that it will never conflict with names in user code.
+
+Let's redefine \texttt{swap!} using \texttt{gensym}:
+
+\begin{lstlisting}
+(defmacro swap! (lhs rhs)
+  (let ((temp (gensym)))
+    `(let ((,temp ,lhs))
+        (set! ,lhs ,rhs)
+        (set! ,rhs ,temp))))
+
+
+(define x 1)
+(define temp 2)
+
+(macroexpand '(swap! x temp))
+            ===> (let (($:0 x)) (set! x temp) (set! temp $:0))
+
+(swap! x temp)
+x    ===> 2
+temp ===> 1
+\end{lstlisting}
+
+With \texttt{gensym}, we can write hygienic macros under an unhygienic macro system by introducing unique names.
+
+\subsection*{Derived expression types}
+
+
+Derived expression types are expressions that can be defined using primitive expressions and macros. As a result, the Scheme evaluator does not need to understand these expressions natively. They are defined using macros as part of our standard library. The definitions can be found at\\
+\url{https://gist.github.com/gary-lgy/51e03d4d387ed2eec322326769bfd153}.
+
+\subsubsection*{begin}
+The following is the syntax of \texttt{begin}:
+\begin{lstlisting}
+            (begin <expression>+)
+\end{lstlisting}
+The \texttt{<expression>}s are evaluated sequentially from left to right, and the value of the last \texttt{<expression>} is returned.\\ \\
+
+\subsubsection*{cond}
+The following is the syntax of \texttt{cond}:
+\begin{lstlisting}
+            (cond <clause> <clause> ...)
+\end{lstlisting}
+Each \texttt{<clause>} should be form \texttt{(<test> <expression> \dots)}. And \texttt{<test>} is any expression. When a \texttt{<test>} evaluates to a true value, then the remaining <expression>s in its \texttt{<clause>} are evaluated in order, and the results of the last <expression> in the clause is(are) returned as the result(s) of the entire \texttt{cond} expression. If the selected \texttt{<clause>} contains only the \texttt{<test>} and no \texttt{<expression>}s, then the value of the \texttt{<test>} is returned as the result. If all \texttt{<test>}s evaluate to false values, and there is no else clause, then the result of the conditional expression is unspecified; if there is an else clause, then its \texttt{<expression>}s are evaluated, and the value(s) of the last one is(are) returned.\\ \\The following gives some examples about \texttt{cond}:
+\begin{lstlisting}
+(cond ((> 3 2) 'greater)
+      ((< 3 2) 'less))                             ===>  greater
+
+(cond ((> 3 3) 'greater)
+      ((< 3 3) 'less)
+      (else 'equal))                               ===>  equal
+\end{lstlisting}
+
+\subsubsection*{and}
+The following is the syntax of \texttt{and}:
+\begin{lstlisting}
+            (and <test> ...)
+\end{lstlisting}
+The \texttt{<test>} expressions are evaluated from left to right, and the value of the first expression that evaluates to a false value is returned. Any remaining expressions are not evaluated. If all the expressions evaluate to true values, the value of the last expression is returned. If there are no expressions then \#t is returned.\\ \\
+
+\subsubsection*{or}
+The following is the syntax of \texttt{or}:
+\begin{lstlisting}
+            (or <test> ...)
+\end{lstlisting}
+The \texttt{<test>} expressions are evaluated from left to right, and the value of the first expression that evaluates to a true value is returned. Any remaining expressions are not evaluated. If all expressions evaluate to false values, the value of the last expression is returned. If there are no expressions then \#f is returned.
+
+
+
+\subsubsection*{Binding constructs}
+The three bindings constructs \textit{let}, \textit{let$^*$}, and \textit{letrec} give Scheme a block procedure. The syntax of three constructs is identical, but they differ in the regions they establish for their variable bindings.
+\begin{itemize}
+\item \texttt{(let <bindings> <body>)}
+\item \texttt{(let$^*$ <bindings> <body>)}
+\item \texttt{(letrec <bindings> <body>)}\\ \\
+where \texttt{<body>} should be a sequence of one or more expressions.
+\end{itemize}
+For \texttt{let} expression, the initial values are computed before any of the variables become bound. In a \texttt{let$^*$}expression, the bindings and evaluations are performed sequentially; while in a \texttt{letrec} expression, all the bindings are in effect while their initial values are being computed, thus allowing mutually recursive definitions.
+To be specific, we give an example about \texttt{letrec} here:
+\begin{lstlisting}
+(letrec ((even?
+          (lambda (n)
+            (if (zero? n)
+                #t
+                (odd? (- n 1)))))
+         (odd?
+          (lambda (n)
+            (if (zero? n)
+                #f
+                (even? (- n 1))))))
+  (even? 88))                              ===>  #t
+\end{lstlisting}
+
+\section{Tail call optimization}
+Scheme is ``properly tail recursive'', meaning that procedure calls from certain contexts do not consume extra resources and can an unbounded number of tail calls is be supported.
+
+Tail calls are procedure calls that occur in tail contexts. Tail context is defined inductively as follows:
+
+\begin{itemize}
+\item The last expression within the body of a lambda expression, shown as \texttt{<tail expression>} below, occurs in a tail context.
+\begin{lstlisting}
+(lambda <formals>
+        <expression>* <tail expression>)}
+\end{lstlisting}
+\item If one of the following expressions is in a tail context, then the subexpressions shown as \texttt{<tail expression>} are in a tail context. Here we replace some occurrences of \texttt{<expression>} with \texttt{<tail expression>}. Only those rules that contain tail contexts are shown here.
+\begin{lstlisting}
+(if <expression> <tail expression> <tail expression>)
+(if <expression> <tail expression>)
+
+(cond <cond clause>+)
+(cond <cond clause>* (else <tail sequence>))
+
+(and <expression>* <tail expression>)
+(or <expression>* <tail expression>)
+
+(let (<binding spec>*) <tail body>)
+(let* (<binding spec>*) <tail body>)
+(letrec (<binding spec>*) <tail body>)
+
+(begin <tail sequence>)
+\end{lstlisting}
+where
+\begin{alignat*}{7}
+&& \texttt{<cond clause>}   \quad &&::= &\quad && \texttt{(<test> <tail sequence>)}\\[1mm]
+&& \texttt{<tail body>}    \quad&&::= &\quad && \texttt{<tail sequence>}\\[1mm]
+&& \texttt{<tail sequence>}    &&::= &\quad && \texttt{<expression>* <tail expression>}
+\end{alignat*}
+\item If a \texttt{cond} expression is in a tail context, and has a clause of the form \texttt{(<expression1> => <expression2>)} then the (implied) call to the procedure that results from the evaluation of \texttt{<expression2>} is in a tail context. \texttt{<expression2>} itself is not in a tail context.
+\end{itemize}
+
+
+
+\section{Deviations from R5RS}
+
+\begin{itemize}
+\item The full numeric tower is not supported. All numbers behave similarly to numbers in JavaScript.
+\item Strings are immutable.
+\item No vector or character data types.
+\item No hygienic macro system. Only an unhygienic macro system is provided.
+\item Some standard library procedures are simplified.
+\end{itemize}
+
+
+\section{Denotational Semantics of Scheme}
+In this section, we follow the notation used in CS4215 lectures, unless otherwise stated.
+
+We define the syntactic domain of Scheme is follows.
+\begin{center}
+\begin{tabular}{|l|ll|} \hline
+Domain name & Definition & Explanation\\ \hline
+\textbf{Syn} & $\textbf{Num} \boldsymbol{+} \textbf{Bool} \boldsymbol{+} \textbf{Str} \boldsymbol{+} \textbf{Symbol} \boldsymbol{+} $ & \\
+            & $\textbf{Pair} \boldsymbol{+} \textbf{EmptyList}$  & syntax \\ \hline
+\end{tabular}
+\end{center}
+
+We define the semantic domains of Scheme as follows.
+\begin{center}
+\begin{tabular}{|l|ll|} \hline
+Domain name & Definition & Explanation\\ \hline
+\textbf{EV} & $\textbf{Num} \boldsymbol{+} \textbf{Bool} \boldsymbol{+} \textbf{Str} \boldsymbol{+} \textbf{Symbol} \boldsymbol{+} $ & \\
+            & $\textbf{Pair} \boldsymbol{+} \textbf{EmptyList} \boldsymbol{+} \textbf{Proc} \boldsymbol{+} \textbf{Macro}$  & expressible values\\
+\textbf{SV} & $\textbf{Num} \boldsymbol{+} \textbf{Bool} \boldsymbol{+} \textbf{Str} \boldsymbol{+} \textbf{Symbol} \boldsymbol{+} $ & \\
+            & $\textbf{Pair} \boldsymbol{+} \textbf{EmptyList} \boldsymbol{+} \textbf{Proc} \boldsymbol{+} \textbf{Macro}$  & storable values\\
+\textbf{DV} & $\textbf{Loc}$ & denotable values \\
+\textbf{Proc}   & $\textbf{DV} \boldsymbol{*} \cdots \boldsymbol{*} \textbf{DV} \boldsymbol{*} \textbf{Store} \partfun \textbf{(EV, Store)}$ & procedure values \\
+\textbf{Macro}   & $\textbf{Syn} \boldsymbol{*} \cdots \boldsymbol{*} \textbf{Syn} \boldsymbol{*} \textbf{Store} \partfun \textbf{(Syn, Store)}$ & macro values \\
+\textbf{Store} & $\textbf{Loc} \rightsquigarrow \textbf{SV}$ & stores\\
+\textbf{Env} & $\textbf{Id} \rightsquigarrow \textbf{DV}$ & environments\\ \hline
+\end{tabular}
+\end{center}
+
+We present an outline of the denotational semantics of Scheme.
+
+$nil$ denotes unspecified return value.
+
+\subsection*{Variable definition}
+$\dfrac{\sum' \left[l_1\gets v_1\right] |\Delta[x\gets l_1] \Vdash E_2 \to\left(v,\sum'' \right)}
+{\sum |\Delta \Vdash \left(define \quad x\quad E_1\right) \quad E_2 \to \left(v,\sum''\right)}$
+
+if $\sum | \Delta \Vdash E_1 \rightarrowtail (v_1,\sum')$,\\
+and $l_1$ is a new location.
+
+\subsection*{Variable access}
+$\dfrac{}
+{\sum | \Delta \Vdash x \rightarrowtail (\sum(\Delta(x)),\sum)}$
+
+\subsection*{Variable mutation}
+$\dfrac{\sum | \Delta \Vdash E \rightarrowtail (v,\sum')}
+{\sum | \Delta \Vdash \left(set! \quad x \quad E)\right \rightarrowtail (nil, \sum'[\Delta(x) \leftarrow v])}$
+
+\subsection*{Lambda expression}
+$\dfrac{}
+{\sum |\Delta \Vdash \left(lambda \quad (x)\quad E\right) \rightarrowtail \left(f,\sum\right)}$\\
+
+where $f(l,\sum') = (v',\sum''),$\\
+where $\sum' | \Delta [x \leftarrow l] \Vdash E \rightarrowtail (v',\sum'')$
+
+\subsection*{Procedure application}
+$\dfrac{\sum | \Delta \Vdash E_1 \rightarrowtail (f,\sum')\quad \quad \sum' | \Delta \Vdash E_2 \rightarrowtail (v_2, \sum'')}
+{\sum |\Delta \Vdash \left(E1 \quad E2)\right \rightarrowtail f(l, \sum''[l \leftarrow v_2])}$\\
+
+where $l$ is a new location in $\sum''$\\
+and $f \in \texttt{Proc}$
+
+\subsection*{Macro definition}
+$\dfrac{\sum[l_1 \leftarrow f] | \Delta[m \leftarrow l_1] | \Vdash E_2 \rightarrowtail (v, \sum')}
+{\sum |\Delta \Vdash \left(defmacro \quad m \quad (x)\quad E\right) \quad E_2 \rightarrowtail \left(v,\sum'\right)}$\\
+
+where $f(l,\sum') = (v',\sum''),$\\
+where $\sum' | \Delta [x \leftarrow l] \Vdash E \rightarrowtail (v',\sum'')$\\
+and $l_1$ is a new location.
+
+\subsection*{Macro use}
+$\dfrac{\sum | \Delta \Vdash E_1 \rightarrowtail (f,\sum') \quad \sum' | \Delta \Vdash f(l, \sum'[l \leftarrow E_2]) \rightarrowtail (S, \sum'') \quad \sum'' | \Delta \Vdash S \rightarrowtail (v, \sum''')}
+{\sum |\Delta \Vdash \left(E1 \quad E2)\right \rightarrowtail (v, \sum''')}$\\
+
+where $l$ is a new location in $\sum'$\\
+and $f \in \texttt{Macro}$
+
+The definitions for the other constructs are straight-forward.
+
+\section{Built-in Procedures}
+To be specific, we summarize all built-in procedures here.\\
+These procedures are accessing the basic calculating function:
+\begin{itemize}
+\item \texttt{(+ z \dots)}
+\item \texttt{(- z \dots)}
+\item \texttt{(* z \dots)}
+\item \texttt{(/ z \dots)}
+\end{itemize}
+
+These procedures implement number-theoretic (integer) division. n2 should be non-zero.
+All three procedures return integers. If n1/n2 is an integer:
+\begin{itemize}
+\item \texttt{(quotient n$_1$ n$_2$)             ===> n$_1$/n$_2$}
+\item \texttt{(remainder n$_1$ n$_2$)            ===> 0}
+\item \texttt{(modulo n$_1$ n$_2$)            ===> 0}
+\end{itemize}
+If n1/n2 is not an integer:
+\begin{itemize}
+\item \texttt{(quotient n$_1$ n$_2$)             ===> n$_q$}
+\item \texttt{(remainder n$_1$ n$_2$)            ===> n$_r$}
+\item \texttt{(modulo n$_1$ n$_2$)               ===> n$_m$}
+\end{itemize}
+where n$_q$ is n$_1$/n$_2$ rounded towards zero, 0 < |n$_r$| < |n$_2$|, 0 < |n$_m$| < |n$_2$|, n$_r$ and n$_m$ differ from n$_1$ by a multiple of n$_2$, n$_r$ has the same
+sign as n$_1$, and n$_m$ has the same sign as n$_2$.\\
+
+\begin{itemize}
+\item \texttt{(= z$_1$ z$_2$)}
+\item \texttt{(< x$_1$ x$_2$)}
+\item \texttt{(> x$_1$ x$_2$)}
+\item \texttt{(<= x$_1$ x$_2$)}
+\item \texttt{(>= x$_1$ x$_2$)}
+\end{itemize}
+These procedures return \#t if their arguments are (respectively): equal, monotonically increasing, monotonically decreasing, monotonically nondecreasing, or monotonically nonincreasing.\\
+\begin{itemize}
+\item \texttt{(cons obj$_1$ obj$_2$)}
+\end{itemize}
+Returns a newly allocated pair whose car is obj1 and whose cdr is obj2.
+\begin{itemize}
+\item \texttt{ (car \textit{pair})}
+\end{itemize}
+Returns the contents of the car field of pair.
+\begin{itemize}
+\item \texttt{(cdr \textit{pair})}
+\end{itemize}
+Returns the contents of the cdr field of pair.
+\begin{itemize}
+\item \texttt{(set-car! \textit{pair} \textit{obj})}
+\end{itemize}
+Stores obj in the car field of pair. The value returned by set-car! is unspecified.
+\begin{itemize}
+\item \texttt{(set-cdr! \textit{pair} \textit{obj})}
+\end{itemize}
+Stores obj in the cdr field of pair. The value returned by set-cdr! is unspecified.
+\begin{itemize}
+\item \texttt{(list \textit{obj} \dots)}
+\end{itemize}
+Returns a newly allocated list of its arguments.
+\begin{itemize}
+\item \texttt{(number? \textit{obj})}
+\end{itemize}
+Returns \#t if obj is a number, otherwise returns \#f.
+\begin{itemize}
+\item \texttt{(boolean? \textit{obj})}
+\end{itemize}
+Returns \#t if obj is a boolean, otherwise returns \#f.
+\begin{itemize}
+\item \texttt{(string? \textit{obj})}
+\end{itemize}
+Returns \#t if obj is a string, otherwise returns \#f.
+\begin{itemize}
+\item \texttt{(symbol? \textit{obj})}
+\end{itemize}
+Returns \#t if obj is a symbol, otherwise returns \#f.
+\begin{itemize}
+\item \texttt{(procedure? \textit{obj})}
+\end{itemize}
+Returns \#t if obj is a procedure, otherwise returns \#f.
+\begin{itemize}
+\item \texttt{(pair? \textit{obj})}
+\end{itemize}
+Returns \#t if obj is a pair, otherwise returns \#f.
+\begin{itemize}
+\item \texttt{(null? \textit{obj})}
+\end{itemize}
+Returns \#t if obj is the empty list, otherwise returns \#f.
+\begin{itemize}
+\item \texttt{(eq? \textit{obj}$_1$ \textit{obj}$_2$)}
+\item \texttt{(eqv? \textit{obj}$_1$ \textit{obj}$_2$)}
+\item \texttt{(equal? \textit{obj}$_1$ \textit{obj}$_2$)}
+\end{itemize}
+The three equivalence predicates above are the computational analogue of a mathematical equivalence relation. The \texttt{eqv?} procedure defines a useful equivalence relation
+on objects. Briefly, it returns #t if obj1 and obj2 should normally be regarded as the
+same object. \texttt{eq?}'s behavior on numbers and characters is implementation-dependent, but
+it will always return either true or false, and will return true only when \texttt{eqv?} would
+also return true. Equal? recursively compares the contents of pairs, and strings,
+applying \texttt{eqv?} on other objects such as numbers and symbols. A rule of thumb is that
+objects are generally \texttt{equal?} if they print the same.\\
+\begin{itemize}
+\item \texttt{(apply \textit{proc} \textit{arg}$_1$ \dots \textit{arg}$_s$ )}
+\end{itemize}
+Calls proc with the elements of the list (append (list arg1 ...) args) as the actual arguments.Proc must be a procedure and args must be a list.
+\begin{itemize}
+\item \texttt{(error \textit{obj} \dots)}
+\end{itemize}
+Aborts further evaluation and print the supplied objects.
+\begin{itemize}
+\item \texttt{(display \textit{obj})}
+\end{itemize}
+Displays the object.
+
+\section{Special Syntax Definitions}
+\begin{itemize}
+\item \texttt{(begin <expression> <expression> \dots)}: Evaluates the expression(s) from left to right, and the values of the last expression is(are) returned.
+\item \texttt{(cond <clause> <clause> \dots)}: Each <clause> should be form (<test> <expression> \dots). And <test> is any expression. When a <test> evaluates to a true value, then the remaining <expression>s in its <clause> are evaluated in order, and the results of the last <expression> in the clause is(are) returned as the result(s) of the entire \texttt{cond} expression. If the selected \texttt{<clause>} contains only the <test> and no \texttt{<expression>}s, then the value of the \texttt{<test>} is returned as the result. If all \texttt{<test>}s evaluate to false values, and there is no else clause, then the result of the conditional expression is unspecified; if there is an else clause, then its \texttt{<expression>}s are evaluated, and the value(s) of the last one is(are) returned.
+\item \texttt{(and  <test> \dots)}:The \texttt{<test>} expressions are evaluated from left to right, and the value of the first expression that evaluates to a false value is returned. Any remaining expressions are not evaluated. If all the expressions evaluate to true values, the value of the last expression is returned. If there are no expressions then \#t is returned.
+\item \texttt{(or  <test> \dots)}:The \texttt{<test>} expressions are evaluated from left to right, and the value of the first expression that evaluates to a true value is returned. Any remaining expressions are not evaluated. If all expressions evaluate to false values, the value of the last expression is returned. If there are no expressions then \#f is returned.
+\end{itemize}
+
+
+\section{Libraries}
+The following libraries are always available in this language.
+
+The definitions can be found at\\
+\url{https://gist.github.com/gary-lgy/519fd61f3df7d89bf4e84cbc8486c5f6}.
+
+\subsection*{Pair Accessors}
+The following pair accessing functions are supported and there procedures are compositions of car and cdr:
+\begin{itemize}
+\item \texttt{(caar \textit{pair})}
+\item \texttt{(cadr \textit{pair})}
+\item \texttt{(cadr \textit{pair})}
+\item \texttt{(cddr \textit{pair})}
+\item \texttt{(caaar \textit{pair})}
+\item \texttt{(caadr \textit{pair})}
+\item \texttt{(cadar \textit{pair})}
+\item \texttt{(caddr \textit{pair})}
+\item \texttt{(cdaar \textit{pair})}
+\item \texttt{(cdadr \textit{pair})}
+\item \texttt{(cddar \textit{pair})}
+\item \texttt{(cdddr \textit{pair})}
+\item \texttt{(caaaar \textit{pair})}
+\item \texttt{(caadar \textit{pair})}
+\item \texttt{(caaddr \textit{pair})}
+\item \texttt{(caaddr \textit{pair})}
+\item \texttt{(cadddr \textit{pair})}
+\item \texttt{(cdaaar \textit{pair})}
+\item \texttt{(cdaddr \textit{pair})}
+\item (\texttt{cddaar \textit{pair})}
+\item \texttt{(cddadr \textit{pair})}
+\item \texttt{(cdddar \textit{pair})}
+\item \texttt{(cddddr \textit{pair})}
+\end{itemize}
+\subsection*{Logical Operator}
+\begin{itemize}
+\item \texttt{(not \textit{obj})}: Returns \#t if obj is false, and returns \#f otherwise.
+\end{itemize}
+\subsection*{Numerical Operator}
+\begin{itemize}
+\item \texttt{(zero? \textit{z})}: Returns \#t if z is 0, and returns \#f otherwise.
+\end{itemize}
+\subsection*{List Helpers}
+\begin{itemize}
+\item \texttt{(list? \textit{obj})}: Returns \#t if obj is a list, otherwise returns \#f.
+\item \texttt{(length \textit{list})}: Returns length of list.
+\item \texttt{(append \textit{list1} \textit{list2})}: Returns a list consisting of the elements of the first list followed by the elements of the other lists.
+\item \texttt{(reverse \textit{list})}: Returns a newly allocated list consisting of the elements of list in reverse order.
+\item \texttt{(map \textit{proc} \textit{list})}: Applies \textit{proc} element-wise to the elements of the list and returns a list of the returns, in order.
+\item \texttt{(for-each \textit{proc} \texttt{list})}: Calls \texttt{proc} on the elements of the \texttt{list} in order from the firsr element(s) to the last, and the value returned is unspecified.
+\end{itemize}
+
+
+\end{document}

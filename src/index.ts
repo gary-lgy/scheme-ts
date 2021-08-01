@@ -15,7 +15,6 @@ import {
   Variant
 } from './types'
 
-export { SourceDocumentation } from './editors/ace/docTooltip'
 export { Variant } from './types'
 export { createContext, Context, Result }
 

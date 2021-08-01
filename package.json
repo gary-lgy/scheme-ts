@@ -1,18 +1,12 @@
 {
-  "name": "x-slang",
-  "version": "0.4.70",
-  "description": "Javascript-based implementations of a simple calc language, written in Typescript",
+  "name": "scheme-ts",
+  "version": "0.0.1",
+  "description": "Implementation of a variant of the Scheme programming language, written in Typescript",
   "keywords": [
-    "JavaScript",
+    "TypeScript",
     "interpreter",
-    "compiler",
-    "Source",
-    "SICP"
+    "Scheme"
   ],
-  "author": {
-    "name": "Source Academy",
-    "url": "https://github.com/source-academy/"
-  },
   "dependencies": {
     "antlr4ts": "^0.5.0-alpha.4",
     "node-getopt": "^0.3.2",
@@ -24,45 +18,31 @@
     "dist"
   ],
   "bin": {
-    "js-slang": "dist/repl/repl.js"
+    "scheme-ts": "dist/repl/repl.js"
   },
   "scripts": {
-    "ci": "yarn jsdoc && yarn autocomplete && yarn format:ci && yarn eslint && yarn test",
-    "format": "prettier --write \"src/**/*.{ts,tsx}\"",
-    "format:ci": "prettier --list-different \"src/**/*.{ts,tsx}\"",
-    "prepublishOnly": "tsc",
+    "check": "yarn run format:check && yarn run eslint:check && yarn test",
+    "fix": "yarn run format:fix && yarn run eslint:fix",
+    "format:fix": "prettier --write \"src/**/*.{ts,tsx}\"",
+    "format:check": "prettier --list-different \"src/**/*.{ts,tsx}\"",
     "test": "jest",
-    "benchmark": "jest --testPathPattern='.*benchmark.*'",
     "test-coverage": "jest --coverage",
-    "eslint": "eslint --ext \".ts,.tsx\" src",
-    "jsdoc": "./scripts/jsdoc.sh",
-    "autocomplete": "node ./scripts/updateAutocompleteDocs.js",
-    "docs": "yarn jsdoc && yarn autocomplete",
-    "build": "yarn docs && yarn tsc",
+    "eslint:fix": "eslint --fix --ext \".ts,.tsx\" src",
+    "eslint:check": "eslint --ext \".ts,.tsx\" src",
+    "build": "yarn tsc",
     "antlr4ts": "antlr4ts -visitor ./src/lang/Scheme.g4"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/source-academy/x-slang.git"
-  },
-  "bugs": {
-    "url": "https://github.com/source-academy/x-slang/issues"
-  },
-  "homepage": "https://github.com/source-academy/x-slang",
   "devDependencies": {
     "@types/jest": "^26.0.14",
     "@types/node": "^14.11.2",
     "@typescript-eslint/eslint-plugin": "^4.4.1",
     "@typescript-eslint/parser": "^4.4.1",
-    "ace-builds": "^1.4.12",
     "coveralls": "^3.1.0",
     "eslint": "^7.11.0",
     "eslint-config-prettier": "^6.13.0",
     "husky": "^4.3.0",
     "jest": "^26.4.2",
     "jest-html-reporter": "^3.2.0",
-    "jsdoc": "^3.6.6",
-    "jsdom": "^16.4.0",
     "prettier": "^2.1.2",
     "ts-jest": "^26.4.1",
     "typescript": "^4.0.3",
@@ -105,8 +85,8 @@
   },
   "husky": {
     "hooks": {
-      "pre-commit": "yarn eslint --fix && yarn format && yarn eslint",
-      "pre-push": "yarn ci"
+      "pre-commit": "yarn run fix && yarn run check",
+      "pre-push": "yarn run check"
     }
   }
 }

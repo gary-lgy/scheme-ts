@@ -1,12 +1,12 @@
-# scheme-slang
+# scheme-ts
 
 Implementation of the programming language *Scheme* largely based on the [Revised<sup>5</sup> Report on the Algorithmic Language Scheme (R5RS)](https://schemers.org/Documents/Standards/R5RS/).
 
 ## Documentation
 
-User documentation and specifications: [Documentation.pdf](./Documentation.pdf)
+User documentation and specifications: [Documentation.pdf](./docs/Documentation.pdf)
 
-Developer documentation: [DEVELOPER.md](./DEVELOPER.md)
+Developer documentation: [DEVELOPER.md](./docs/DEVELOPER.md)
 
 ## Usage
 
@@ -32,8 +32,12 @@ node dist/repl/repl.js "$(< my_scheme_program.scm)"
 
 ## Testing
 
-`scheme-slang` comes with an extensive test suite. To run the tests after you made your modifications, run
+`scheme-ts` comes with an extensive test suite. To run the tests after you made your modifications, run
 
 ```bash
 yarn test
 ```
+
+## Credits
+
+This repository was bootstrapped with the project template provided in CS4215 Programming Language Implementation at National University of Singapore. The template was in turn a stripped-down version of the [Source Academy](https://github.com/source-academy/)'s [`js-slang`](https://github.com/source-academy/js-slang).
